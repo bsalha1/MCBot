@@ -151,17 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AuthenticateResponse.cpp" />
     <ClCompile Include="JsonObject.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Profile.cpp" />
-    <ClCompile Include="User.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AuthenticateResponse.h" />
     <ClInclude Include="JsonObject.h" />
-    <ClInclude Include="Profile.h" />
-    <ClInclude Include="User.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

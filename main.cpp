@@ -267,9 +267,7 @@ int join_server(char* hostname, char* port)
     return sock;
 }
 
-
-
-int account_login(char* username, char* password)
+int mojang_login(char* username, char* password)
 {
     char url[] = "https://authserver.mojang.com";
  
@@ -296,8 +294,19 @@ int account_login(char* username, char* password)
     return 0;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 3)
+    {
+        std::cerr << "Must enter username and password" << std::endl;
+        return -1;
+    }
+
+    char* username = argv[1];
+    char* password = argv[2];
+    std::cout << "Logging into Mojang authservers with " << username << "..." << std::endl;
+    mojang_login(username, password);
+
     // Start WinSock DLL //
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -308,9 +317,6 @@ int main()
     }
     std::cout << "WinSock DLL Started" << std::endl;
 
-    char* username = (char*) "ReachCarter";
-    char* password = (char*) "Kll4403130!";
-    account_login((char*) "leopardgeckochannel@gmail.com", password);
 
     char* hostname = (char*) "cosmicpvp.com";   
     char* port = (char*) "25565";
