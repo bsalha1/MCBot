@@ -968,10 +968,10 @@ public:
   void set_read_timeout(time_t sec, time_t usec = 0);
   void set_write_timeout(time_t sec, time_t usec = 0);
 
-  void set_basic_auth(const char *username, const char *password);
+  void set_basic_auth(const char *email, const char *password);
   void set_bearer_token_auth(const char *token);
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  void set_digest_auth(const char *username, const char *password);
+  void set_digest_auth(const char *email, const char *password);
 #endif
 
   void set_keep_alive(bool on);
@@ -984,10 +984,10 @@ public:
   void set_interface(const char *intf);
 
   void set_proxy(const char *host, int port);
-  void set_proxy_basic_auth(const char *username, const char *password);
+  void set_proxy_basic_auth(const char *email, const char *password);
   void set_proxy_bearer_token_auth(const char *token);
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  void set_proxy_digest_auth(const char *username, const char *password);
+  void set_proxy_digest_auth(const char *email, const char *password);
 #endif
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
@@ -1270,10 +1270,10 @@ public:
   void set_read_timeout(time_t sec, time_t usec = 0);
   void set_write_timeout(time_t sec, time_t usec = 0);
 
-  void set_basic_auth(const char *username, const char *password);
+  void set_basic_auth(const char *email, const char *password);
   void set_bearer_token_auth(const char *token);
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  void set_digest_auth(const char *username, const char *password);
+  void set_digest_auth(const char *email, const char *password);
 #endif
 
   void set_keep_alive(bool on);
@@ -1286,10 +1286,10 @@ public:
   void set_interface(const char *intf);
 
   void set_proxy(const char *host, int port);
-  void set_proxy_basic_auth(const char *username, const char *password);
+  void set_proxy_basic_auth(const char *email, const char *password);
   void set_proxy_bearer_token_auth(const char *token);
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-  void set_proxy_digest_auth(const char *username, const char *password);
+  void set_proxy_digest_auth(const char *email, const char *password);
 #endif
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
@@ -3688,7 +3688,7 @@ static WSInit wsinit_;
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
 inline std::pair<std::string, std::string> make_digest_authentication_header(
     const Request &req, const std::map<std::string, std::string> &auth,
-    size_t cnonce_count, const std::string &cnonce, const std::string &username,
+    size_t cnonce_count, const std::string &cnonce, const std::string &email,
     const std::string &password, bool is_proxy = false) {
   using namespace std;
 
@@ -3715,7 +3715,7 @@ inline std::pair<std::string, std::string> make_digest_authentication_header(
                  ? detail::SHA_256
                  : algo == "SHA-512" ? detail::SHA_512 : detail::MD5;
 
-    auto A1 = username + ":" + auth.at("realm") + ":" + password;
+    auto A1 = email + ":" + auth.at("realm") + ":" + password;
 
     auto A2 = req.method + ":" + req.path;
     if (qop == "auth-int") { A2 += ":" + H(req.body); }
@@ -3724,7 +3724,7 @@ inline std::pair<std::string, std::string> make_digest_authentication_header(
                  ":" + qop + ":" + H(A2));
   }
 
-  auto field = "Digest username=\"" + username + "\", realm=\"" +
+  auto field = "Digest username=\"" + email + "\", realm=\"" +
                auth.at("realm") + "\", nonce=\"" + auth.at("nonce") +
                "\", uri=\"" + req.path + "\", algorithm=" + algo +
                ", qop=" + qop + ", nc=\"" + nc + "\", cnonce=\"" + cnonce +
@@ -3813,10 +3813,10 @@ inline std::pair<std::string, std::string> make_range_header(Ranges ranges) {
 }
 
 inline std::pair<std::string, std::string>
-make_basic_authentication_header(const std::string &username,
+make_basic_authentication_header(const std::string &email,
                                  const std::string &password,
                                  bool is_proxy = false) {
-  auto field = "Basic " + detail::base64_encode(username + ":" + password);
+  auto field = "Basic " + detail::base64_encode(email + ":" + password);
   auto key = is_proxy ? "Proxy-Authorization" : "Authorization";
   return std::make_pair(key, std::move(field));
 }
@@ -5414,12 +5414,12 @@ inline bool ClientImpl::handle_request(Stream &strm, Request &req,
   if ((res.status == 401 || res.status == 407) &&
       req.authorization_count_ < 5) {
     auto is_proxy = res.status == 407;
-    const auto &username =
+    const auto &email =
         is_proxy ? proxy_digest_auth_username_ : digest_auth_username_;
     const auto &password =
         is_proxy ? proxy_digest_auth_password_ : digest_auth_password_;
 
-    if (!username.empty() && !password.empty()) {
+    if (!email.empty() && !password.empty()) {
       std::map<std::string, std::string> auth;
       if (detail::parse_www_authenticate(res, auth, is_proxy)) {
         Request new_req = req;
@@ -5428,7 +5428,7 @@ inline bool ClientImpl::handle_request(Stream &strm, Request &req,
         new_req.headers.erase(key);
         new_req.headers.insert(detail::make_digest_authentication_header(
             req, auth, new_req.authorization_count_, detail::random_string(10),
-            username, password, is_proxy));
+            email, password, is_proxy));
 
         Response new_res;
 
@@ -6275,9 +6275,9 @@ inline void ClientImpl::set_write_timeout(time_t sec, time_t usec) {
   write_timeout_usec_ = usec;
 }
 
-inline void ClientImpl::set_basic_auth(const char *username,
+inline void ClientImpl::set_basic_auth(const char *email,
                                        const char *password) {
-  basic_auth_username_ = username;
+  basic_auth_username_ = email;
   basic_auth_password_ = password;
 }
 
@@ -6286,9 +6286,9 @@ inline void ClientImpl::set_bearer_token_auth(const char *token) {
 }
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-inline void ClientImpl::set_digest_auth(const char *username,
+inline void ClientImpl::set_digest_auth(const char *email,
                                         const char *password) {
-  digest_auth_username_ = username;
+  digest_auth_username_ = email;
   digest_auth_password_ = password;
 }
 #endif
@@ -6318,9 +6318,9 @@ inline void ClientImpl::set_proxy(const char *host, int port) {
   proxy_port_ = port;
 }
 
-inline void ClientImpl::set_proxy_basic_auth(const char *username,
+inline void ClientImpl::set_proxy_basic_auth(const char *email,
                                              const char *password) {
-  proxy_basic_auth_username_ = username;
+  proxy_basic_auth_username_ = email;
   proxy_basic_auth_password_ = password;
 }
 
@@ -6329,9 +6329,9 @@ inline void ClientImpl::set_proxy_bearer_token_auth(const char *token) {
 }
 
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-inline void ClientImpl::set_proxy_digest_auth(const char *username,
+inline void ClientImpl::set_proxy_digest_auth(const char *email,
                                               const char *password) {
-  proxy_digest_auth_username_ = username;
+  proxy_digest_auth_username_ = email;
   proxy_digest_auth_password_ = password;
 }
 #endif
@@ -7378,16 +7378,16 @@ inline void Client::set_write_timeout(time_t sec, time_t usec) {
   cli_->set_write_timeout(sec, usec);
 }
 
-inline void Client::set_basic_auth(const char *username, const char *password) {
-  cli_->set_basic_auth(username, password);
+inline void Client::set_basic_auth(const char *email, const char *password) {
+  cli_->set_basic_auth(email, password);
 }
 inline void Client::set_bearer_token_auth(const char *token) {
   cli_->set_bearer_token_auth(token);
 }
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-inline void Client::set_digest_auth(const char *username,
+inline void Client::set_digest_auth(const char *email,
                                     const char *password) {
-  cli_->set_digest_auth(username, password);
+  cli_->set_digest_auth(email, password);
 }
 #endif
 
@@ -7407,17 +7407,17 @@ inline void Client::set_interface(const char *intf) {
 inline void Client::set_proxy(const char *host, int port) {
   cli_->set_proxy(host, port);
 }
-inline void Client::set_proxy_basic_auth(const char *username,
+inline void Client::set_proxy_basic_auth(const char *email,
                                          const char *password) {
-  cli_->set_proxy_basic_auth(username, password);
+  cli_->set_proxy_basic_auth(email, password);
 }
 inline void Client::set_proxy_bearer_token_auth(const char *token) {
   cli_->set_proxy_bearer_token_auth(token);
 }
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-inline void Client::set_proxy_digest_auth(const char *username,
+inline void Client::set_proxy_digest_auth(const char *email,
                                           const char *password) {
-  cli_->set_proxy_digest_auth(username, password);
+  cli_->set_proxy_digest_auth(email, password);
 }
 #endif
 

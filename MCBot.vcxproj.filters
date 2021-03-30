@@ -21,9 +21,15 @@
     <ClCompile Include="JsonObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MCBot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="JsonObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MCBot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
