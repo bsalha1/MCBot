@@ -12,6 +12,7 @@
 #include "lib/httplib.h"
 #include "MCBot.h"
 #include "JsonObject.h"
+#include "DaftHash.h"
 
 using namespace mcbot;
 
@@ -27,18 +28,35 @@ int main(int argc, char* argv[])
     char* password = argv[2];
     mcbot::MCBot bot(email, password);
 
-    // Log in to Mojang authservers
-    // - To resolve our email to a username
-    // - To obtain an access token
-    std::cout << "Logging into Mojang authservers with " << email << "..." << std::endl;
-    bot.mojang_login();
+    // Log in to Mojang auth servers
+    // - To resolve our email to a username and a UUID
+    // - To obtain an access 
+    std::cout << "Logging in to Mojang authservers..." << std::endl;
+    if (bot.login_mojang() < 0)
+    {
+        std::cerr << "Failed to log in to Mojang authservers!" << std::endl;
+        return -1;
+    }
+    
+    std::cout << "Verifying access token..." << std::endl;
+    if (bot.verify_access_token() < 0)
+    {
+        std::cerr << "Invalid access token!" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Verifying session..." << std::endl;
+    if (bot.verify_session() < 0)
+    {
+        std::cerr << "Invalid session!" << std::endl;
+        return -1;
+    }
 
     // Connect to server
     // - So we can send it packets
     char* hostname = (char*) "cosmicpvp.com";   
     char* port = (char*) "25565";
-    int sock = bot.connect_server(hostname, port);
-    if (sock < 0)
+    if (bot.connect_server(hostname, port) < 0)
     {
         std::cout << "Failed to join server" << std::endl;
         return -1;

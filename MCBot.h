@@ -20,11 +20,14 @@ namespace mcbot
 	class MCBot
 	{
 	private:
-		const std::string auth_url = "https://authserver.mojang.com";
 		std::string email;
 		std::string password;
 		std::string username;
 		std::string access_token;
+		std::string uuid;
+		std::string server_id;
+		std::string shared_secret;
+		std::string public_key;
 		SOCKET sock;
 
 		// Packet parsers
@@ -40,13 +43,18 @@ namespace mcbot
 	public:
 		MCBot(std::string email, std::string password);
 
-		int mojang_login();
+		// HTTP Mojang requests
+		int login_mojang();
+		int verify_access_token();
+		int verify_session();
 
+		// Server outgoing requests
 		int connect_server(char* hostname, char* port);
-
 		void send_handshake(char* hostname, unsigned short port);
 		void send_login_start();
+		void send_encryption_request();
 
+		// Server incoming requests
 		void recv_packet();
 		void recv_encryption_request(char* packet, size_t size_read, size_t* offset);
 	};

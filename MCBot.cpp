@@ -1,5 +1,6 @@
 #include "MCBot.h"
 #include "JsonObject.h"
+#include "DaftHash.h"
 
 
 static void print_array(char* arr, size_t length)
@@ -19,6 +20,27 @@ static void print_winsock_error()
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPWSTR)&s, 0, NULL);
     printf("%S\n", s);
+}
+
+static std::string get_random_hex_bytes(std::size_t num_bytes)
+{
+    std::string out;
+
+    for (std::size_t i = 0; i < num_bytes; i++)
+    {
+        int val = rand() % 0xFF;
+
+        // We don't want to deal with single digit hex because that will only count as half a byte in the sequence
+        if (val < 16)
+        {
+            val += 16;
+        }
+
+        char hex_string[33];
+        _itoa_s(val, hex_string, 16);
+        out.append(hex_string);
+    }
+    return out;
 }
 
 int mcbot::MCBot::read_var_int(char* bytes, size_t* offset)
@@ -141,33 +163,84 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
     std::cout << "WinSock DLL Started" << std::endl;
 }
 
-int mcbot::MCBot::mojang_login()
+int mcbot::MCBot::login_mojang()
 {
-    char url[] = "https://authserver.mojang.com";
-
     // Payload //
-    char content_format[] = "{\"agent\": {"
-        "\"name\": \"Minecraft\","
-        "\"version\" : 1 },"
-        "\"username\" : \"%s\","
-        "\"password\" : \"%s\"}\r\n";
+    char content_format[] = 
+        "{"
+            "\"agent\": {"
+            "\"name\": \"Minecraft\","
+            "\"version\" : 1 },"
+            "\"username\" : \"%s\","
+            "\"password\" : \"%s\""
+        "}\r\n";
     char content[256] = { 0 };
     sprintf_s(content, content_format, this->email.c_str(), this->password.c_str());
 
     // Send Payload //
-    httplib::Client cli(mcbot::MCBot::auth_url.c_str());
-    httplib::Result res = cli.Post("/authenticate", content, "application/json");
-    std::string response = res->body;
+    httplib::Client cli("https://authserver.mojang.com");
+    auto response = cli.Post("/authenticate", content, "application/json");
 
-    std::size_t user_index = response.rfind("\"user\":") + strlen("\"user\":");
+    // Read Response //
+    auto response_json = mcbot::JsonObject::serialize(response->body);
+    this->access_token = response_json.get_string("accessToken");
+    
+    auto selected_profile = response_json.get_object("selectedProfile");
+    this->username = selected_profile.get_string("name");
+    this->uuid = selected_profile.get_string("id");
 
-    auto json = mcbot::JsonObject::serialize(response);
-    this->access_token = json.get_string("accessToken");
-    this->username = json.get_object("selectedProfile").get_string("name");
     std::cout << "Logged into Mojang account:" << std::endl
         << "\tAccount resolved to " << this->username << std::endl;
 
     return 0;
+}
+
+int mcbot::MCBot::verify_access_token()
+{
+    // Payload //
+    char content_format[] = 
+        "{"
+            "\"accessToken\" : \"%s\""
+        "}\r\n";
+    char content[1024] = { 0 };
+    sprintf_s(content, content_format, this->access_token.c_str());
+
+    // Send Payload //
+    httplib::Client cli("https://authserver.mojang.com");
+    auto response = cli.Post("/validate", content, "application/json");
+
+    // If response is 204 then the access token is valid
+    return response->status == 204 ? 0 : -1;
+}
+
+int mcbot::MCBot::verify_session()
+{
+    this->shared_secret = get_random_hex_bytes(16);
+
+    mcbot::daft_hash_impl hasher;
+    hasher.update((void*)this->server_id.c_str(), this->server_id.length());
+    hasher.update((void*)this->shared_secret.c_str(), this->shared_secret.length());
+    hasher.update((void*)this->public_key.c_str(), this->public_key.length());
+
+    std::string hash = hasher.finalise();
+    
+
+    // Payload //
+    char content_format[] =
+        "{"
+            "\"accessToken\" : \"%s\","
+            "\"selectedProfile\": \"%s\","
+            "\"serverId\": \"%s\""
+        "}\r\n";
+    char content[1024] = { 0 };
+    sprintf_s(content, content_format, this->access_token.c_str(), this->uuid.c_str(), hash.c_str());
+
+    // Send Payload //
+    httplib::Client cli("https://sessionserver.mojang.com");
+    auto response = cli.Post("/session/minecraft/join", content, "application/json");
+
+    // If response is 204 then session is valid
+    return response->status == 204 ? 0 : -1;
 }
 
 int mcbot::MCBot::connect_server(char* hostname, char* port)
@@ -246,6 +319,11 @@ void mcbot::MCBot::send_login_start()
     }
 }
 
+void mcbot::MCBot::send_encryption_request()
+{
+
+}
+
 void mcbot::MCBot::recv_packet()
 {
     char packet[1028] = { 0 };
@@ -279,12 +357,15 @@ void mcbot::MCBot::recv_encryption_request(char* packet, size_t size_read, size_
     char server_id[64] = { 0 };
     read_string_n(server_id, sizeof(server_id), packet, size_read, offset);
     printf("Server ID: %s\n", server_id);
+    this->server_id = server_id;
 
     int public_key_length = read_var_int(packet, offset);
     char* public_key = (char*)malloc(public_key_length);
     read_byte_array(public_key, public_key_length, packet, size_read, offset);
     printf("Public key: ");
     print_array(public_key, public_key_length);
+    this->public_key = std::string(public_key);
+    free(public_key);
 
 
     int verify_token_length = read_var_int(packet, offset);
@@ -292,6 +373,5 @@ void mcbot::MCBot::recv_encryption_request(char* packet, size_t size_read, size_
     read_byte_array(verify_token, verify_token_length, packet, size_read, offset);
     printf("Verify token: ");
     print_array(verify_token, verify_token_length);
-
-    printf("%ld\n", *offset);
+    free(verify_token);
 }

@@ -151,11 +151,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DaftHash.cpp" />
     <ClCompile Include="JsonObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MCBot.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DaftHash.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="MCBot.h" />
   </ItemGroup>
