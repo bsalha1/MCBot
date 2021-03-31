@@ -1,6 +1,7 @@
 #include "MCBot.h"
 #include "JsonObject.h"
 #include "DaftHash.h"
+#include "base64.h"
 
 
 static void print_array(char* arr, size_t length)
@@ -8,6 +9,15 @@ static void print_array(char* arr, size_t length)
     for (size_t i = 0; i < length; i++)
     {
         printf("%d ", (unsigned char)arr[i]);
+    }
+    printf("\n");
+}
+
+static void print_array(unsigned char* arr, size_t length)
+{
+    for (size_t i = 0; i < length; i++)
+    {
+        printf("%d ", arr[i]);
     }
     printf("\n");
 }
@@ -28,13 +38,7 @@ static std::string get_random_hex_bytes(std::size_t num_bytes)
 
     for (std::size_t i = 0; i < num_bytes; i++)
     {
-        int val = rand() % 0xFF;
-
-        // We don't want to deal with single digit hex because that will only count as half a byte in the sequence
-        if (val < 16)
-        {
-            val += 16;
-        }
+        int val = rand() % 0xF;
 
         char hex_string[33];
         _itoa_s(val, hex_string, 16);
@@ -85,6 +89,14 @@ void mcbot::MCBot::read_byte_array(char* bytes, int bytes_length, char* packet, 
     }
 }
 
+void mcbot::MCBot::read_byte_array(unsigned char* bytes, int bytes_length, char* packet, size_t packet_size, size_t* offset)
+{
+    for (int i = 0; i < bytes_length; i++)
+    {
+        bytes[i] = (unsigned char) packet[(*offset)++];
+    }
+}
+
 void mcbot::MCBot::write_var_int(int value, char* packet, size_t packet_size, size_t* offset)
 {
     do
@@ -113,6 +125,14 @@ size_t mcbot::MCBot::get_var_int_size(int value)
         size++;
     } while (value != 0);
     return size;
+}
+
+void mcbot::MCBot::write_byte_array(unsigned char* bytes, int bytes_length, char* packet, size_t packet_size, size_t* offset)
+{
+    for (int i = 0; i < bytes_length; i++)
+    {
+        packet[(*offset)++] = bytes[i];
+    }
 }
 
 void mcbot::MCBot::write_string_n(char* string, char* packet, size_t packet_size, size_t* offset)
@@ -161,6 +181,14 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
         return;
     }
     std::cout << "WinSock DLL Started" << std::endl;
+}
+
+mcbot::MCBot::~MCBot()
+{
+    /*if (this->public_key != nullptr)
+    {
+        free(this->public_key);
+    }*/
 }
 
 int mcbot::MCBot::login_mojang()
@@ -213,14 +241,14 @@ int mcbot::MCBot::verify_access_token()
     return response->status == 204 ? 0 : -1;
 }
 
-int mcbot::MCBot::verify_session()
+int mcbot::MCBot::save_session()
 {
     this->shared_secret = get_random_hex_bytes(16);
 
     mcbot::daft_hash_impl hasher;
     hasher.update((void*)this->server_id.c_str(), this->server_id.length());
     hasher.update((void*)this->shared_secret.c_str(), this->shared_secret.length());
-    hasher.update((void*)this->public_key.c_str(), this->public_key.length());
+    hasher.update((void*)this->public_key, public_key_length);
 
     std::string hash = hasher.finalise();
     
@@ -321,7 +349,89 @@ void mcbot::MCBot::send_login_start()
 
 void mcbot::MCBot::send_encryption_request()
 {
+    // Convert DER to PEM //
+    char pem_format[] = 
+        "-----BEGIN PUBLIC KEY-----"
+        "%s\n"
+        "-----END PUBLIC KEY-----\n";
 
+    char pem_text[1024] = { 0 };
+    int max_encoded_length = Base64encode_len(this->public_key_length);
+    int result = Base64encode(pem_text, (const char*)this->public_key, this->public_key_length);
+
+    std::string temp;
+    int i;
+    for (i = 0; i < max_encoded_length; i++)
+    {
+        if (i % 64 == 0)
+        {
+            temp += '\n';
+        }
+        temp += pem_text[i];
+    }
+
+    int pem_formatted_size = strlen(pem_format) + temp.length() - 2;
+    char* pem_formatted = (char*) malloc(pem_formatted_size);
+    sprintf_s(pem_formatted, pem_formatted_size, pem_format, temp.c_str());
+
+    std::cout << "Server Public Key: " << std::endl 
+        << pem_formatted << std::endl;
+
+
+
+    // Get RSA corresponding to PEM
+    BIO* bio = BIO_new_mem_buf((void*)pem_formatted, -1);
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+    RSA* rsa_public_key = PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
+    if (rsa_public_key == NULL)
+    {
+        printf("ERROR: Could not load PUBLIC KEY! PEM_read_bio_RSA_PUBKEY FAILED: %s\n", ERR_error_string(ERR_get_error(), NULL));
+    }
+    BIO_free(bio);
+    free(pem_formatted);
+
+    std::cout << "Public Key Info: " << std::endl;
+    BIO* keybio = BIO_new(BIO_s_mem());
+    RSA_print(keybio, rsa_public_key, 0);
+    char buffer[1024] = { 0 };
+    std::string res = "";
+    while (BIO_read(keybio, buffer, 1024) > 0)
+    {
+        std::cout << buffer;
+    }
+    BIO_free(keybio);
+
+
+    unsigned char encrypted_shared_secret[128] = { 0 };
+    RSA_public_encrypt(this->shared_secret.length(), (unsigned char*)this->shared_secret.c_str(), encrypted_shared_secret, rsa_public_key, RSA_PKCS1_PADDING);
+    std::cout << "Encrypted shared secret with public key" << std::endl;
+
+    unsigned char encrypted_verify_token[128] = { 0 };
+    RSA_public_encrypt(this->verify_token_length, this->verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
+    std::cout << "Encrypted verify token with public key" << std::endl;
+
+    char packet[1028];
+    size_t offset = 0;
+
+    write_var_int(0x01, packet, sizeof(packet), &offset); // packet id
+
+    write_var_int(128, packet, sizeof(packet), &offset); // shared secret length
+    write_byte_array(encrypted_shared_secret, 128, packet, sizeof(packet), &offset); // shared secret
+
+    write_var_int(128, packet, sizeof(packet), &offset); // verify token length
+    write_byte_array(encrypted_verify_token, 128, packet, sizeof(packet), &offset); // verify token
+
+    write_packet_length(packet, sizeof(packet), &offset);
+
+    if (send(this->sock, packet, offset, 0) <= 0)
+    {
+        std::cout << "Failed to send packet" << std::endl;
+        print_winsock_error();
+    }
+    else
+    {
+        std::cout << "Sent encryption response" << std::endl;
+    }
 }
 
 void mcbot::MCBot::recv_packet()
@@ -354,24 +464,18 @@ void mcbot::MCBot::recv_encryption_request(char* packet, size_t size_read, size_
 {
     std::cout << "\tHandling Encryption Request..." << std::endl;
 
+    // Server ID //
     char server_id[64] = { 0 };
     read_string_n(server_id, sizeof(server_id), packet, size_read, offset);
-    printf("Server ID: %s\n", server_id);
     this->server_id = server_id;
 
-    int public_key_length = read_var_int(packet, offset);
-    char* public_key = (char*)malloc(public_key_length);
-    read_byte_array(public_key, public_key_length, packet, size_read, offset);
-    printf("Public key: ");
-    print_array(public_key, public_key_length);
-    this->public_key = std::string(public_key);
-    free(public_key);
+    // Public Key //
+    this->public_key_length = read_var_int(packet, offset);
+    this->public_key = (const unsigned char*)calloc(public_key_length, sizeof(char));
+    read_byte_array((unsigned char *)this->public_key, public_key_length, packet, size_read, offset);
 
-
-    int verify_token_length = read_var_int(packet, offset);
-    char* verify_token = (char*)malloc(verify_token_length);
-    read_byte_array(verify_token, verify_token_length, packet, size_read, offset);
-    printf("Verify token: ");
-    print_array(verify_token, verify_token_length);
-    free(verify_token);
+    // Verify Token //
+    this->verify_token_length = read_var_int(packet, offset);
+    this->verify_token = (const unsigned char*)calloc(verify_token_length, sizeof(char));
+    read_byte_array((unsigned char*)this->verify_token, verify_token_length, packet, size_read, offset);
 }

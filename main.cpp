@@ -6,9 +6,6 @@
 #include <sstream>
 #include <random>
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "lib/httplib.h"
 #include "MCBot.h"
 #include "JsonObject.h"
@@ -30,14 +27,14 @@ int main(int argc, char* argv[])
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID
-    // - To obtain an access 
+    // - To obtain an access token
     std::cout << "Logging in to Mojang authservers..." << std::endl;
     if (bot.login_mojang() < 0)
     {
         std::cerr << "Failed to log in to Mojang authservers!" << std::endl;
         return -1;
     }
-    
+
     std::cout << "Verifying access token..." << std::endl;
     if (bot.verify_access_token() < 0)
     {
@@ -45,16 +42,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    std::cout << "Verifying session..." << std::endl;
-    if (bot.verify_session() < 0)
-    {
-        std::cerr << "Invalid session!" << std::endl;
-        return -1;
-    }
-
     // Connect to server
     // - So we can send it packets
-    char* hostname = (char*) "cosmicpvp.com";   
+    char* hostname = (char*) "localhost";   
     char* port = (char*) "25565";
     if (bot.connect_server(hostname, port) < 0)
     {
@@ -65,7 +55,20 @@ int main(int argc, char* argv[])
     bot.send_handshake(hostname, atoi(port));
     bot.send_login_start();
 
-    Sleep(100);
+    Sleep(500);
+    bot.recv_packet();
+
+    std::cout << "Saving session..." << std::endl;
+    if (bot.save_session() < 0)
+    {
+        std::cerr << "Invalid session!" << std::endl;
+        return -1;
+    }
+
+    bot.send_encryption_request();
+
+
+    Sleep(500);
     bot.recv_packet();
 
     
