@@ -952,8 +952,8 @@ public:
   Result Options(const char *path);
   Result Options(const char *path, const Headers &headers);
 
-  bool send(Request &req, Response &res, Error &error);
-  Result send(const Request &req);
+  bool send_packet(Request &req, Response &res, Error &error);
+  Result send_packet(const Request &req);
 
   size_t is_socket_open() const;
 
@@ -1254,8 +1254,8 @@ public:
   Result Options(const char *path);
   Result Options(const char *path, const Headers &headers);
 
-  bool send(Request &req, Response &res, Error &error);
-  Result send(const Request &req);
+  bool send_packet(Request &req, Response &res, Error &error);
+  Result send_packet(const Request &req);
 
   size_t is_socket_open() const;
 
@@ -3141,7 +3141,7 @@ inline bool redirect(T &cli, Request &req, Response &res,
 
   Response new_res;
 
-  auto ret = cli.send(new_req, new_res, error);
+  auto ret = cli.send_packet(new_req, new_res, error);
   if (ret) {
     req = new_req;
     res = new_res;
@@ -5281,7 +5281,7 @@ inline bool ClientImpl::read_response_line(Stream &strm, const Request &req,
   return true;
 }
 
-inline bool ClientImpl::send(Request &req, Response &res, Error &error) {
+inline bool ClientImpl::send_packet(Request &req, Response &res, Error &error) {
   std::lock_guard<std::recursive_mutex> request_mutex_guard(request_mutex_);
 
   {
@@ -5369,7 +5369,7 @@ inline bool ClientImpl::send(Request &req, Response &res, Error &error) {
   return ret;
 }
 
-inline Result ClientImpl::send(const Request &req) {
+inline Result ClientImpl::send_packet(const Request &req) {
   auto req2 = req;
   return send_(std::move(req2));
 }
@@ -5377,7 +5377,7 @@ inline Result ClientImpl::send(const Request &req) {
 inline Result ClientImpl::send_(Request &&req) {
   auto res = detail::make_unique<Response>();
   auto error = Error::Success;
-  auto ret = send(req, *res, error);
+  auto ret = send_packet(req, *res, error);
   return Result{ret ? std::move(res) : nullptr, error, std::move(req.headers)};
 }
 
@@ -5432,7 +5432,7 @@ inline bool ClientImpl::handle_request(Stream &strm, Request &req,
 
         Response new_res;
 
-        ret = send(new_req, new_res, error);
+        ret = send_packet(new_req, new_res, error);
         if (ret) { res = new_res; }
       }
     }
@@ -5701,7 +5701,7 @@ inline std::unique_ptr<Response> ClientImpl::send_with_content_provider(
   }
 
   auto res = detail::make_unique<Response>();
-  return send(req, *res, error) ? std::move(res) : nullptr;
+  return send_packet(req, *res, error) ? std::move(res) : nullptr;
 }
 
 inline Result ClientImpl::send_with_content_provider(
@@ -7349,11 +7349,11 @@ inline Result Client::Options(const char *path, const Headers &headers) {
   return cli_->Options(path, headers);
 }
 
-inline bool Client::send(Request &req, Response &res, Error &error) {
-  return cli_->send(req, res, error);
+inline bool Client::send_packet(Request &req, Response &res, Error &error) {
+  return cli_->send_packet(req, res, error);
 }
 
-inline Result Client::send(const Request &req) { return cli_->send(req); }
+inline Result Client::send_packet(const Request &req) { return cli_->send_packet(req); }
 
 inline size_t Client::is_socket_open() const { return cli_->is_socket_open(); }
 

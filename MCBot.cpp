@@ -4,6 +4,9 @@
 #include "base64.h"
 
 
+
+
+
 static void print_array(char* arr, size_t length)
 {
     for (size_t i = 0; i < length; i++)
@@ -47,57 +50,90 @@ static std::string get_random_hex_bytes(std::size_t num_bytes)
     return out;
 }
 
-int mcbot::MCBot::read_var_int(char* bytes, size_t* offset)
+int mcbot::MCBot::read_var_int(uint8_t* bytes, size_t &offset)
 {
     int num_read = 0;
     int result = 0;
     char read;
     int i = 0;
     do {
-        read = bytes[(*offset) + num_read];
+        read = bytes[offset + num_read];
         int value = (read & 0b01111111);
         result |= (value << (7 * num_read));
 
         num_read++;
         if (num_read > 5)
         {
-            *offset += num_read;
+            offset += num_read;
             fprintf(stderr, "VarInt out of bounds");
             return -1;
         }
     } while ((read & 0b10000000) != 0);
 
-    *offset += num_read;
+    offset += num_read;
     return result;
 }
 
-int mcbot::MCBot::read_string_n(char* string, size_t string_length, char* packet, size_t packet_size, size_t* offset)
+int mcbot::MCBot::read_int(uint8_t* bytes, size_t& offset)
+{
+    uint8_t byte4 = bytes[offset++];
+    uint8_t byte3 = bytes[offset++];
+    uint8_t byte2 = bytes[offset++];
+    uint8_t byte1 = bytes[offset++];
+
+    int result = byte4 << 12 | byte3 << 8 | byte2 << 4 | byte1 << 0;
+    return result;
+}
+
+unsigned short mcbot::MCBot::read_ushort(uint8_t* bytes, size_t& offset)
+{
+    uint8_t byte2 = bytes[offset++];
+    uint8_t byte1 = bytes[offset++];
+
+    unsigned short result = byte2 << 4 | byte1 << 0;
+    return result;
+}
+
+bool mcbot::MCBot::read_boolean(uint8_t* bytes, size_t& offset)
+{
+    uint8_t value = bytes[offset++];
+    bool result = false;
+    if (value == 1)
+    {
+        result = true;
+    }
+    else if (value == 0)
+    {
+        result = false;
+    }
+    else
+    {
+        std::cerr << "Invalid boolean value read: " << value << std::endl;
+    }
+
+    return result;
+}
+
+int mcbot::MCBot::read_string_n(char* string, size_t string_length, uint8_t* packet, size_t packet_size, size_t &offset)
 {
     int n = read_var_int(packet, offset);
     for (size_t i = 0; i < n && i < string_length; i++)
     {
-        string[i] = packet[(*offset)++];
+        string[i] = packet[offset++];
     }
+    string[n] = 0;
     return n;
 }
 
-void mcbot::MCBot::read_byte_array(char* bytes, int bytes_length, char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::read_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t &offset)
 {
     for (int i = 0; i < bytes_length; i++)
     {
-        bytes[i] = packet[(*offset)++];
+        bytes[i] = packet[offset++];
     }
 }
 
-void mcbot::MCBot::read_byte_array(unsigned char* bytes, int bytes_length, char* packet, size_t packet_size, size_t* offset)
-{
-    for (int i = 0; i < bytes_length; i++)
-    {
-        bytes[i] = (unsigned char) packet[(*offset)++];
-    }
-}
-
-void mcbot::MCBot::write_var_int(int value, char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size, size_t &offset)
 {
     do
     {
@@ -107,8 +143,8 @@ void mcbot::MCBot::write_var_int(int value, char* packet, size_t packet_size, si
         {
             temp |= 0b10000000;
         }
-        packet[(*offset)++] = temp;
-    } while (value != 0 && (*offset) <= packet_size);
+        packet[offset++] = temp;
+    } while (value != 0 && offset <= packet_size);
 }
 
 size_t mcbot::MCBot::get_var_int_size(int value)
@@ -127,34 +163,34 @@ size_t mcbot::MCBot::get_var_int_size(int value)
     return size;
 }
 
-void mcbot::MCBot::write_byte_array(unsigned char* bytes, int bytes_length, char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t &offset)
 {
     for (int i = 0; i < bytes_length; i++)
     {
-        packet[(*offset)++] = bytes[i];
+        packet[offset++] = bytes[i];
     }
 }
 
-void mcbot::MCBot::write_string_n(char* string, char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::write_string_n(char* string, uint8_t* packet, size_t packet_size, size_t &offset)
 {
     size_t string_length = strlen(string);
     write_var_int(string_length, packet, packet_size, offset);
 
     for (int i = 0; i < string_length; i++)
     {
-        packet[(*offset)++] = string[i];
+        packet[offset++] = string[i];
     }
 }
 
-void mcbot::MCBot::write_ushort(unsigned short num, char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t &offset)
 {
-    packet[(*offset)++] = num >> 8;
-    packet[(*offset)++] = num & 0xFF;
+    packet[offset++] = num >> 8;
+    packet[offset++] = num & 0xFF;
 }
 
-void mcbot::MCBot::write_packet_length(char* packet, size_t packet_size, size_t* offset)
+void mcbot::MCBot::write_packet_length(uint8_t* packet, size_t packet_size, size_t &offset)
 {
-    int length = *offset;
+    int length = offset;
     int packet_length_size = get_var_int_size(length);
 
     for (int i = length - 1; i >= 0; i--)
@@ -162,13 +198,15 @@ void mcbot::MCBot::write_packet_length(char* packet, size_t packet_size, size_t*
         packet[i + packet_length_size] = packet[i];
     }
 
-    *offset += packet_length_size;
+    offset += packet_length_size;
     size_t offset2 = 0;
-    write_var_int(length, packet, sizeof(packet), &offset2);
+    write_var_int(length, packet, sizeof(packet), offset2);
 }
 
 mcbot::MCBot::MCBot(std::string email, std::string password)
 {
+    this->connected = false;
+    this->encryption_enabled = false;
     this->email = email;
     this->password = password;
 
@@ -241,7 +279,7 @@ int mcbot::MCBot::verify_access_token()
     return response->status == 204 ? 0 : -1;
 }
 
-int mcbot::MCBot::save_session()
+int mcbot::MCBot::send_session()
 {
     this->shared_secret = get_random_hex_bytes(16);
 
@@ -280,43 +318,46 @@ int mcbot::MCBot::connect_server(char* hostname, char* port)
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
-    if (getaddrinfo(hostname, port, &hints, &result) < 0)
+    if (getaddrinfo(hostname, port, &hints, &result) < 0 || result == NULL)
     {
         std::cout << "Failed to resolve " << hostname << std::endl;
         print_winsock_error();
         WSACleanup();
         return -1;
     }
+
     char* address_string = inet_ntoa(((struct sockaddr_in*) result->ai_addr)->sin_addr);
     std::cout << "Resolved " << hostname << " to " << address_string << std::endl;
 
     // Connect //
-    this->sock = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    this->sock = mcbot::Socket(socket(result->ai_family, result->ai_socktype, result->ai_protocol));
     std::cout << "Connecting to " << address_string << ":" << port << std::endl;
-    if (connect(this->sock, result->ai_addr, (int)result->ai_addrlen) < 0)
+    if (this->sock.connect_socket(result) < 0)
     {
         print_winsock_error();
         WSACleanup();
         return -1;
     }
+
+    this->connected = true;
     std::cout << "Connected to " << address_string << ":" << port << std::endl;
 
-    return sock;
+    return 0;
 }
 
 void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
 {
-    char packet[1028];
+    uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x00, packet, sizeof(packet), &offset); // packet id
-    write_var_int(47, packet, sizeof(packet), &offset);   // protocol version
-    write_string_n(hostname, packet, sizeof(packet), &offset); // hostname
-    write_ushort(port, packet, sizeof(packet), &offset); // port
-    write_var_int(2, packet, sizeof(packet), &offset);   // next state
-    write_packet_length(packet, sizeof(packet), &offset);
+    write_var_int(0x00, packet, sizeof(packet), offset); // packet id
+    write_var_int(47, packet, sizeof(packet), offset);   // protocol version
+    write_string_n(hostname, packet, sizeof(packet), offset); // hostname
+    write_ushort(port, packet, sizeof(packet), offset); // port
+    write_var_int(2, packet, sizeof(packet), offset);   // next state
+    write_packet_length(packet, sizeof(packet), offset);
 
-    if (send(this->sock, packet, offset, 0) <= 0)
+    if (this->sock.send_pack(packet, offset) <= 0)
     {
         std::cout << "Failed to send packet" << std::endl;
         print_winsock_error();
@@ -329,14 +370,14 @@ void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
 
 void mcbot::MCBot::send_login_start()
 {
-    char packet[1028];
+    uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x00, packet, sizeof(packet), &offset); // packet id
-    write_string_n((char*) this->username.c_str(), packet, sizeof(packet), &offset); // username
-    write_packet_length(packet, sizeof(packet), &offset);
+    write_var_int(0x00, packet, sizeof(packet), offset); // packet id
+    write_string_n((char*) this->username.c_str(), packet, sizeof(packet), offset); // username
+    write_packet_length(packet, sizeof(packet), offset);
 
-    if (send(this->sock, packet, offset, 0) <= 0)
+    if (this->sock.send_pack(packet, offset) <= 0)
     {
         std::cout << "Failed to send packet" << std::endl;
         print_winsock_error();
@@ -347,7 +388,7 @@ void mcbot::MCBot::send_login_start()
     }
 }
 
-void mcbot::MCBot::send_encryption_request()
+void mcbot::MCBot::send_encryption_response()
 {
     // Convert DER to PEM //
     char pem_format[] = 
@@ -374,11 +415,6 @@ void mcbot::MCBot::send_encryption_request()
     char* pem_formatted = (char*) malloc(pem_formatted_size);
     sprintf_s(pem_formatted, pem_formatted_size, pem_format, temp.c_str());
 
-    std::cout << "Server Public Key: " << std::endl 
-        << pem_formatted << std::endl;
-
-
-
     // Get RSA corresponding to PEM
     BIO* bio = BIO_new_mem_buf((void*)pem_formatted, -1);
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
@@ -393,76 +429,242 @@ void mcbot::MCBot::send_encryption_request()
     std::cout << "Public Key Info: " << std::endl;
     BIO* keybio = BIO_new(BIO_s_mem());
     RSA_print(keybio, rsa_public_key, 0);
-    char buffer[1024] = { 0 };
+    char buffer[2048] = { 0 };
     std::string res = "";
-    while (BIO_read(keybio, buffer, 1024) > 0)
+    while (BIO_read(keybio, buffer, 2048) > 0)
     {
         std::cout << buffer;
     }
     BIO_free(keybio);
 
 
-    unsigned char encrypted_shared_secret[128] = { 0 };
-    RSA_public_encrypt(this->shared_secret.length(), (unsigned char*)this->shared_secret.c_str(), encrypted_shared_secret, rsa_public_key, RSA_PKCS1_PADDING);
+    unsigned char encrypted_shared_secret[256] = { 0 };
+    int encrypted_shared_secret_len = RSA_public_encrypt(this->shared_secret.length(), (unsigned char*)this->shared_secret.c_str(), encrypted_shared_secret, rsa_public_key, RSA_PKCS1_PADDING);
     std::cout << "Encrypted shared secret with public key" << std::endl;
 
-    unsigned char encrypted_verify_token[128] = { 0 };
-    RSA_public_encrypt(this->verify_token_length, this->verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
+    unsigned char encrypted_verify_token[256] = { 0 };
+    int encrypted_verify_token_len = RSA_public_encrypt(this->verify_token_length, this->verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
     std::cout << "Encrypted verify token with public key" << std::endl;
 
-    char packet[1028];
+    uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x01, packet, sizeof(packet), &offset); // packet id
+    write_var_int(0x01, packet, sizeof(packet), offset); // packet id
 
-    write_var_int(128, packet, sizeof(packet), &offset); // shared secret length
-    write_byte_array(encrypted_shared_secret, 128, packet, sizeof(packet), &offset); // shared secret
+    write_var_int(encrypted_shared_secret_len, packet, sizeof(packet), offset); // shared secret length
+    write_byte_array(encrypted_shared_secret, encrypted_shared_secret_len, packet, sizeof(packet), offset); // shared secret
 
-    write_var_int(128, packet, sizeof(packet), &offset); // verify token length
-    write_byte_array(encrypted_verify_token, 128, packet, sizeof(packet), &offset); // verify token
+    write_var_int(encrypted_verify_token_len, packet, sizeof(packet), offset); // verify token length
+    write_byte_array(encrypted_verify_token, encrypted_verify_token_len, packet, sizeof(packet), offset); // verify token
 
-    write_packet_length(packet, sizeof(packet), &offset);
+    write_packet_length(packet, sizeof(packet), offset);
 
-    if (send(this->sock, packet, offset, 0) <= 0)
+    if (this->sock.send_pack(packet, offset) <= 0)
     {
         std::cout << "Failed to send packet" << std::endl;
         print_winsock_error();
     }
     else
     {
-        std::cout << "Sent encryption response" << std::endl;
+        this->encryption_enabled = true;
+        this->sock.initialize_encryption((unsigned char*)this->shared_secret.c_str(), (unsigned char*)this->shared_secret.c_str());
+        std::cout << "Sent encryption response - ENCRYPTION ENABLED" << std::endl;
     }
 }
 
-void mcbot::MCBot::recv_packet()
+void mcbot::MCBot::send_message(char* message)
 {
-    char packet[1028] = { 0 };
-    size_t bytes_read = recv(this->sock, packet, 1028, 0);
-    if (bytes_read < 0)
-    {
-        std::cout << "Failed to receive packet" << std::endl;
-        return;
-    }
-    std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
-
+    uint8_t packet[1028];
     size_t offset = 0;
-    int length = read_var_int(packet, &offset);
-    int packet_id = read_var_int(packet, &offset);
-    std::cout << "\tLength: " << length << std::endl << "\tPacket ID: " << packet_id << std::endl;
-    print_array(packet, bytes_read);
+
+    write_var_int(0x01, packet, sizeof(packet), offset); // packet id
+
+    write_string_n(message, packet, sizeof(packet), offset);
+
+    write_packet_length(packet, sizeof(packet), offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        std::cout << "Failed to send packet" << std::endl;
+        print_winsock_error();
+    }
+    else
+    {
+        std::cout << "Sent chat message: " << message << std::endl;
+    }
+}
+
+
+void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int bytes_read, size_t &offset)
+{
     switch (packet_id)
     {
-    case 0x01:
-        this->recv_encryption_request(packet, bytes_read, &offset);
+    case 0x00:
+        this->recv_disconnect(packet, bytes_read, offset);
         break;
+    case 0x01:
+        this->recv_encryption_request(packet, bytes_read, offset);
+        break;
+    case 0x02:
+        this->recv_login_success(packet, bytes_read, offset);
+        break;
+    case 0x03:
+        this->recv_set_compression(packet, bytes_read, offset);
+        break;
+    case 0x26:
+        this->recv_map_chunk_bulk(packet, bytes_read, offset);
+
     default:
         std::cout << "Unhandled packet ID: " << packet_id << std::endl;
     }
 }
 
-void mcbot::MCBot::recv_encryption_request(char* packet, size_t size_read, size_t* offset)
+int mcbot::MCBot::read_next_var_int()
 {
-    std::cout << "\tHandling Encryption Request..." << std::endl;
+    int num_read = 0;
+    int result = 0;
+    char read;
+    int i = 0;
+    do {
+
+        uint8_t packet[2] = { 0 };
+        size_t bytes_read = this->sock.recv_packet(packet, 1);
+        if (bytes_read < 0)
+        {
+            std::cout << "Failed to receive packet" << std::endl;
+            return -1;
+        }
+        read = packet[0];
+
+
+        int value = (read & 0b01111111);
+        result |= (value << (7 * num_read));
+
+        num_read++;
+        if (num_read > 5)
+        {
+            fprintf(stderr, "VarInt out of bounds");
+            return -1;
+        }
+    } while ((read & 0b10000000) != 0);
+    return result;
+}
+
+void mcbot::MCBot::read_next_packet(int length, uint8_t* packet)
+{
+    size_t bytes_read = this->sock.recv_packet(packet, length);
+    if (bytes_read < 0)
+    {
+        std::cerr << "Failed to receive packet" << std::endl;
+        packet = NULL;
+        return;
+    }
+    else if (bytes_read != length)
+    {
+        std::cerr << "Received packet of length " << bytes_read << " vs. " << length << " expected" << std::endl;
+        packet = NULL;
+        return;
+    }
+    std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
+}
+
+void mcbot::MCBot::recv_packet()
+{
+
+    int length = this->read_next_var_int();
+    std::cout << "Length: " << length << std::endl;
+
+    uint8_t* packet = (uint8_t*) calloc(length, sizeof(uint8_t));
+    read_next_packet(length, packet);
+
+    size_t offset = 0;
+    int packet_id = read_var_int(packet, offset);
+    std::cout << "ID: " << packet_id << std::endl;
+
+    handle_recv_packet(packet_id, packet, length, offset);
+
+
+    free(packet);
+    //uint8_t packet[1024] = { 0 };
+    //size_t bytes_read = recv(this->sock, (char*)packet, 1024, 0);
+    //if (bytes_read < 0)
+    //{
+    //    std::cout << "Failed to receive packet" << std::endl;
+    //    return;
+    //}
+    //std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
+
+    //if (this->encryption_enabled)
+    //{
+    //    uint8_t* decrypted_packet = (unsigned char*)calloc(bytes_read, sizeof(unsigned char));
+    //    int out_len = decrypt((unsigned char*)packet, bytes_read, (unsigned char*)this->shared_secret.c_str(), (unsigned char*)this->shared_secret.c_str(), decrypted_packet);
+    //    std::cout << "Decrypted Len: " << out_len << std::endl;
+    //}
+
+    //size_t offset = 0;
+
+
+    //int packet_length = read_var_int(decrypted_packet, offset);
+    //std::cout << "Packet length: " << packet_length << std::endl;
+
+    //int i = 1;
+    //do
+    //{
+    //    std::cout << "--- SERVING PACKET " << i++ << std::endl;
+    //    if (this->encryption_enabled)
+    //    {
+    //        if (this->compression_enabled)
+    //        {
+    //            int uncompressed_length = read_var_int(decrypted_packet, offset);
+
+    //            std::cout << "\tUncompressed Length: " << uncompressed_length << std::endl;
+    //        }
+    //        else
+    //        {
+    //            int packet_id = read_var_int(decrypted_packet, offset);
+
+    //            std::cout << "\tPacket ID: " << packet_id << std::endl;
+    //            handle_recv_packet(packet_id, decrypted_packet, bytes_read, offset);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        int packet_id = read_var_int(packet, offset);
+
+    //        std::cout << "\tLength: " << length << std::endl << "\tPacket ID: " << packet_id << std::endl;
+    //        handle_recv_packet(packet_id, packet, bytes_read, offset);
+    //    }
+
+    //    std::cout << "Ending offset: " << offset << std::endl;
+    //} while (offset < out_len);
+
+    //free(decrypted_packet);
+}
+
+void mcbot::MCBot::recv_disconnect(uint8_t* packet, size_t size_read, size_t& offset)
+{
+    std::cout << "\tHandling PacketLoginOutDisconnect..." << std::endl;
+
+    std::cout << packet << std::endl;
+    
+    this->connected = false;
+    std::cout << "Disconnected" << std::endl;
+
+}
+
+void mcbot::MCBot::recv_set_compression(uint8_t* packet, size_t size_read, size_t& offset)
+{
+    std::cout << "\tHandling PacketLoginOutSetCompression..." << std::endl;
+    this->max_packet_size = read_var_int(packet, offset);
+
+    std::cout << "\tMax Packet Size: " << this->max_packet_size << std::endl;
+    this->compression_enabled = true;
+    std::cout << "--- COMPRESSION ENABLED ---" << std::endl;
+}
+
+void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t size_read, size_t &offset)
+{
+    std::cout << "\tHandling PacketLoginOutEncryptionRequest..." << std::endl;
 
     // Server ID //
     char server_id[64] = { 0 };
@@ -471,11 +673,62 @@ void mcbot::MCBot::recv_encryption_request(char* packet, size_t size_read, size_
 
     // Public Key //
     this->public_key_length = read_var_int(packet, offset);
-    this->public_key = (const unsigned char*)calloc(public_key_length, sizeof(char));
-    read_byte_array((unsigned char *)this->public_key, public_key_length, packet, size_read, offset);
+    this->public_key = (uint8_t*)calloc(public_key_length, sizeof(uint8_t));
+    read_byte_array(this->public_key, public_key_length, packet, size_read, offset);
 
     // Verify Token //
     this->verify_token_length = read_var_int(packet, offset);
-    this->verify_token = (const unsigned char*)calloc(verify_token_length, sizeof(char));
-    read_byte_array((unsigned char*)this->verify_token, verify_token_length, packet, size_read, offset);
+    this->verify_token = (uint8_t*)calloc(verify_token_length, sizeof(uint8_t));
+    read_byte_array(this->verify_token, verify_token_length, packet, size_read, offset);
+
+    // Save Session //
+    // - So Yggdrasil authentication doesn't kick us!
+    std::cout << "Saving session..." << std::endl;
+    if (this->send_session() < 0)
+    {
+        std::cerr << "Invalid session!" << std::endl;
+    }
+    else
+    {
+        this->send_encryption_response();
+    }
 }
+
+void mcbot::MCBot::recv_login_success(uint8_t* packet, size_t size_read, size_t& offset)
+{
+    std::cout << "\tHandling PacketPlayLoginOutSuccess..." << std::endl;
+    char uuid_string[36 + 1] = { 0 };
+    read_string_n(uuid_string, sizeof(uuid_string), packet, size_read, offset);
+
+    char username[16 + 1] = { 0 };
+    read_string_n(username, sizeof(username), packet, size_read, offset);
+
+    std::cout << "\tUUID: " << uuid_string << std::endl;
+    std::cout << "\tUsername: " << username << std::endl;
+}
+
+void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset)
+{
+    std::cout << "\tHandling PacketPlayOutMapChunkBulk..." << std::endl;
+
+    bool sky_light_sent = read_boolean(packet, offset);
+    int chunk_column_count = read_var_int(packet, offset);
+    int x = read_int(packet, offset);
+    int z = read_int(packet, offset);
+    unsigned short primary_bit_mask = read_ushort(packet, offset);
+
+    offset = 106;
+
+    std::cout << "Loading Chunk (" << x << "," << z << ")" << std::endl;
+}
+
+bool mcbot::MCBot::is_connected()
+{
+    return this->connected;
+}
+
+bool mcbot::MCBot::is_encrypted()
+{
+    return this->encryption_enabled;
+}
+

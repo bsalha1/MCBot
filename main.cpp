@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 
     // Connect to server
     // - So we can send it packets
-    char* hostname = (char*) "localhost";   
+    char* hostname = (char*) "casual.universemc.us";   
     char* port = (char*) "25565";
     if (bot.connect_server(hostname, port) < 0)
     {
@@ -55,22 +55,9 @@ int main(int argc, char* argv[])
     bot.send_handshake(hostname, atoi(port));
     bot.send_login_start();
 
-    Sleep(500);
-    bot.recv_packet();
-
-    std::cout << "Saving session..." << std::endl;
-    if (bot.save_session() < 0)
+    while (bot.is_connected())
     {
-        std::cerr << "Invalid session!" << std::endl;
-        return -1;
+        Sleep(100);
+        bot.recv_packet();
     }
-
-    bot.send_encryption_request();
-
-
-    Sleep(500);
-    bot.recv_packet();
-
-    
-
 }
