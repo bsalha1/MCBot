@@ -25,6 +25,9 @@ namespace mcbot
 		EVP_CIPHER_CTX* decrypt_ctx;
 		bool encryption_enabled;
 
+		int max_uncompressed_length;
+		bool compression_enabled;
+
 	public:
 		Socket(SOCKET socket);
 		Socket();
@@ -35,6 +38,9 @@ namespace mcbot
 		void cleanup_encryption();
 		int encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* encrypted_text);
 		int decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* decrypted_text);
+
+		// Compression
+		void initialize_compression(int max_uncompressed_length);
 
 		int recv_packet(uint8_t* packet, int length);
 		int send_pack(uint8_t* packet, int length);

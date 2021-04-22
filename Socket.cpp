@@ -4,12 +4,24 @@ mcbot::Socket::Socket(SOCKET socket)
 {
 	this->socket = socket;
     this->encryption_enabled = false;
+    this->compression_enabled = false;
+    this->encrypt_ctx = NULL;
+    this->decrypt_ctx = NULL;
+    this->iv = NULL;
+    this->key = NULL;
+    this->max_uncompressed_length = -1;
 }
 
 mcbot::Socket::Socket()
 {
     this->socket = -1;
     this->encryption_enabled = false;
+    this->compression_enabled = false;
+    this->encrypt_ctx = NULL;
+    this->decrypt_ctx = NULL;
+    this->iv = NULL;
+    this->key = NULL;
+    this->max_uncompressed_length = -1;
 }
 
 mcbot::Socket::~Socket()
@@ -99,6 +111,11 @@ int mcbot::Socket::decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* 
     return decrypted_len;
 }
 
+void mcbot::Socket::initialize_compression(int max_uncompressed_length)
+{
+    this->max_uncompressed_length = max_uncompressed_length;
+}
+
 int mcbot::Socket::recv_packet(uint8_t* packet, int length)
 {
     if (this->encryption_enabled)
@@ -108,6 +125,11 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length)
         int bytes_read = recv(this->socket, (char*)encrypted_packet, length, 0);
 
         int out_len = decrypt((unsigned char*)encrypted_packet, length, packet);
+
+        if (this->compression_enabled)
+        {
+
+        }
 
         free(encrypted_packet);
         return out_len;

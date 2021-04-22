@@ -3,9 +3,16 @@
 #include "DaftHash.h"
 #include "base64.h"
 
-
-
-
+static float unpack_float(uint8_t* buf)
+{
+    uint32_t temp = 0;
+    temp = 
+        (buf[0] << 24) |
+        (buf[1] << 16) |
+        (buf[2] << 8) |
+        (buf[3] << 0);
+    return *((float*)&temp);
+}
 
 static void print_array(char* arr, size_t length)
 {
@@ -74,29 +81,45 @@ int mcbot::MCBot::read_var_int(uint8_t* bytes, size_t &offset)
     return result;
 }
 
-int mcbot::MCBot::read_int(uint8_t* bytes, size_t& offset)
+int mcbot::MCBot::read_int(uint8_t* packet, size_t& offset)
 {
-    uint8_t byte4 = bytes[offset++];
-    uint8_t byte3 = bytes[offset++];
-    uint8_t byte2 = bytes[offset++];
-    uint8_t byte1 = bytes[offset++];
+    uint8_t byte4 = packet[offset++];
+    uint8_t byte3 = packet[offset++];
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
 
-    int result = byte4 << 12 | byte3 << 8 | byte2 << 4 | byte1 << 0;
+    int result = byte4 << 24 | byte3 << 16 | byte2 << 8 | byte1 << 0;
     return result;
 }
 
-unsigned short mcbot::MCBot::read_ushort(uint8_t* bytes, size_t& offset)
+uint16_t mcbot::MCBot::read_ushort(uint8_t* packet, size_t& offset)
 {
-    uint8_t byte2 = bytes[offset++];
-    uint8_t byte1 = bytes[offset++];
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
 
-    unsigned short result = byte2 << 4 | byte1 << 0;
+    unsigned short result = byte2 << 8 | byte1 << 0;
     return result;
 }
 
-bool mcbot::MCBot::read_boolean(uint8_t* bytes, size_t& offset)
+int8_t mcbot::MCBot::read_byte(uint8_t* packet, size_t& offset)
 {
-    uint8_t value = bytes[offset++];
+    return packet[offset++];
+}
+
+uint8_t mcbot::MCBot::read_ubyte(uint8_t* packet, size_t& offset)
+{
+    return packet[offset++];
+}
+
+float mcbot::MCBot::read_float(uint8_t* packet, size_t& offset)
+{
+    uint32_t bytes = read_int(packet, offset);
+    return *((float*)&bytes);
+}
+
+bool mcbot::MCBot::read_boolean(uint8_t* packet, size_t& offset)
+{
+    uint8_t value = packet[offset++];
     bool result = false;
     if (value == 1)
     {
@@ -114,24 +137,131 @@ bool mcbot::MCBot::read_boolean(uint8_t* bytes, size_t& offset)
     return result;
 }
 
-int mcbot::MCBot::read_string_n(char* string, size_t string_length, uint8_t* packet, size_t packet_size, size_t &offset)
+std::string mcbot::MCBot::read_string(uint8_t* packet, size_t &offset)
 {
     int n = read_var_int(packet, offset);
-    for (size_t i = 0; i < n && i < string_length; i++)
+    std::string string = "";
+    for (size_t i = 0; i < n; i++)
     {
-        string[i] = packet[offset++];
+        string += packet[offset++];
     }
-    string[n] = 0;
-    return n;
+    return string;
 }
 
-void mcbot::MCBot::read_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::read_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t &offset)
 {
     for (int i = 0; i < bytes_length; i++)
     {
         bytes[i] = packet[offset++];
     }
 }
+
+
+std::list<std::string> mcbot::MCBot::read_string_array(int string_length, uint8_t* packet, size_t& offset)
+{
+    std::list<std::string> strings;
+
+    for (int i = 0; i < string_length; i++)
+    {
+        strings.push_back(read_string(packet, offset));
+    }
+
+    return strings;
+}
+
+std::list<mcbot::Statistic> mcbot::MCBot::read_statistic_array(int statistics_length, uint8_t* packet, size_t& offset)
+{
+    std::list<mcbot::Statistic> statistics;
+
+    for (int i = 0; i < statistics_length; i++)
+    {
+        std::string name = read_string(packet, offset);
+        int value = read_var_int(packet, offset);
+        statistics.push_back(mcbot::Statistic(name, value));
+    }
+
+    return statistics;
+}
+
+mcbot::Location mcbot::MCBot::read_location(uint8_t* packet, size_t& offset)
+{
+    // Parse X Coordinate (26 bit signed integer)
+    uint8_t byte4 = packet[offset++];
+    uint8_t byte3 = packet[offset++];
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset] & 0xC0; // xx00 0000
+
+    uint32_t x_bits = ((byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1 << 0)) >> 6;
+    int32_t x = x_bits & (1 << 25) ? x_bits - (0x3FFFFFF + 1) : x_bits;
+
+    // Parse Y Coordinate (12 bit signed integer)
+    byte2 = packet[offset++] & 0x3F;
+    byte1 = packet[offset] & 0xFC;
+
+    uint16_t y_bits = ((byte2 << 8) | (byte1 << 0)) >> 2;
+    int16_t y = y_bits & (1 << 11) ? y_bits - (0xFFF + 1) : y_bits;
+
+    // Parse Z Coordinate (26 bit signed integer)
+    byte4 = packet[offset++] & 0x03;
+    byte3 = packet[offset++];
+    byte2 = packet[offset++];
+    byte1 = packet[offset++];
+
+    uint32_t z_bits = (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1 << 0);
+    int32_t z = z_bits & (1 << 25) ? z_bits - (0x3FFFFFF + 1) : z_bits;
+
+    return mcbot::Location(x, y, z);
+}
+
+int mcbot::MCBot::read_next_var_int()
+{
+    int num_read = 0;
+    int result = 0;
+    char read;
+    int i = 0;
+    do {
+
+        uint8_t packet[2] = { 0 };
+        size_t bytes_read = this->sock.recv_packet(packet, 1);
+        if (bytes_read < 0)
+        {
+            std::cout << "Failed to receive packet" << std::endl;
+            return -1;
+        }
+        read = packet[0];
+
+
+        int value = (read & 0b01111111);
+        result |= (value << (7 * num_read));
+
+        num_read++;
+        if (num_read > 5)
+        {
+            fprintf(stderr, "VarInt out of bounds");
+            return -1;
+        }
+    } while ((read & 0b10000000) != 0);
+    return result;
+}
+
+void mcbot::MCBot::read_next_packet(int length, uint8_t* packet)
+{
+    size_t bytes_read = this->sock.recv_packet(packet, length);
+    if (bytes_read < 0)
+    {
+        std::cerr << "Failed to receive packet" << std::endl;
+        packet = NULL;
+        return;
+    }
+    else if (bytes_read != length)
+    {
+        std::cerr << "Received packet of length " << bytes_read << " vs. " << length << " expected" << std::endl;
+        packet = NULL;
+        return;
+    }
+    std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
+}
+
 
 void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size, size_t &offset)
 {
@@ -207,6 +337,7 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
 {
     this->connected = false;
     this->encryption_enabled = false;
+    this->compression_enabled = false;
     this->email = email;
     this->password = password;
 
@@ -347,6 +478,9 @@ int mcbot::MCBot::connect_server(char* hostname, char* port)
 
 void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
 {
+    std::cout << "Sending PacketHandshakingIn..." << std::endl;
+    this->state = mcbot::State::HANDSHAKE;
+
     uint8_t packet[1028];
     size_t offset = 0;
 
@@ -362,14 +496,13 @@ void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
         std::cout << "Failed to send packet" << std::endl;
         print_winsock_error();
     }
-    else
-    {
-        std::cout << "Sent handshake" << std::endl;
-    }
 }
 
 void mcbot::MCBot::send_login_start()
 {
+    std::cout << "Sending PacketLoginInStart..." << std::endl;
+    this->state = mcbot::State::LOGIN;
+
     uint8_t packet[1028];
     size_t offset = 0;
 
@@ -381,10 +514,6 @@ void mcbot::MCBot::send_login_start()
     {
         std::cout << "Failed to send packet" << std::endl;
         print_winsock_error();
-    }
-    else
-    {
-        std::cout << "Sent login start" << std::endl;
     }
 }
 
@@ -495,82 +624,80 @@ void mcbot::MCBot::send_message(char* message)
 }
 
 
-void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int bytes_read, size_t &offset)
+void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length, size_t &offset)
 {
-    switch (packet_id)
+    if (this->state == mcbot::State::HANDSHAKE)
     {
-    case 0x00:
-        this->recv_disconnect(packet, bytes_read, offset);
-        break;
-    case 0x01:
-        this->recv_encryption_request(packet, bytes_read, offset);
-        break;
-    case 0x02:
-        this->recv_login_success(packet, bytes_read, offset);
-        break;
-    case 0x03:
-        this->recv_set_compression(packet, bytes_read, offset);
-        break;
-    case 0x26:
-        this->recv_map_chunk_bulk(packet, bytes_read, offset);
 
-    default:
-        std::cout << "Unhandled packet ID: " << packet_id << std::endl;
     }
-}
+    else if (this->state == mcbot::State::STATUS)
+    {
 
-int mcbot::MCBot::read_next_var_int()
-{
-    int num_read = 0;
-    int result = 0;
-    char read;
-    int i = 0;
-    do {
-
-        uint8_t packet[2] = { 0 };
-        size_t bytes_read = this->sock.recv_packet(packet, 1);
-        if (bytes_read < 0)
+    }
+    else if (this->state == mcbot::State::LOGIN)
+    {
+        switch (packet_id)
         {
-            std::cout << "Failed to receive packet" << std::endl;
-            return -1;
+            case 0x00:
+                this->recv_disconnect(packet, length, offset);
+                break;
+            case 0x01:
+                this->recv_encryption_request(packet, length, offset);
+                break;
+            case 0x02:
+                this->recv_login_success(packet, length, offset);
+                break;
+            case 0x03:
+                this->recv_set_compression(packet, length, offset);
+                break;
+            default:
+                std::cerr << "UNHANDLED " << this->state << " PACKET ID: " << packet_id << std::endl;
         }
-        read = packet[0];
-
-
-        int value = (read & 0b01111111);
-        result |= (value << (7 * num_read));
-
-        num_read++;
-        if (num_read > 5)
+    }
+    else if (this->state == mcbot::State::PLAY)
+    {
+        switch (packet_id)
         {
-            fprintf(stderr, "VarInt out of bounds");
-            return -1;
+            case 0x01:
+                this->recv_join_server(packet, length, offset);
+                break;
+            case 0x05:
+                this->recv_spawn_position(packet, length, offset);
+                break;
+            case 0x09:
+                this->recv_held_item_slot(packet, length, offset);
+                break;
+            case 0x26:
+                this->recv_map_chunk_bulk(packet, length, offset);
+                break;
+            case 0x37:
+                this->recv_statistics(packet, length, offset);
+                break;
+            case 0x39:
+                this->recv_abilities(packet, length, offset);
+                break;
+            case 0x3E:
+                this->recv_scoreboard_team(packet, length, offset);
+                break;
+            case 0x3F:
+                this->recv_plugin_message(packet, length, offset);
+                break;
+            case 0x41:
+                this->recv_server_difficulty(packet, length, offset);
+                break;
+            default:
+                std::cerr << "UNHANDLED " << this->state << " PACKET ID: " << packet_id << std::endl;
         }
-    } while ((read & 0b10000000) != 0);
-    return result;
+    }
+    else
+    {
+        std::cerr << "UNKNOWN STATE: " << this->state << std::endl;
+    }
 }
 
-void mcbot::MCBot::read_next_packet(int length, uint8_t* packet)
-{
-    size_t bytes_read = this->sock.recv_packet(packet, length);
-    if (bytes_read < 0)
-    {
-        std::cerr << "Failed to receive packet" << std::endl;
-        packet = NULL;
-        return;
-    }
-    else if (bytes_read != length)
-    {
-        std::cerr << "Received packet of length " << bytes_read << " vs. " << length << " expected" << std::endl;
-        packet = NULL;
-        return;
-    }
-    std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
-}
 
 void mcbot::MCBot::recv_packet()
 {
-
     int length = this->read_next_var_int();
     std::cout << "Length: " << length << std::endl;
 
@@ -578,6 +705,11 @@ void mcbot::MCBot::recv_packet()
     read_next_packet(length, packet);
 
     size_t offset = 0;
+    if (this->compression_enabled)
+    {
+        int uncompressed_length = read_var_int(packet, offset);
+        std::cout << "Uncompressed Length: " << uncompressed_length << std::endl;
+    }
     int packet_id = read_var_int(packet, offset);
     std::cout << "ID: " << packet_id << std::endl;
 
@@ -585,101 +717,46 @@ void mcbot::MCBot::recv_packet()
 
 
     free(packet);
-    //uint8_t packet[1024] = { 0 };
-    //size_t bytes_read = recv(this->sock, (char*)packet, 1024, 0);
-    //if (bytes_read < 0)
-    //{
-    //    std::cout << "Failed to receive packet" << std::endl;
-    //    return;
-    //}
-    //std::cout << "Received Packet: " << bytes_read << "bytes" << std::endl;
-
-    //if (this->encryption_enabled)
-    //{
-    //    uint8_t* decrypted_packet = (unsigned char*)calloc(bytes_read, sizeof(unsigned char));
-    //    int out_len = decrypt((unsigned char*)packet, bytes_read, (unsigned char*)this->shared_secret.c_str(), (unsigned char*)this->shared_secret.c_str(), decrypted_packet);
-    //    std::cout << "Decrypted Len: " << out_len << std::endl;
-    //}
-
-    //size_t offset = 0;
-
-
-    //int packet_length = read_var_int(decrypted_packet, offset);
-    //std::cout << "Packet length: " << packet_length << std::endl;
-
-    //int i = 1;
-    //do
-    //{
-    //    std::cout << "--- SERVING PACKET " << i++ << std::endl;
-    //    if (this->encryption_enabled)
-    //    {
-    //        if (this->compression_enabled)
-    //        {
-    //            int uncompressed_length = read_var_int(decrypted_packet, offset);
-
-    //            std::cout << "\tUncompressed Length: " << uncompressed_length << std::endl;
-    //        }
-    //        else
-    //        {
-    //            int packet_id = read_var_int(decrypted_packet, offset);
-
-    //            std::cout << "\tPacket ID: " << packet_id << std::endl;
-    //            handle_recv_packet(packet_id, decrypted_packet, bytes_read, offset);
-    //        }
-    //    }
-    //    else
-    //    {
-    //        int packet_id = read_var_int(packet, offset);
-
-    //        std::cout << "\tLength: " << length << std::endl << "\tPacket ID: " << packet_id << std::endl;
-    //        handle_recv_packet(packet_id, packet, bytes_read, offset);
-    //    }
-
-    //    std::cout << "Ending offset: " << offset << std::endl;
-    //} while (offset < out_len);
-
-    //free(decrypted_packet);
 }
 
-void mcbot::MCBot::recv_disconnect(uint8_t* packet, size_t size_read, size_t& offset)
+void mcbot::MCBot::recv_disconnect(uint8_t* packet, size_t length, size_t& offset)
 {
-    std::cout << "\tHandling PacketLoginOutDisconnect..." << std::endl;
+    std::cout << "--- Handling PacketLoginOutDisconnect..." << std::endl;
 
     std::cout << packet << std::endl;
     
     this->connected = false;
-    std::cout << "Disconnected" << std::endl;
+    std::cout << "\tDisconnected" << std::endl;
 
 }
 
-void mcbot::MCBot::recv_set_compression(uint8_t* packet, size_t size_read, size_t& offset)
+void mcbot::MCBot::recv_set_compression(uint8_t* packet, size_t length, size_t& offset)
 {
-    std::cout << "\tHandling PacketLoginOutSetCompression..." << std::endl;
-    this->max_packet_size = read_var_int(packet, offset);
+    std::cout << "--- Handling PacketLoginOutSetCompression..." << std::endl;
+    this->max_uncompressed_length = read_var_int(packet, offset);
 
-    std::cout << "\tMax Packet Size: " << this->max_packet_size << std::endl;
+    std::cout << "\tMax Uncompressed Length: " << this->max_uncompressed_length << std::endl;
     this->compression_enabled = true;
+    this->sock.initialize_compression(this->max_uncompressed_length);
     std::cout << "--- COMPRESSION ENABLED ---" << std::endl;
 }
 
-void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t size_read, size_t &offset)
+void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t length, size_t &offset)
 {
-    std::cout << "\tHandling PacketLoginOutEncryptionRequest..." << std::endl;
+    std::cout << "--- Handling PacketLoginOutEncryptionRequest..." << std::endl;
 
     // Server ID //
-    char server_id[64] = { 0 };
-    read_string_n(server_id, sizeof(server_id), packet, size_read, offset);
-    this->server_id = server_id;
+    this->server_id = read_string(packet, offset);
 
     // Public Key //
     this->public_key_length = read_var_int(packet, offset);
     this->public_key = (uint8_t*)calloc(public_key_length, sizeof(uint8_t));
-    read_byte_array(this->public_key, public_key_length, packet, size_read, offset);
+    read_byte_array(this->public_key, public_key_length, packet, offset);
 
     // Verify Token //
     this->verify_token_length = read_var_int(packet, offset);
     this->verify_token = (uint8_t*)calloc(verify_token_length, sizeof(uint8_t));
-    read_byte_array(this->verify_token, verify_token_length, packet, size_read, offset);
+    read_byte_array(this->verify_token, verify_token_length, packet, offset);
 
     // Save Session //
     // - So Yggdrasil authentication doesn't kick us!
@@ -694,22 +771,60 @@ void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t size_read, si
     }
 }
 
-void mcbot::MCBot::recv_login_success(uint8_t* packet, size_t size_read, size_t& offset)
+void mcbot::MCBot::recv_login_success(uint8_t* packet, size_t length, size_t& offset)
 {
-    std::cout << "\tHandling PacketPlayLoginOutSuccess..." << std::endl;
-    char uuid_string[36 + 1] = { 0 };
-    read_string_n(uuid_string, sizeof(uuid_string), packet, size_read, offset);
+    std::cout << "--- Handling PacketPlayLoginOutSuccess..." << std::endl;
+    this->state = State::PLAY;
 
-    char username[16 + 1] = { 0 };
-    read_string_n(username, sizeof(username), packet, size_read, offset);
-
-    std::cout << "\tUUID: " << uuid_string << std::endl;
-    std::cout << "\tUsername: " << username << std::endl;
+    std::string uuid_string = read_string(packet, offset);
+    std::string username = read_string(packet, offset);
+    
+    std::cout << "\tUUID: " << uuid_string << std::endl
+        << "\tUsername: " << username << std::endl;
 }
 
-void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset)
+void mcbot::MCBot::recv_join_server(uint8_t* packet, size_t length, size_t& offset)
 {
-    std::cout << "\tHandling PacketPlayOutMapChunkBulk..." << std::endl;
+    std::cout << "--- Handling PacketPlayOutJoinServer..." << std::endl;
+
+    int entity_id = read_int(packet, offset);
+    mcbot::Gamemode gamemode = (mcbot::Gamemode) read_ubyte(packet, offset);
+    mcbot::Dimension dimension = (mcbot::Dimension) read_byte(packet, offset);
+    mcbot::Difficulty difficulty = (mcbot::Difficulty) read_ubyte(packet, offset);
+    uint8_t max_players = read_ubyte(packet, offset);
+    std::string level_type = read_string(packet, offset);
+    bool reduced_debug_info = read_boolean(packet, offset);
+
+    std::cout << "\tEntity ID: " << entity_id << std::endl
+        << "\tGamemode: " << gamemode << std::endl
+        << "\tDimension: " << dimension << std::endl
+        << "\tDifficulty: " << difficulty << std::endl
+        << "\tMax Players: " << (int)max_players << std::endl
+        << "\tLevel Type: " << level_type << std::endl
+        << "\tReduced Debug Info: " << reduced_debug_info << std::endl;
+}
+
+void mcbot::MCBot::recv_spawn_position(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutSpawnPosition..." << std::endl;
+
+    mcbot::Location location = read_location(packet, offset);
+
+    std::cout << "\tLocation: " << location << std::endl;
+}
+
+void mcbot::MCBot::recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutHeldItemSLot..." << std::endl;
+
+    uint8_t held_item_slot = read_byte(packet, offset);
+
+    std::cout << "\tHeld Item Slot: " << (int) held_item_slot << std::endl;
+}
+
+void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutMapChunkBulk..." << std::endl;
 
     bool sky_light_sent = read_boolean(packet, offset);
     int chunk_column_count = read_var_int(packet, offset);
@@ -717,9 +832,98 @@ void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t
     int z = read_int(packet, offset);
     unsigned short primary_bit_mask = read_ushort(packet, offset);
 
-    offset = 106;
-
     std::cout << "Loading Chunk (" << x << "," << z << ")" << std::endl;
+}
+
+void mcbot::MCBot::recv_statistics(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutStatistics..." << std::endl;
+    int count = read_var_int(packet, offset);
+    std::list<mcbot::Statistic> statistics = read_statistic_array(count, packet, offset);
+
+    std::cout << "\tStatistics (" << count << "): " << std::endl;
+
+    for (auto statistic : statistics)
+    {
+        std::cout << "\t\t" << statistic << std::endl;
+    }
+}
+
+void mcbot::MCBot::recv_abilities(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutAbilities..." << std::endl;
+    uint8_t flags = read_ubyte(packet, offset);
+    float flying_speed = read_float(packet, offset);
+    float fov_modifier = read_float(packet, offset);
+
+    std::cout << "\tFlags: " << flags << std::endl
+        << "\tFlying Speed: " << flying_speed << std::endl
+        << "\tFOV Modifier: " << fov_modifier << std::endl;
+}
+
+void mcbot::MCBot::recv_scoreboard_team(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutScoreboardTeam..." << std::endl;
+    std::string team_name = read_string(packet, offset);
+    uint8_t mode = read_ubyte(packet, offset);
+
+    std::cout << "\tTeam Name: " << team_name << std::endl
+        << "\tMode: " << (int) mode << std::endl;
+
+    if (mode == 0 || mode == 2)
+    {
+        std::string team_display_name = read_string(packet, offset);
+        std::string team_prefix = read_string(packet, offset);
+        std::string team_suffix = read_string(packet, offset);
+        mcbot::FriendlyFire friendly_fire = (mcbot::FriendlyFire) read_ubyte(packet, offset);
+        std::string nametag_visibility = read_string(packet, offset);
+        uint8_t color = read_ubyte(packet, offset);
+
+        std::cout << "\tTeam Display Name: " << team_display_name << std::endl
+            << "\tTeam Prefix: " << team_prefix << std::endl
+            << "\tTeam Suffix: " << team_suffix << std::endl
+            << "\tFriendly Fire: " << friendly_fire << std::endl
+            << "\tNametag Visibility: " << nametag_visibility << std::endl
+            << "\tColor: " << (int)color << std::endl;
+    } 
+    
+    if (mode == 0 || mode == 3 || mode == 4)
+    {
+        int player_count = read_var_int(packet, offset);
+        std::list<std::string> players = read_string_array(player_count, packet, offset);
+
+        std::cout << "\tPlayers (" << player_count << "): " << std::endl;
+
+        for (auto player : players)
+        {
+            std::cout << "\t\t" << player << std::endl;
+        }
+    }
+
+}
+
+void mcbot::MCBot::recv_plugin_message(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutCustomPayload..." << std::endl;
+
+    std::string plugin_channel = read_string(packet, offset);
+
+    uint8_t* data = (uint8_t*)calloc(length - offset, sizeof(uint8_t));
+    read_byte_array(data, length - offset, packet, offset);
+
+    std::cout << "\tPlugin Channel: " << plugin_channel << std::endl
+        << "\tData: " << data << std::endl;
+
+    free(data);
+}
+
+void mcbot::MCBot::recv_server_difficulty(uint8_t* packet, size_t length, size_t& offset)
+{
+    std::cout << "--- Handling PacketPlayOutServerDifficulty..." << std::endl;
+
+    mcbot::Difficulty difficulty = (mcbot::Difficulty) read_ubyte(packet, offset);
+
+    std::cout << "\tDifficulty: " << difficulty << std::endl;
 }
 
 bool mcbot::MCBot::is_connected()

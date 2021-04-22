@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\types">
+      <UniqueIdentifier>{561d0e5d-e7ce-4c16-897f-88bdbe3e132d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\types">
+      <UniqueIdentifier>{fb612a50-55f1-4869-8f66-5b5471461976}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\encryption">
+      <UniqueIdentifier>{eb127790-e33a-41e4-8d3a-f875a14ccf01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\encryption">
+      <UniqueIdentifier>{fa5f81b5-e21a-4f3f-9942-d875cbe39389}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -24,14 +36,23 @@
     <ClCompile Include="MCBot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DaftHash.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="base64.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Location.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Statistic.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Enums.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="base64.cpp">
+      <Filter>Source Files\encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="DaftHash.cpp">
+      <Filter>Source Files\encryption</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -41,14 +62,23 @@
     <ClInclude Include="MCBot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DaftHash.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="base64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Socket.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Enums.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Statistic.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Location.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="base64.h">
+      <Filter>Header Files\encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="DaftHash.h">
+      <Filter>Header Files\encryption</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
