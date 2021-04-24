@@ -7,10 +7,12 @@ namespace mcbot
 	class UUID
 	{
 	private:
-		int64_t msb;
-		int64_t lsb;
+		uint8_t bytes[16] = { 0 };
+		uint64_t msb;
+		uint64_t lsb;
+
 	public:
-		UUID(int64_t msb, int64_t lsb);
+		UUID(char bytes[16]);
 
 		UUID();
 

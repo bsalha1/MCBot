@@ -184,7 +184,6 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
             }
             else
             {
-                std::cout << "DECOMPRESSING" << std::endl;
                 uint8_t* decompressed_packet = (uint8_t*)calloc(decompressed_length, sizeof(uint8_t));
 
                 decompress(decrypted_packet, length, decompressed_packet, decompressed_length);

@@ -157,25 +157,32 @@
     <ClCompile Include="Location.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MCBot.cpp" />
+    <ClCompile Include="NBT.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerProperty.cpp" />
+    <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="Statistic.cpp" />
     <ClCompile Include="UUID.cpp" />
+    <ClCompile Include="WorldBorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base64.h" />
+    <ClInclude Include="Buffer.h" />
     <ClInclude Include="DaftHash.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="Location.h" />
     <ClInclude Include="MCBot.h" />
+    <ClInclude Include="NBT.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerProperty.h" />
+    <ClInclude Include="Slot.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Statistic.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="UUID.h" />
+    <ClInclude Include="WorldBorder.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

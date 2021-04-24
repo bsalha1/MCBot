@@ -1,11 +1,16 @@
 #pragma once
 
 #include "Socket.h"
+#include "Buffer.h"
+
 #include "Enums.h"
+#include "Slot.h"
 #include "Location.h"
 #include "Statistic.h"
 #include "Player.h"
 #include "UUID.h"
+#include "WorldBorder.h"
+#include "NBT.h"
 
 namespace mcbot
 {
@@ -43,26 +48,35 @@ namespace mcbot
 		bool connected;
 		mcbot::State state;
 
-
 		// Runtime Minecraft Info
 		std::map<mcbot::UUID, mcbot::Player> uuid_to_player;
+		mcbot::WorldBorder world_border;
 
 		// Packet parsers
-		static int read_var_int(uint8_t* packet, size_t &offset);
-		static int read_int(uint8_t* packet, size_t& offset);
-		static uint16_t read_ushort(uint8_t* packet, size_t& offset);
-		static uint64_t read_ulong(uint8_t* packet, size_t& offset);
-		static int8_t read_byte(uint8_t* bytes, size_t& offset);
-		static uint8_t read_ubyte(uint8_t* bytes, size_t& offset);
+		static uint64_t read_long(uint8_t* packet, size_t& offset);
+		static int64_t read_var_long(uint8_t* packet, size_t& offset);
+		static uint32_t read_int(uint8_t* packet, size_t& offset);
+		static int32_t read_var_int(uint8_t* packet, size_t &offset);
+		static uint16_t read_short(uint8_t* packet, size_t& offset);
+		static uint8_t read_byte(uint8_t* bytes, size_t& offset);
 		static float read_float(uint8_t* packet, size_t& offset);
+		static double read_double(uint8_t* packet, size_t& offset);
 		static bool read_boolean(uint8_t* packet, size_t& offset);
 		static std::string read_string(uint8_t* packet, size_t &offset);
+		static std::string read_string(int length, uint8_t* packet, size_t& offset);
 		static mcbot::UUID read_uuid(uint8_t* packet, size_t& offset);
-		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t &offset);
+		static mcbot::Slot read_slot(uint8_t* packet, size_t& offset);
+		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t &offset);
+		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
 		static std::list<std::string> read_string_array(int length , uint8_t* packet, size_t& offset);
 		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
 		static std::list <mcbot::PlayerProperty> read_property_array(int length, uint8_t* packet, size_t& offset);
+		static std::list <mcbot::Slot> read_slot_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Location read_location(uint8_t* packet, size_t& offset);
+		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
+		static std::list<mcbot::NBT> read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset);
 
 		static void write_var_int(int value, uint8_t* packet, size_t packet_size, size_t &offset);
 		static size_t get_var_int_size(int value);
@@ -116,10 +130,13 @@ namespace mcbot
 		void recv_chat_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_update_time(uint8_t* packet, size_t length, size_t& offset);
 		void recv_spawn_position(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_position(uint8_t* packet, size_t length, size_t& offset);
 		void recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
+		void recv_set_slot(uint8_t* packet, size_t length, size_t& offset);
+		void recv_window_items(uint8_t* packet, size_t length, size_t& offset);
 		void recv_statistics(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_player_info(uint8_t* packet, size_t length, size_t& offset);
 		void recv_abilities(uint8_t* packet, size_t size_read, size_t& offset);
@@ -128,6 +145,7 @@ namespace mcbot
 		void recv_update_scoreboard_score(uint8_t* packet, size_t length, size_t& offset);
 		void recv_display_scoreboard(uint8_t* packet, size_t length, size_t& offset);
 		void recv_server_difficulty(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_world_border(uint8_t* packet, size_t length, size_t& offset);
 		void recv_player_list_header_footer(uint8_t* packet, size_t size_read, size_t& offset);
 
 		bool is_connected();
