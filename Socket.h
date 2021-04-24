@@ -41,8 +41,9 @@ namespace mcbot
 
 		// Compression
 		void initialize_compression(int max_uncompressed_length);
+		void decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length);
 
-		int recv_packet(uint8_t* packet, int length);
+		int recv_packet(uint8_t* packet, int length, int decompressed_length = 0);
 		int send_pack(uint8_t* packet, int length);
 		int connect_socket(addrinfo* info);
 	};

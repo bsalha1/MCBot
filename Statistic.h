@@ -16,7 +16,7 @@ namespace mcbot
 		std::string get_name();
 		int get_value();
 		
-		friend std::ostream& operator<<(std::ostream& os, mcbot::Statistic loc);
+		std::string to_string();
 	};
 }
 

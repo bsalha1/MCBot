@@ -1,3 +1,5 @@
+#include <string>
+
 #include "Statistic.h"
 
 mcbot::Statistic::Statistic(std::string name, int value)
@@ -16,8 +18,7 @@ int mcbot::Statistic::get_value()
 	return this->value;
 }
 
-std::ostream& mcbot::operator<<(std::ostream& os, mcbot::Statistic statistic)
+std::string mcbot::Statistic::to_string()
 {
-	os << "{" << statistic.name << "," << statistic.value << "}";
-	return os;
+	return "{" + this->name + "," + std::to_string(this->value) + "}";
 }

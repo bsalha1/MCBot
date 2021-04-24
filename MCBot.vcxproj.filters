@@ -45,14 +45,20 @@
     <ClCompile Include="Statistic.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
-    <ClCompile Include="Enums.cpp">
-      <Filter>Source Files\types</Filter>
-    </ClCompile>
     <ClCompile Include="base64.cpp">
       <Filter>Source Files\encryption</Filter>
     </ClCompile>
     <ClCompile Include="DaftHash.cpp">
       <Filter>Source Files\encryption</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerProperty.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="UUID.cpp">
+      <Filter>Source Files\types</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,5 +86,20 @@
     <ClInclude Include="DaftHash.h">
       <Filter>Header Files\encryption</Filter>
     </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerProperty.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="UUID.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

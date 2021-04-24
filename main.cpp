@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
     char* email = argv[1];
     char* password = argv[2];
     mcbot::MCBot bot(email, password);
+    bot.set_debug(false);
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID
@@ -44,7 +45,7 @@ int main(int argc, char* argv[])
 
     // Connect to server
     // - So we can send it packets
-    char* hostname = (char*) "casual.universemc.us";   
+    char* hostname = (char*) "play.reliableplugins.com";   
     char* port = (char*) "25565";
     if (bot.connect_server(hostname, port) < 0)
     {
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
 
     while (bot.is_connected())
     {
-        Sleep(100);
+        Sleep(1);
         bot.recv_packet();
     }
 }

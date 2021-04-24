@@ -1,4 +1,45 @@
 #include "Socket.h"
+#include "zlib.h"
+
+int read_var_int(uint8_t* packet)
+{
+    int num_read = 0;
+    int result = 0;
+    char read;
+    int i = 0;
+    do {
+        read = packet[i + num_read];
+        int value = (read & 0b01111111);
+        result |= (value << (7 * num_read));
+
+        num_read++;
+        if (num_read > 5)
+        {
+            i += num_read;
+            fprintf(stderr, "VarInt out of bounds");
+            return -1;
+        }
+    } while ((read & 0b10000000) != 0);
+
+    i += num_read;
+    return result;
+}
+
+int get_var_int_size(int value)
+{
+    int size = 0;
+    do
+    {
+        char temp = (char)(value & 0b01111111);
+        value >>= 7;
+        if (value != 0)
+        {
+            temp |= 0b10000000;
+        }
+        size++;
+    } while (value != 0);
+    return size;
+}
 
 mcbot::Socket::Socket(SOCKET socket)
 {
@@ -82,12 +123,6 @@ int mcbot::Socket::encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* 
     }
     encrypted_len = len;
 
-    //if (1 != EVP_EncryptFinal_ex(encrypt_ctx, encrypted_text + len, &len))
-    //{
-    //    std::cerr << "EVP_EncryptFinal_ex error" << std::endl;
-    //}
-    //encrypted_len += len;
-
     return encrypted_len;
 }
 
@@ -102,41 +137,80 @@ int mcbot::Socket::decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* 
     }
     decrypted_len = len;
 
-    //if (1 != EVP_DecryptFinal_ex(decrypt_ctx, decrypted_text + len, &len))
-    //{
-    //    std::cerr << "EVP_DecryptFinal_ex error" << std::endl;
-    //}
-    //decrypted_len += len;
-
     return decrypted_len;
 }
 
-void mcbot::Socket::initialize_compression(int max_uncompressed_length)
+void mcbot::Socket::decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
 {
-    this->max_uncompressed_length = max_uncompressed_length;
+    // Configure Stream
+    z_stream infstream;
+    infstream.zalloc = Z_NULL;
+    infstream.zfree = Z_NULL;
+    infstream.opaque = Z_NULL;
+    infstream.avail_in = (uInt)compressed_length;
+    infstream.next_in = (Bytef*)compressed;
+    infstream.avail_out = (uInt)decompressed_length;
+    infstream.next_out = (Bytef*)decompressed;
+
+    // Decompress
+    inflateInit(&infstream);
+    inflate(&infstream, Z_NO_FLUSH);
+    inflateEnd(&infstream);
 }
 
-int mcbot::Socket::recv_packet(uint8_t* packet, int length)
+void mcbot::Socket::initialize_compression(int max_decompressed_length)
+{
+    this->max_uncompressed_length = max_decompressed_length;
+    this->compression_enabled = true;
+}
+
+int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_length)
 {
     if (this->encryption_enabled)
     {
-        std::cout << "Receiving encrypted..." << std::endl;
         uint8_t* encrypted_packet = (uint8_t*) calloc(length, sizeof(uint8_t));
+        uint8_t* decrypted_packet = (uint8_t*) calloc(length, sizeof(uint8_t));
         int bytes_read = recv(this->socket, (char*)encrypted_packet, length, 0);
 
-        int out_len = decrypt((unsigned char*)encrypted_packet, length, packet);
-
-        if (this->compression_enabled)
-        {
-
-        }
-
+        int decrypted_packet_length = decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
         free(encrypted_packet);
-        return out_len;
+
+        if (this->compression_enabled && length > 1)
+        {
+            if (decompressed_length == 0)
+            {
+                memcpy(packet, decrypted_packet, decrypted_packet_length);
+                free(decrypted_packet);
+            }
+            else
+            {
+                std::cout << "DECOMPRESSING" << std::endl;
+                uint8_t* decompressed_packet = (uint8_t*)calloc(decompressed_length, sizeof(uint8_t));
+
+                decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
+                free(decrypted_packet);
+
+                memcpy(packet, decompressed_packet, decompressed_length);
+                free(decompressed_packet);
+
+                return decompressed_length;
+            }
+        }
+        else
+        {
+            memcpy(packet, decrypted_packet, decrypted_packet_length);
+            free(decrypted_packet);
+        }
+        return decrypted_packet_length;
+
     }
     else
     {
-        std::cout << "Receiving..." << std::endl;
+        if (this->compression_enabled)
+        {
+            // TODO
+        }
+
         return recv(this->socket, (char*) packet, length, 0);
     }
 }
@@ -145,14 +219,22 @@ int mcbot::Socket::send_pack(uint8_t* packet, int length)
 {
     if (this->encryption_enabled)
     {
-        std::cout << "Sending encrypted..." << std::endl;
+        if (this->compression_enabled)
+        {
+            // TODO
+        }
+
         char encrypted_packet[1028] = { 0 };
         int encrypted_len = encrypt((uint8_t*)packet, length, (uint8_t*)encrypted_packet);
         send(this->socket, encrypted_packet, encrypted_len, 0);
     }
     else
     {
-        std::cout << "Sending..." << std::endl;
+        if (this->compression_enabled)
+        {
+            // TODO
+        }
+
         return send(this->socket, (char*)packet, length, 0);
     }
 }

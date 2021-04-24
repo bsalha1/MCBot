@@ -18,7 +18,7 @@ namespace mcbot
 		int16_t get_y();
 		int32_t get_z();
 
-		friend std::ostream& operator<<(std::ostream& os, mcbot::Location loc);
+		std::string to_string();
 	};
 }
 

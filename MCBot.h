@@ -4,16 +4,18 @@
 #include "Enums.h"
 #include "Location.h"
 #include "Statistic.h"
+#include "Player.h"
+#include "UUID.h"
 
 namespace mcbot
 {
 	class MCBot
 	{
 	private:
+		// Configuration
+		bool debug;
 
-		bool connected;
-		mcbot::State state;
-
+		// User info
 		std::string email;
 		std::string password;
 		std::string username;
@@ -30,24 +32,36 @@ namespace mcbot
 		int public_key_length;
 		int verify_token_length;
 
+
 		// Compression
 		bool compression_enabled;
 		int max_uncompressed_length;
 
+
+		// Connection Info
 		mcbot::Socket sock;
+		bool connected;
+		mcbot::State state;
+
+
+		// Runtime Minecraft Info
+		std::map<mcbot::UUID, mcbot::Player> uuid_to_player;
 
 		// Packet parsers
 		static int read_var_int(uint8_t* packet, size_t &offset);
 		static int read_int(uint8_t* packet, size_t& offset);
 		static uint16_t read_ushort(uint8_t* packet, size_t& offset);
+		static uint64_t read_ulong(uint8_t* packet, size_t& offset);
 		static int8_t read_byte(uint8_t* bytes, size_t& offset);
 		static uint8_t read_ubyte(uint8_t* bytes, size_t& offset);
 		static float read_float(uint8_t* packet, size_t& offset);
 		static bool read_boolean(uint8_t* packet, size_t& offset);
 		static std::string read_string(uint8_t* packet, size_t &offset);
-		static void read_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t &offset);
-		static std::list<std::string> read_string_array(int strings_length, uint8_t* packet, size_t& offset);
-		static std::list<mcbot::Statistic> read_statistic_array(int statistics_length, uint8_t* packet, size_t& offset);
+		static mcbot::UUID read_uuid(uint8_t* packet, size_t& offset);
+		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t &offset);
+		static std::list<std::string> read_string_array(int length , uint8_t* packet, size_t& offset);
+		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
+		static std::list <mcbot::PlayerProperty> read_property_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Location read_location(uint8_t* packet, size_t& offset);
 
 		static void write_var_int(int value, uint8_t* packet, size_t packet_size, size_t &offset);
@@ -56,10 +70,20 @@ namespace mcbot
 		static void write_string_n(char* string, uint8_t* packet, size_t packet_size, size_t &offset);
 		static void write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t &offset);
 		static void write_packet_length(uint8_t* packet, size_t packet_size, size_t &offset);
+		
+		void update_player_info(mcbot::PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 
 	public:
 		MCBot(std::string email, std::string password);
 		~MCBot();
+
+		// Logging
+		void log_debug(std::string message);
+		void log_error(std::string message);
+		void log_info(std::string message);
+		void log_chat(std::string message);
+
+		void set_debug(bool debug);
 
 		// HTTP Mojang requests
 		int login_mojang();
@@ -74,12 +98,12 @@ namespace mcbot
 		void send_message(char* message);
 
 		int read_next_var_int();
-		void read_next_packet(int length, uint8_t* packet);
+		int read_next_packet(int length, uint8_t* packet, int decompressed_length = 0);
 
 		// Server incoming requests
 		void handle_recv_packet(int packet_id, uint8_t* packet, int bytes_read, size_t& offset);
 		void recv_packet();
-		void recv_disconnect(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_login_disconnect(uint8_t* packet, size_t size_read, size_t& offset);
 		
 		// LOGIN
 		void recv_encryption_request(uint8_t* packet, size_t size_read, size_t &offset);
@@ -87,15 +111,24 @@ namespace mcbot
 		void recv_login_success(uint8_t* packet, size_t size_read, size_t& offset);
 
 		// PLAY
+		void recv_play_disconnect(uint8_t* packet, size_t length, size_t& offset);
 		void recv_join_server(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_chat_message(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_update_time(uint8_t* packet, size_t length, size_t& offset);
 		void recv_spawn_position(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
 		void recv_statistics(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_player_info(uint8_t* packet, size_t length, size_t& offset);
 		void recv_abilities(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_scoreboard_team(uint8_t* packet, size_t length, size_t& offset);
+		void recv_scoreboard_objective(uint8_t* packet, size_t length, size_t& offset);
+		void recv_update_scoreboard_score(uint8_t* packet, size_t length, size_t& offset);
+		void recv_display_scoreboard(uint8_t* packet, size_t length, size_t& offset);
 		void recv_server_difficulty(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_player_list_header_footer(uint8_t* packet, size_t size_read, size_t& offset);
 
 		bool is_connected();
 		bool is_encrypted();
