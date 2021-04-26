@@ -225,7 +225,7 @@ int mcbot::Socket::send_pack(uint8_t* packet, int length)
 
         char encrypted_packet[1028] = { 0 };
         int encrypted_len = encrypt((uint8_t*)packet, length, (uint8_t*)encrypted_packet);
-        send(this->socket, encrypted_packet, encrypted_len, 0);
+        return send(this->socket, encrypted_packet, encrypted_len, 0);
     }
     else
     {

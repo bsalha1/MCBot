@@ -31,6 +31,54 @@ namespace mcbot
 		HARD = 3
 	};
 
+	enum class Direction {
+		DOWN = 0,
+		UP = 1,
+		NORTH = 2,
+		SOUTH = 3,
+		WEST = 4,
+		EAST = 5
+	};
+
+	enum class EntityStatus {
+		RESET_MOB_SPAWN_MINECART = 1, // Also rabbit jump animation
+		HURT = 2,
+		DEAD = 3,
+		IRON_GOLEM_THROW = 4,
+		TAMING = 6,
+		TAMED = 7,
+		WOLF_SHAKING = 8,
+		EATING = 9,
+		SHEEP_EATING = 10, // Also TNT ignite sound
+		IRON_GOLEM_ROSE = 11,
+		VILLAGER_MATING = 12,
+		VILLAGER_ANGRY = 13,
+		VILLAGER_HAPPY = 14,
+		WITCH_PARTICLES = 15,
+		ZOMBIE_TO_VILLAGE_SOUND = 16,
+		FIREWORK_EXPLODE = 17,
+		ANIMAL_READY_TO_MATE = 18,
+		SQUID_RESET_ROTATION = 19,
+		EXPLOSION_PARTICLE = 20,
+		GUARDIAN_SOUND = 21,
+		ENABLE_DEBUG = 22,
+		DISABLE_DEBUG = 23
+	};
+	
+	enum class Pose {
+		STANDING = 0,
+		FALL_FLYING = 1,
+		SLEEPING = 2,
+		SWIMMING = 3,
+		SPIN_ATTACK = 4,
+		SNEAKING = 5,
+		DYING = 6
+	};
+
+	enum class VillageProfession {
+
+	};
+
 	enum class NBTType {
 		TAG_END = 0,
 		TAG_BYTE = 1,

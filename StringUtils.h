@@ -78,6 +78,36 @@ namespace mcbot
 		}
 	}
 
+	std::string to_string(mcbot::EntityStatus c)
+	{
+		switch (c)
+		{
+		case mcbot::EntityStatus::ANIMAL_READY_TO_MATE: return "ANIMAL_READY_TO_MATE"; break;
+		case mcbot::EntityStatus::DEAD: return "DEAD"; break;
+		case mcbot::EntityStatus::DISABLE_DEBUG: return "DISABLE_DEBUG"; break;
+		case mcbot::EntityStatus::EATING: return "EATING"; break;
+		case mcbot::EntityStatus::ENABLE_DEBUG: return "ENABLE_DEBUG"; break;
+		case mcbot::EntityStatus::EXPLOSION_PARTICLE: return "EXPLOSION_PARTICLE"; break;
+		case mcbot::EntityStatus::FIREWORK_EXPLODE: return "FIREWORK_EXPLODE"; break;
+		case mcbot::EntityStatus::GUARDIAN_SOUND: return "GUARDIAN_SOUND"; break;
+		case mcbot::EntityStatus::HURT: return "HURT"; break;
+		case mcbot::EntityStatus::IRON_GOLEM_ROSE: return "IRON_GOLEM_ROSE"; break;
+		case mcbot::EntityStatus::IRON_GOLEM_THROW: return "IRON_GOLEM_THROW"; break;
+		case mcbot::EntityStatus::RESET_MOB_SPAWN_MINECART: return "RESET_MOB_SPAWN_MINECART"; break;
+		case mcbot::EntityStatus::SHEEP_EATING: return "SHEEP_EATING"; break;
+		case mcbot::EntityStatus::SQUID_RESET_ROTATION: return "SQUID_RESET_ROTATION"; break;
+		case mcbot::EntityStatus::TAMED: return "TAMED"; break;
+		case mcbot::EntityStatus::TAMING: return "TAMING"; break;
+		case mcbot::EntityStatus::VILLAGER_ANGRY: return "VILLAGER_ANGRY"; break;
+		case mcbot::EntityStatus::VILLAGER_HAPPY: return "VILLAGER_HAPPY"; break;
+		case mcbot::EntityStatus::VILLAGER_MATING: return "VILLAGER_MATING"; break;
+		case mcbot::EntityStatus::WITCH_PARTICLES: return "WITCH_PARTICLES"; break;
+		case mcbot::EntityStatus::WOLF_SHAKING: return "WOLF_SHAKING"; break;
+		case mcbot::EntityStatus::ZOMBIE_TO_VILLAGE_SOUND: return "ZOMBIE_TO_VILLAGE_SOUND"; break;
+		default: return "UNKNOWN";
+		}
+	}
+
 	std::string to_string(mcbot::WorldBorderAction c)
 	{
 		switch (c)

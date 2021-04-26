@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\types">
       <UniqueIdentifier>{561d0e5d-e7ce-4c16-897f-88bdbe3e132d}</UniqueIdentifier>
     </Filter>
@@ -24,6 +20,10 @@
     </Filter>
     <Filter Include="Source Files\encryption">
       <UniqueIdentifier>{fa5f81b5-e21a-4f3f-9942-d875cbe39389}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -38,9 +38,6 @@
     </ClCompile>
     <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Location.cpp">
-      <Filter>Source Files\types</Filter>
     </ClCompile>
     <ClCompile Include="Statistic.cpp">
       <Filter>Source Files\types</Filter>
@@ -69,6 +66,24 @@
     <ClCompile Include="NBT.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
+    <ClCompile Include="EntityMetadata.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Rotation.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Position.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="Color.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VillagerData.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="JsonObject.h">
@@ -86,9 +101,6 @@
     <ClInclude Include="Statistic.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
-    <ClInclude Include="Location.h">
-      <Filter>Header Files\types</Filter>
-    </ClInclude>
     <ClInclude Include="base64.h">
       <Filter>Header Files\encryption</Filter>
     </ClInclude>
@@ -104,9 +116,6 @@
     <ClInclude Include="UUID.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
-    <ClInclude Include="StringUtils.h">
-      <Filter>Header Files\types</Filter>
-    </ClInclude>
     <ClInclude Include="WorldBorder.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
@@ -117,6 +126,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NBT.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityMetadata.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Rotation.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Position.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VillagerData.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
   </ItemGroup>

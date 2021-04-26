@@ -4,7 +4,7 @@
 
 namespace mcbot
 {
-	class Location
+	class Position
 	{
 	private:
 		int32_t x; // 26 bit integer
@@ -12,7 +12,7 @@ namespace mcbot
 		int32_t z; // 26 bit integer
 
 	public:
-		Location(int32_t x, int32_t y, int32_t z);
+		Position(int32_t x, int32_t y, int32_t z);
 
 		int32_t get_x();
 		int16_t get_y();

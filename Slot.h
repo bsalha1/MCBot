@@ -7,14 +7,14 @@ namespace mcbot
 	class Slot
 	{
 	private:
-		bool item_present;
-		int item_id;
-		int item_count;
+		short item_id;
+		uint8_t item_count;
+		short data;
 		mcbot::NBT nbt;
 	public:
-		Slot(bool item_present);
+		Slot();
 
-		Slot(bool item_present, int item_id, int item_count, mcbot::NBT nbt);
+		Slot(short item_id, int item_count, short data, mcbot::NBT nbt);
 	};
 }
 

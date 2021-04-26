@@ -152,36 +152,46 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="base64.cpp" />
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="DaftHash.cpp" />
     <ClCompile Include="JsonObject.cpp" />
-    <ClCompile Include="Location.cpp" />
+    <ClCompile Include="Particle.cpp" />
+    <ClCompile Include="Position.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MCBot.cpp" />
+    <ClCompile Include="EntityMetadata.cpp" />
     <ClCompile Include="NBT.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerProperty.cpp" />
+    <ClCompile Include="Rotation.cpp" />
     <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="Statistic.cpp" />
     <ClCompile Include="UUID.cpp" />
+    <ClCompile Include="VillagerData.cpp" />
     <ClCompile Include="WorldBorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base64.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="DaftHash.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="JsonObject.h" />
-    <ClInclude Include="Location.h" />
+    <ClInclude Include="Particle.h" />
+    <ClInclude Include="Position.h" />
     <ClInclude Include="MCBot.h" />
+    <ClInclude Include="EntityMetadata.h" />
     <ClInclude Include="NBT.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerProperty.h" />
+    <ClInclude Include="Rotation.h" />
     <ClInclude Include="Slot.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Statistic.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="UUID.h" />
+    <ClInclude Include="VillagerData.h" />
     <ClInclude Include="WorldBorder.h" />
   </ItemGroup>
   <ItemGroup>
@@ -190,11 +200,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets" Condition="Exists('packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets')" />
+    <Import Project="packages\boost.1.76.0.0\build\boost.targets" Condition="Exists('packages\boost.1.76.0.0\build\boost.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets'))" />
+    <Error Condition="!Exists('packages\boost.1.76.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\boost.1.76.0.0\build\boost.targets'))" />
   </Target>
 </Project>

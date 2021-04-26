@@ -33,7 +33,7 @@ static std::string get_random_hex_bytes(std::size_t num_bytes)
     return out;
 }
 
-int32_t mcbot::MCBot::read_var_int(uint8_t* packet, size_t &offset)
+int32_t mcbot::MCBot::read_var_int(uint8_t* packet, size_t& offset)
 {
     int num_read = 0;
     int result = 0;
@@ -79,33 +79,50 @@ int64_t mcbot::MCBot::read_var_long(uint8_t* packet, size_t& offset)
 
 uint32_t mcbot::MCBot::read_int(uint8_t* packet, size_t& offset)
 {
-    int result = 
-        packet[offset++] << 24 |
-        packet[offset++] << 16 | 
-        packet[offset++] << 8 | 
-        packet[offset++] << 0;
+    uint8_t byte4 = packet[offset++];
+    uint8_t byte3 = packet[offset++];
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
+
+    uint32_t result = 
+        byte4 << 24 |
+        byte3 << 16 |
+        byte2 << 8 |
+        byte1 << 0;
     return result;
 }
 
 uint16_t mcbot::MCBot::read_short(uint8_t* packet, size_t& offset)
 {
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
+
     uint16_t result =
-        packet[offset++] << 8 | 
-        packet[offset++] << 0;
+        byte2 << 8 | 
+        byte1 << 0;
     return result;
 }
 
 uint64_t mcbot::MCBot::read_long(uint8_t* packet, size_t& offset)
 {
+    uint8_t byte8 = packet[offset++];
+    uint8_t byte7 = packet[offset++];
+    uint8_t byte6 = packet[offset++];
+    uint8_t byte5 = packet[offset++];
+    uint8_t byte4 = packet[offset++];
+    uint8_t byte3 = packet[offset++];
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
+
     uint64_t result =
-        ((uint64_t)packet[offset++]) << 56 |
-        ((uint64_t)packet[offset++]) << 48 |
-        ((uint64_t)packet[offset++]) << 40 |
-        ((uint64_t)packet[offset++]) << 32 |
-        ((uint64_t)packet[offset++]) << 24 |
-        ((uint64_t)packet[offset++]) << 16 |
-        ((uint64_t)packet[offset++]) << 8 |
-        ((uint64_t)packet[offset++]) << 0;
+        ((uint64_t)byte8) << 56 |
+        ((uint64_t)byte7) << 48 |
+        ((uint64_t)byte6) << 40 |
+        ((uint64_t)byte5) << 32 |
+        ((uint64_t)byte4) << 24 |
+        ((uint64_t)byte3) << 16 |
+        ((uint64_t)byte2) << 8 |
+        ((uint64_t)byte1) << 0;
     return result;
 }
 
@@ -146,7 +163,7 @@ bool mcbot::MCBot::read_boolean(uint8_t* packet, size_t& offset)
     return result;
 }
 
-std::string mcbot::MCBot::read_string(uint8_t* packet, size_t &offset)
+std::string mcbot::MCBot::read_string(uint8_t* packet, size_t& offset)
 {
     int length = read_var_int(packet, offset);
     std::string string = "";
@@ -179,18 +196,61 @@ mcbot::UUID mcbot::MCBot::read_uuid(uint8_t* packet, size_t& offset)
 
 mcbot::Slot mcbot::MCBot::read_slot(uint8_t* packet, size_t& offset)
 {
-    bool present = read_boolean(packet, offset);
-    if (present)
+    short item_id = read_short(packet, offset);
+    if (item_id >= 0)
     {
-        int item_id = read_var_int(packet, offset);
         uint8_t item_count = read_byte(packet, offset);
+        short data = read_short(packet, offset);
         mcbot::NBT nbt = read_nbt(packet, offset);
-        return mcbot::Slot(present, item_id, item_count, nbt);
+        return mcbot::Slot(item_id, item_count, data, nbt);
     }
     else
     {
-        return mcbot::Slot(present);
+        return mcbot::Slot();
     }
+}
+
+mcbot::Color mcbot::MCBot::read_color(uint8_t* packet, size_t& offset)
+{
+    float r = read_float(packet, offset);
+    float g = read_float(packet, offset);
+    float b = read_float(packet, offset);
+    float scale = read_float(packet, offset);
+
+    return mcbot::Color(r, g, b, scale);
+}
+
+mcbot::Particle mcbot::MCBot::read_particle(uint8_t* packet, size_t& offset)
+{
+    int id = read_var_int(packet, offset);
+    switch (id)
+    {
+    case 3:
+    {
+        int block_state = read_var_int(packet, offset);
+        return mcbot::Particle(id, block_state);
+    }
+
+    case 14:
+    {
+        mcbot::Color dust_color = read_color(packet, offset);
+        return mcbot::Particle(id, dust_color);
+    }
+
+    case 23:
+    {
+        float block_state = read_var_int(packet, offset);
+        return mcbot::Particle(id, block_state);
+    }
+
+    case 32:
+    {
+        mcbot::Slot slot = read_slot(packet, offset);
+        return mcbot::Particle(id, slot);
+    }
+    }
+
+    return mcbot::Particle(id);
 }
 
 void mcbot::MCBot::read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset)
@@ -201,7 +261,7 @@ void mcbot::MCBot::read_byte_array(uint8_t* bytes, int length, uint8_t* packet, 
     }
 }
 
-mcbot::Buffer<char> mcbot::MCBot::read_byte_array(int length, uint8_t* packet, size_t &offset)
+mcbot::Buffer<char> mcbot::MCBot::read_byte_array(int length, uint8_t* packet, size_t& offset)
 {
     mcbot::Buffer<char> buffer = mcbot::Buffer<char>(length);
     for (int i = 0; i < length; i++)
@@ -281,26 +341,13 @@ std::list<mcbot::Slot> mcbot::MCBot::read_slot_array(int length, uint8_t* packet
 
     for (int i = 0; i < length; i++)
     {
-        bool present = read_boolean(packet, offset);
-        if (present)
-        {
-            int item_id = read_var_int(packet, offset);
-            uint8_t item_count = read_byte(packet, offset);
-            mcbot::NBT nbt = read_nbt(packet, offset);
-            slots.push_back(mcbot::Slot(present, item_id, item_count, nbt));
-        }
-        else
-        {
-            slots.push_back(mcbot::Slot(present));
-        }
+        slots.push_back(read_slot(packet, offset));
     }
 
     return slots;
 }
 
-
-
-mcbot::Location mcbot::MCBot::read_location(uint8_t* packet, size_t& offset)
+mcbot::Position mcbot::MCBot::read_position(uint8_t* packet, size_t& offset)
 {
     // Parse X Coordinate (26 bit signed integer)
     uint8_t byte4 = packet[offset++];
@@ -327,7 +374,23 @@ mcbot::Location mcbot::MCBot::read_location(uint8_t* packet, size_t& offset)
     uint32_t z_bits = (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1 << 0);
     int32_t z = z_bits & (1 << 25) ? z_bits - (0x3FFFFFF + 1) : z_bits;
 
-    return mcbot::Location(x, y, z);
+    return mcbot::Position(x, y, z);
+}
+
+mcbot::Rotation mcbot::MCBot::read_rotation(uint8_t* packet, size_t& offset)
+{
+    float x = read_float(packet, offset);
+    float y = read_float(packet, offset);
+    float z = read_float(packet, offset);
+    return mcbot::Rotation(x, y, z);
+}
+
+mcbot::VillagerData mcbot::MCBot::read_villager_data(uint8_t* packet, size_t& offset)
+{
+    int type = read_var_int(packet, offset);
+    int profession = read_var_int(packet, offset);
+    int level = read_var_int(packet, offset);
+    return mcbot::VillagerData(type, profession, level);
 }
 
 std::list<mcbot::NBT> mcbot::MCBot::read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset)
@@ -359,6 +422,12 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
         if (!list)
         {
             type = (mcbot::NBTType) read_byte(packet, offset);
+
+            if (type == mcbot::NBTType::TAG_END)
+            {
+                return nbt;
+            }
+
             uint16_t name_length = read_short(packet, offset);
             name = read_string(name_length, packet, offset);
         }
@@ -367,15 +436,8 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
             name = "NONE";
         }
 
-        std::cout << "NBT name: " << name << std::endl
-            << "NBT type: " << mcbot::to_string(type) << std::endl;
-
         switch (type)
         {
-        case mcbot::NBTType::TAG_END:
-        {
-            return nbt;
-        }
 
         case mcbot::NBTType::TAG_BYTE:
         {
@@ -445,21 +507,13 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
         {
             mcbot::NBTType list_type = (mcbot::NBTType) read_byte(packet, offset);
             int32_t length = read_int(packet, offset);
-
-            if (length == 0 && list_type != NBTType::TAG_END)
-            {
-                std::cerr << "Found NBT Tag List of size 0 that is not TAG_END" << std::endl;
-            }
-
-
             nbt.add_nbt_list(name, read_nbt_list(length, list_type, packet, offset));
-
             break;
         }
         case mcbot::NBTType::TAG_COMPOUND:
         {
             nbt.add_nbt(name, read_nbt(packet, offset, false));
-            break;
+            return nbt;
         }
         }
 
@@ -468,9 +522,77 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
             return nbt;
         }
 
-    } while (type != mcbot::NBTType::TAG_END);
+    } while (true);
 
     return nbt;
+}
+
+mcbot::EntityMetaData mcbot::MCBot::read_meta_data(uint8_t* packet, size_t& offset)
+{
+    mcbot::EntityMetaData meta_data;
+
+    uint8_t index = read_byte(packet, offset);
+    while (index != 0x7F)
+    {
+        int a = index & 0x1F;
+        int type = index >> 5;
+
+        switch (type)
+        {
+        case 0:
+        {
+            meta_data.add_value(read_byte(packet, offset));
+            break;
+        }
+
+        case 1:
+        {
+            meta_data.add_value(read_short(packet, offset));
+            break;
+        }
+
+        case 2:
+        {
+            meta_data.add_value(read_int(packet, offset));
+            break;
+        }
+
+        case 3:
+        {
+            meta_data.add_value(read_float(packet, offset));
+            break;
+        }
+
+        case 4:
+        {
+            meta_data.add_value(read_string(packet, offset));
+            break;
+        }
+
+        case 5:
+        {
+            //meta_data.add_value(read_itemstack(packet, offset));
+            break;
+        }
+
+        case 6:
+        {
+            meta_data.add_value(read_position(packet, offset));
+            break;
+        }
+
+        case 7:
+        {
+            meta_data.add_value(read_rotation(packet, offset));
+            break;
+        }
+
+        }
+
+        index = read_byte(packet, offset);
+    }
+
+    return meta_data;
 }
 
 int mcbot::MCBot::read_next_var_int()
@@ -525,7 +647,7 @@ int mcbot::MCBot::read_next_packet(int length, uint8_t* packet, int decompressed
 }
 
 
-void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size, size_t& offset)
 {
     do
     {
@@ -555,7 +677,7 @@ size_t mcbot::MCBot::get_var_int_size(int value)
     return size;
 }
 
-void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t& offset)
 {
     for (int i = 0; i < bytes_length; i++)
     {
@@ -563,7 +685,7 @@ void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* p
     }
 }
 
-void mcbot::MCBot::write_string_n(char* string, uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::write_string_n(char* string, uint8_t* packet, size_t packet_size, size_t& offset)
 {
     size_t string_length = strlen(string);
     write_var_int(string_length, packet, packet_size, offset);
@@ -574,13 +696,13 @@ void mcbot::MCBot::write_string_n(char* string, uint8_t* packet, size_t packet_s
     }
 }
 
-void mcbot::MCBot::write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t& offset)
 {
     packet[offset++] = num >> 8;
     packet[offset++] = num & 0xFF;
 }
 
-void mcbot::MCBot::write_packet_length(uint8_t* packet, size_t packet_size, size_t &offset)
+void mcbot::MCBot::write_packet_length(uint8_t* packet, size_t packet_size, size_t& offset)
 {
     int length = offset;
     int packet_length_size = get_var_int_size(length);
@@ -1055,7 +1177,7 @@ void mcbot::MCBot::recv_packet()
     free(packet);
 }
 
-void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length, size_t &offset)
+void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length, size_t& offset)
 {
     if (this->state == mcbot::State::HANDSHAKE)
     {
@@ -1109,6 +1231,12 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
                 break;
             case 0x09:
                 this->recv_held_item_slot(packet, length, offset);
+                break;
+            case 0x1A:
+                this->recv_entity_status(packet, length, offset);
+                break;
+            case 0x1C:
+                this->recv_entity_metadata(packet, length, offset);
                 break;
             case 0x26:
                 this->recv_map_chunk_bulk(packet, length, offset);
@@ -1187,7 +1315,7 @@ void mcbot::MCBot::recv_set_compression(uint8_t* packet, size_t length, size_t& 
     log_debug("--- COMPRESSION ENABLED ---");
 }
 
-void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t length, size_t &offset)
+void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketLoginOutEncryptionRequest...");
 
@@ -1288,7 +1416,7 @@ void mcbot::MCBot::recv_spawn_position(uint8_t* packet, size_t length, size_t& o
 {
     log_debug("--- Handling PacketPlayOutSpawnPosition...");
 
-    mcbot::Location location = read_location(packet, offset);
+    mcbot::Position location = read_position(packet, offset);
 
     log_debug("Location: " + location.to_string());
 }
@@ -1314,11 +1442,33 @@ void mcbot::MCBot::recv_position(uint8_t* packet, size_t length, size_t& offset)
 
 void mcbot::MCBot::recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset)
 {
-    log_debug("--- Handling PacketPlayOutHeldItemSLot...");
+    log_debug("--- Handling PacketPlayOutHeldItemSlot...");
 
     uint8_t held_item_slot = read_byte(packet, offset);
 
     log_debug("Held Item Slot: " + std::to_string((int) held_item_slot));
+}
+
+void mcbot::MCBot::recv_entity_status(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutEntityStatus...");
+
+    int entity_id = read_int(packet, offset);
+    mcbot::EntityStatus status = (mcbot::EntityStatus) read_byte(packet, offset);
+
+    log_debug("Entity ID: " + std::to_string(entity_id) +
+        "\n\tStatus: " + mcbot::to_string(status));
+}
+
+void mcbot::MCBot::recv_entity_metadata(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutEntityMetadata...");
+
+    int entity_id = read_var_int(packet, offset);
+    mcbot::EntityMetaData meta_data = read_meta_data(packet, offset);
+
+    log_debug("Entity ID: " + std::to_string(entity_id) +
+        "\n\tMeta Data: size " + std::to_string(meta_data.get_values().size()));
 }
 
 void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& offset)
@@ -1350,6 +1500,11 @@ void mcbot::MCBot::recv_set_slot(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutSetSlot...");
 
+    for (int i = 0; i < length; i++)
+    {
+        std::cout << (int)packet[i] << " ";
+    }
+    std::cout << std::endl;
     uint8_t window_id = read_byte(packet, offset);
     uint16_t slot_number = read_short(packet, offset);
     mcbot::Slot slot = read_slot(packet, offset);
