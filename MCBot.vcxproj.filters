@@ -84,6 +84,12 @@
     <ClCompile Include="VillagerData.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
+    <ClCompile Include="Attribute.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="AttributeModifier.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="JsonObject.h">
@@ -147,6 +153,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VillagerData.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Attribute.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="AttributeModifier.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
   </ItemGroup>

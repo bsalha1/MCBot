@@ -14,6 +14,8 @@ namespace mcbot
 		std::map<std::string, std::list<mcbot::JsonObject>> lists_map;
 		std::map<std::string, mcbot::JsonObject> objects_map;
 
+		std::size_t pretty_pointer = 0;
+
 		static std::string extract_string(std::string json, std::size_t& offset);
 		static mcbot::JsonObject extract_object(std::string json, std::string name, std::size_t& index);
 		static std::list<mcbot::JsonObject> extract_list(std::string json, std::size_t& index);
@@ -43,6 +45,6 @@ namespace mcbot
 
 		std::map<std::string, std::list<mcbot::JsonObject>> get_lists_map();
 
-		friend std::ostream& operator<<(std::ostream& os, const JsonObject& obj);
+		friend std::ostream& operator<<(std::ostream& os, JsonObject obj);
 	};
 }

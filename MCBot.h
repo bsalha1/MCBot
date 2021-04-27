@@ -5,6 +5,7 @@
 
 #include "VillagerData.h"
 #include "EntityMetadata.h"
+#include "Attribute.h"
 #include "Color.h"
 #include "Enums.h"
 #include "Slot.h"
@@ -78,6 +79,8 @@ namespace mcbot
 		static mcbot::Position read_position(uint8_t* packet, size_t& offset);
 		static mcbot::Rotation read_rotation(uint8_t* packet, size_t& offset);
 		static mcbot::VillagerData read_villager_data(uint8_t* packet, size_t& offset);
+		static mcbot::AttributeModifier read_attribute_modifier(uint8_t* packet, size_t& offset);
+		static mcbot::Attribute read_attribute(uint8_t* packet, size_t& offset);
 		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
 		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
 
@@ -143,16 +146,26 @@ namespace mcbot
 		void recv_join_server(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_chat_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_update_time(uint8_t* packet, size_t length, size_t& offset);
+		void recv_entity_equipment(uint8_t* packet, size_t length, size_t& offset);
 		void recv_spawn_position(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_position(uint8_t* packet, size_t length, size_t& offset);
 		void recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset);
+		void recv_spawn_player(uint8_t* packet, size_t length, size_t& offset);
+		void recv_spawn_entity(uint8_t* packet, size_t length, size_t& offset);
+		void recv_entity_velocity(uint8_t* packet, size_t length, size_t& offset);
+		void recv_entity_head_look(uint8_t* packet, size_t length, size_t& offset);
 		void recv_entity_status(uint8_t* packet, size_t length, size_t& offset);
 		void recv_entity_metadata(uint8_t* packet, size_t length, size_t& offset);
+		void recv_entity_effect(uint8_t* packet, size_t length, size_t& offset);
+		void recv_entity_attributes(uint8_t* packet, size_t length, size_t& offset);
+		void recv_map_chunk(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
 		void recv_set_slot(uint8_t* packet, size_t length, size_t& offset);
 		void recv_window_items(uint8_t* packet, size_t length, size_t& offset);
+		void recv_update_sign(uint8_t* packet, size_t length, size_t& offset);
+		void recv_tile_entity_data(uint8_t* packet, size_t length, size_t& offset);
 		void recv_statistics(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_player_info(uint8_t* packet, size_t length, size_t& offset);
 		void recv_abilities(uint8_t* packet, size_t size_read, size_t& offset);

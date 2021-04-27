@@ -14,3 +14,10 @@ mcbot::Slot::Slot(short item_id, int item_count, short data, mcbot::NBT nbt)
 	this->data = data;
 	this->nbt = nbt;
 }
+
+std::string mcbot::Slot::to_string()
+{
+	return "[id:" + std::to_string(item_id) + 
+		", count:" + std::to_string(item_count) + 
+		", data:" + std::to_string(data) + "]";
+}

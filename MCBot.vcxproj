@@ -151,9 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AttributeModifier.cpp" />
     <ClCompile Include="base64.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="DaftHash.cpp" />
+    <ClCompile Include="Attribute.cpp" />
     <ClCompile Include="JsonObject.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="Position.cpp" />
@@ -172,10 +174,12 @@
     <ClCompile Include="WorldBorder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AttributeModifier.h" />
     <ClInclude Include="base64.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="DaftHash.h" />
+    <ClInclude Include="Attribute.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="JsonObject.h" />
     <ClInclude Include="Particle.h" />

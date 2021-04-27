@@ -153,10 +153,9 @@ void insert_spaces(std::ostream& os, int num_spaces)
     }
 }
 
-std::size_t pretty_pointer = 0;
-std::ostream& mcbot::operator<<(std::ostream& os, const JsonObject& obj)
+std::ostream& mcbot::operator<<(std::ostream& os, JsonObject obj)
 {
-    insert_spaces(os, 2 * pretty_pointer);
+    insert_spaces(os, 2 * obj.pretty_pointer);
     if (obj.name.length() == 0)
     {
         os << '{' << std::endl;
@@ -167,44 +166,44 @@ std::ostream& mcbot::operator<<(std::ostream& os, const JsonObject& obj)
     }
 
     // Print raw key-values
-    pretty_pointer++;
+    obj.pretty_pointer++;
     for (auto entry : obj.raws_map)
     {
-        insert_spaces(os, 2 * pretty_pointer);
+        insert_spaces(os, 2 * obj.pretty_pointer);
         os << "\"" << entry.first << "\": \"" << entry.second << "\"," << std::endl;
     }
-    pretty_pointer--;
+    obj.pretty_pointer--;
 
 
     // Print objects
-    pretty_pointer++;
+    obj.pretty_pointer++;
     for (auto entry : obj.objects_map)
     {
         os << entry.second << ',' << std::endl;
     }
-    pretty_pointer--;
+    obj.pretty_pointer--;
 
 
     // Print arrays
-    pretty_pointer++;
+    obj.pretty_pointer++;
     for (auto entry : obj.lists_map)
     {
-        insert_spaces(os, 2 * pretty_pointer);
+        insert_spaces(os, 2 * obj.pretty_pointer);
         os << "\"" << entry.first << "\": [" << std::endl;
 
-        pretty_pointer++;
+        obj.pretty_pointer++;
         for (auto element : entry.second)
         {
             os << element << ',' << std::endl;
         }
-        pretty_pointer--;
+        obj.pretty_pointer--;
 
-        insert_spaces(os, 2 * pretty_pointer);
+        insert_spaces(os, 2 * obj.pretty_pointer);
         os << ']' << std::endl;
     }
-    pretty_pointer--;
+    obj.pretty_pointer--;
 
-    insert_spaces(os, 2 * pretty_pointer);
+    insert_spaces(os, 2 * obj.pretty_pointer);
     os << '}';
 
     return os;

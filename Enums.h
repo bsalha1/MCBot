@@ -112,6 +112,15 @@ namespace mcbot
 		REMOVE_PLAYER = 4
 	};
 
+	enum class TileEntityAction {
+		SPAWN_POTENTIAL = 1, // set spawner potential
+		COMMAND_BLOCK = 2,   // command block text change
+		BEACON = 3,          // set level, primary and secondary powers of beacon
+		SKULL = 4,           // set rotation and skin of skull
+		FLOWER_POT = 5,      // set flower in pot
+		BANNER = 6           // set base color and patterns of banner
+	};
+
 	enum class ChatPosition {
 		CHAT = 0,
 		SYSTEM = 1,

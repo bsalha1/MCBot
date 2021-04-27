@@ -393,6 +393,28 @@ mcbot::VillagerData mcbot::MCBot::read_villager_data(uint8_t* packet, size_t& of
     return mcbot::VillagerData(type, profession, level);
 }
 
+mcbot::AttributeModifier mcbot::MCBot::read_attribute_modifier(uint8_t* packet, size_t& offset)
+{
+    mcbot::UUID uuid = read_uuid(packet, offset);
+    double amount = read_double(packet, offset);
+    uint8_t operation = read_byte(packet, offset);
+    return mcbot::AttributeModifier(uuid, amount, operation);
+}
+
+mcbot::Attribute mcbot::MCBot::read_attribute(uint8_t* packet, size_t& offset)
+{
+    std::string key = read_string(packet, offset);
+    double value = read_double(packet, offset);
+    int num_modifiers = read_var_int(packet, offset);
+
+    std::list<mcbot::AttributeModifier> modifiers;
+    for (int i = 0; i < num_modifiers; i++)
+    {
+        modifiers.push_back(read_attribute_modifier(packet, offset));
+    }
+    return mcbot::Attribute(key, value, modifiers);
+}
+
 std::list<mcbot::NBT> mcbot::MCBot::read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset)
 {
     std::list<mcbot::NBT> nbt_list;
@@ -1223,6 +1245,9 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
             case 0x03:
                 this->recv_update_time(packet, length, offset);
                 break;
+            case 0x04:
+                this->recv_entity_equipment(packet, length, offset);
+                break;
             case 0x05:
                 this->recv_spawn_position(packet, length, offset);
                 break;
@@ -1232,11 +1257,32 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
             case 0x09:
                 this->recv_held_item_slot(packet, length, offset);
                 break;
+            case 0x0C:
+                this->recv_spawn_player(packet, length, offset);
+                break;
+            case 0x0E:
+                this->recv_spawn_entity(packet, length, offset);
+                break;
+            case 0x12:
+                this->recv_entity_velocity(packet, length, offset);
+                break;
+            case 0x19:
+                this->recv_entity_head_look(packet, length, offset);
+                break;
             case 0x1A:
                 this->recv_entity_status(packet, length, offset);
                 break;
             case 0x1C:
                 this->recv_entity_metadata(packet, length, offset);
+                break;
+            case 0x1D:
+                this->recv_entity_effect(packet, length, offset);
+                break;
+            case 0x20:
+                this->recv_entity_attributes(packet, length, offset);
+                break;
+            case 0x21:
+                this->recv_map_chunk(packet, length, offset);
                 break;
             case 0x26:
                 this->recv_map_chunk_bulk(packet, length, offset);
@@ -1249,6 +1295,12 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
                 break;
             case 0x30:
                 this->recv_window_items(packet, length, offset);
+                break;
+            case 0x33:
+                this->recv_update_sign(packet, length, offset);
+                break;
+            case 0x35:
+                this->recv_tile_entity_data(packet, length, offset);
                 break;
             case 0x37:
                 this->recv_statistics(packet, length, offset);
@@ -1412,6 +1464,20 @@ void mcbot::MCBot::recv_update_time(uint8_t* packet, size_t length, size_t& offs
         "\n\tTime of Day: " + std::to_string(time_of_day));
 }
 
+void mcbot::MCBot::recv_entity_equipment(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutEntityEquipment...");
+
+    int entity_id = read_var_int(packet, offset);
+    short slot = read_short(packet, offset);
+    mcbot::Slot item = read_slot(packet, offset);
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tSlot: " + std::to_string(slot) +
+        "\n\tItem: " + item.to_string());
+}
+
 void mcbot::MCBot::recv_spawn_position(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutSpawnPosition...");
@@ -1449,6 +1515,77 @@ void mcbot::MCBot::recv_held_item_slot(uint8_t* packet, size_t length, size_t& o
     log_debug("Held Item Slot: " + std::to_string((int) held_item_slot));
 }
 
+void mcbot::MCBot::recv_spawn_player(uint8_t* packet, size_t length, size_t& offset)
+{
+    // TODO: find actual name for this packet
+    log_debug("--- Handling PacketPlayOutNamedEntitySpawn...");
+
+    int entity_id = read_var_int(packet, offset);
+    mcbot::UUID uuid = read_uuid(packet, offset);
+    mcbot::Position position = mcbot::Position(read_int(packet, offset), read_int(packet, offset), read_int(packet, offset));
+    uint8_t pitch = read_byte(packet, offset);
+    uint8_t yaw = read_byte(packet, offset);
+    short current_item = read_short(packet, offset);
+    mcbot::EntityMetaData meta_data = read_meta_data(packet, offset);
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tUUID: " + uuid.to_string() + 
+        "\n\tLocation: " + position.to_string());
+}
+
+void mcbot::MCBot::recv_spawn_entity(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutSpawnEntity...");
+
+    int entity_id = read_var_int(packet, offset);
+    uint8_t type = read_byte(packet, offset);
+    int x = read_int(packet, offset);
+    int y = read_int(packet, offset);
+    int z = read_int(packet, offset);
+    uint8_t pitch = read_byte(packet, offset);
+    uint8_t yaw = read_byte(packet, offset);
+    int data = read_int(packet, offset);
+
+    if (data > 0)
+    {
+        short mot_x = read_short(packet, offset);
+        short mot_y = read_short(packet, offset);
+        short mot_z = read_short(packet, offset);
+    }
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tLocation: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+}
+
+void mcbot::MCBot::recv_entity_velocity(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutEntityVelocity...");
+
+    int entity_id = read_var_int(packet, offset);
+    short mot_x = read_short(packet, offset);
+    short mot_y = read_short(packet, offset);
+    short mot_z = read_short(packet, offset);
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tVelocity: (" + std::to_string(mot_x) + ", " + std::to_string(mot_y) + ", " + std::to_string(mot_z) + ")");
+}
+
+void mcbot::MCBot::recv_entity_head_look(uint8_t* packet, size_t length, size_t& offset)
+{
+    // TODO: find actual name of packet
+    log_debug("--- Handling PacketPlayOutEntityHeadLook...");
+
+    int entity_id = read_var_int(packet, offset);
+    uint8_t angle = read_byte(packet, offset);
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tAngle: " + std::to_string((int)angle));
+}
+
 void mcbot::MCBot::recv_entity_status(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutEntityStatus...");
@@ -1468,7 +1605,60 @@ void mcbot::MCBot::recv_entity_metadata(uint8_t* packet, size_t length, size_t& 
     mcbot::EntityMetaData meta_data = read_meta_data(packet, offset);
 
     log_debug("Entity ID: " + std::to_string(entity_id) +
-        "\n\tMeta Data: size " + std::to_string(meta_data.get_values().size()));
+      "\n\tMeta Data: size " + std::to_string(meta_data.get_values().size()));
+}
+
+void mcbot::MCBot::recv_entity_effect(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutEntityEffect...");
+
+    int entity_id = read_var_int(packet, offset);
+    uint8_t effect_id = read_byte(packet, offset);
+    uint8_t amplifier = read_byte(packet, offset);
+    int duration = read_var_int(packet, offset);
+    bool hide_particles = read_boolean(packet, offset);
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tEffect ID: " + std::to_string((int)effect_id) +
+        "\n\tAmplifier: " + std::to_string((int)amplifier) +
+        "\n\tDuration: " + std::to_string(duration) +
+        "\n\tHide Particles: " + mcbot::to_string(hide_particles));
+}
+
+void mcbot::MCBot::recv_entity_attributes(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutUpdateAttributes...");
+
+    int entity_id = read_var_int(packet, offset);
+    int num_attributes = read_int(packet, offset);
+
+    std::list<mcbot::Attribute> attributes;
+    for (int i = 0; i < num_attributes; i++)
+    {
+        attributes.push_back(read_attribute(packet, offset));
+    }
+
+    log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tAttributes: " + std::to_string(attributes.size()));
+
+}
+
+void mcbot::MCBot::recv_map_chunk(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutMapChunk...");
+
+    int x = read_int(packet, offset);
+    int z = read_int(packet, offset);
+    bool ground_up_continuous = read_boolean(packet, offset);
+    uint16_t primary_bitmask = read_short(packet, offset);
+    int data_size = read_var_int(packet, offset);
+    mcbot::Buffer<char> chunk_data = read_byte_array(data_size, packet, offset);
+
+    log_debug(
+        "X: " + std::to_string(x) +
+        "\n\tZ: " + std::to_string(z));
 }
 
 void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& offset)
@@ -1526,6 +1716,39 @@ void mcbot::MCBot::recv_window_items(uint8_t* packet, size_t length, size_t& off
     log_debug(
         "Window ID: " + std::to_string(window_id) +
         "\n\tCount: " + std::to_string(count)
+    );
+}
+
+void mcbot::MCBot::recv_update_sign(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutUpdateSign...");
+
+    mcbot::Position location = read_position(packet, offset);
+    std::string line1 = read_string(packet, offset);
+    std::string line2 = read_string(packet, offset);
+    std::string line3 = read_string(packet, offset);
+    std::string line4 = read_string(packet, offset);
+
+    log_debug(
+        "Location: " + location.to_string() +
+        "\n\tLine 1: " + line1 +
+        "\n\tLine 2: " + line2 +
+        "\n\tLine 3: " + line3 +
+        "\n\tLine 4: " + line4
+    );
+}
+
+void mcbot::MCBot::recv_tile_entity_data(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutTileEntityData...");
+
+    mcbot::Position location = read_position(packet, offset);
+    mcbot::TileEntityAction action = (mcbot::TileEntityAction) read_byte(packet, offset);
+    mcbot::NBT nbt = read_nbt(packet, offset);
+
+    log_debug(
+        "Location: " + location.to_string() +
+        "\n\tAction: " + mcbot::to_string(action)
     );
 }
 
