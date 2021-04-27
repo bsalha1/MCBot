@@ -19,5 +19,5 @@ std::string mcbot::Slot::to_string()
 {
 	return "[id:" + std::to_string(item_id) + 
 		", count:" + std::to_string(item_count) + 
-		", data:" + std::to_string(data) + "]";
+		", data:" + std::to_string(data) + ", nbt:" + this->nbt.to_string() + "]";
 }

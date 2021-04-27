@@ -16,7 +16,7 @@
 #include "Particle.h"
 #include "WorldBorder.h"
 #include "Position.h"
-#include "Rotation.h"
+#include "Vector.h"
 
 namespace mcbot
 {
@@ -65,6 +65,7 @@ namespace mcbot
 		static int32_t read_var_int(uint8_t* packet, size_t& offset);
 		static uint16_t read_short(uint8_t* packet, size_t& offset);
 		static uint8_t read_byte(uint8_t* bytes, size_t& offset);
+		static uint8_t peek_byte(uint8_t* packet, size_t offset);
 		static float read_float(uint8_t* packet, size_t& offset);
 		static double read_double(uint8_t* packet, size_t& offset);
 		static bool read_boolean(uint8_t* packet, size_t& offset);
@@ -77,17 +78,20 @@ namespace mcbot
 		static mcbot::Color read_color(uint8_t* packet, size_t& offset);
 		static mcbot::Particle read_particle(uint8_t* packet, size_t& offset);
 		static mcbot::Position read_position(uint8_t* packet, size_t& offset);
-		static mcbot::Rotation read_rotation(uint8_t* packet, size_t& offset);
+		template<typename T>
+		static mcbot::Vector<T> read_vector(uint8_t* packet, size_t& offset);
 		static mcbot::VillagerData read_villager_data(uint8_t* packet, size_t& offset);
 		static mcbot::AttributeModifier read_attribute_modifier(uint8_t* packet, size_t& offset);
 		static mcbot::Attribute read_attribute(uint8_t* packet, size_t& offset);
-		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
+		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset);
+		static mcbot::NBT read_nbt_part(uint8_t* packet, size_t& offset, bool parent = true, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
 		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
 
 		// Read Array Values
 		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<int> read_var_int_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
 		static std::list<std::string> read_string_array(int length , uint8_t* packet, size_t& offset);
 		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
@@ -161,6 +165,7 @@ namespace mcbot
 		void recv_map_chunk(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
+		void recv_world_particles(uint8_t* packet, size_t length, size_t& offset);
 		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
 		void recv_set_slot(uint8_t* packet, size_t length, size_t& offset);
 		void recv_window_items(uint8_t* packet, size_t length, size_t& offset);

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -165,7 +165,6 @@
     <ClCompile Include="NBT.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerProperty.cpp" />
-    <ClCompile Include="Rotation.cpp" />
     <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="Statistic.cpp" />
@@ -189,7 +188,7 @@
     <ClInclude Include="NBT.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerProperty.h" />
-    <ClInclude Include="Rotation.h" />
+    <ClInclude Include="Vector.h" />
     <ClInclude Include="Slot.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Statistic.h" />

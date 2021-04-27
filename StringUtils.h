@@ -78,6 +78,56 @@ namespace mcbot
 		}
 	}
 
+	std::string to_string(mcbot::ParticleType c)
+	{
+		switch (c)
+		{
+		case mcbot::ParticleType::ANGRY_VILLAGER: return "ANGRY_VILLAGER";
+		case mcbot::ParticleType::BARRIER: return "BARRIER";
+		case mcbot::ParticleType::BLOCK_CRACK: return "BLOCK_CRACK";
+		case mcbot::ParticleType::BLOCK_DUST: return "BLOCK_DUST";
+		case mcbot::ParticleType::BUBBLE: return "BUBBLE";
+		case mcbot::ParticleType::CLOUD: return "CLOUD";
+		case mcbot::ParticleType::CRIT: return "CRIT";
+		case mcbot::ParticleType::DEPTH_SUSPEND: return "DEPTH_SUSPEND";
+		case mcbot::ParticleType::DRIP_LAVA: return "DRIP_LAVA";
+		case mcbot::ParticleType::DRIP_WATER: return "DRIP_WATER";
+		case mcbot::ParticleType::DROPLET: return "DROPLET";
+		case mcbot::ParticleType::ENCHANTMENT_TABLE: return "ENCHANTMENT_TABLE";
+		case mcbot::ParticleType::EXPLODE: return "EXPLODE";
+		case mcbot::ParticleType::FIREWORKS_SPARK: return "FIREWORKS_SPARK";
+		case mcbot::ParticleType::FLAME: return "FLAME";
+		case mcbot::ParticleType::FOOTSTEP: return "FOOTSTEP";
+		case mcbot::ParticleType::HAPPY_VILLAGER: return "HAPPY_VILLAGER";
+		case mcbot::ParticleType::HEART: return "HEART";
+		case mcbot::ParticleType::HUGE_EXPLOSION: return "HUGE_EXPLOSION";
+		case mcbot::ParticleType::ICON_CRACK: return "ICON_CRACK";
+		case mcbot::ParticleType::INSTANT_SPELL: return "INSTANT_SPELL";
+		case mcbot::ParticleType::LARGE_EXPLOSION: return "LARGE_EXPLOSION";
+		case mcbot::ParticleType::LARGE_SMOKE: return "LARGE_SMOKE";
+		case mcbot::ParticleType::LAVA: return "LAVA";
+		case mcbot::ParticleType::MAGIC_CRIT: return "MAGIC_CRIT";
+		case mcbot::ParticleType::MOB_APPEARANCE: return "MOB_APPEARANCE";
+		case mcbot::ParticleType::MOB_SPELL: return "MOB_SPELL";
+		case mcbot::ParticleType::MOB_SPELL_AMBIENT: return "MOB_SPELL_AMBIENT";
+		case mcbot::ParticleType::NOTE: return "NOTE";
+		case mcbot::ParticleType::PORTAL: return "PORTAL";
+		case mcbot::ParticleType::RED_DUST: return "RED_DUST";
+		case mcbot::ParticleType::SLIME: return "SLIME";
+		case mcbot::ParticleType::SMOKE: return "SMOKE";
+		case mcbot::ParticleType::SNOWBALL_POOF: return "SNOWBALL_POOF";
+		case mcbot::ParticleType::SNOW_SHOVEL: return "SNOW_SHOVEL";
+		case mcbot::ParticleType::SPELL: return "SPELL";
+		case mcbot::ParticleType::SPLASH: return "SPLASH";
+		case mcbot::ParticleType::SUSPENDED: return "SUSPENDED";
+		case mcbot::ParticleType::TAKE: return "TAKE";
+		case mcbot::ParticleType::TOWN_AURA: return "TOWN_AURA";
+		case mcbot::ParticleType::WAKE: return "WAKE";
+		case mcbot::ParticleType::WITCH_MAGIC: return "WITCH_MAGIC";
+		default: return "UNKNOWN";
+		}
+	}
+
 	std::string to_string(mcbot::EntityStatus c)
 	{
 		switch (c)

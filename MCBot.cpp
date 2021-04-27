@@ -131,6 +131,11 @@ uint8_t mcbot::MCBot::read_byte(uint8_t* packet, size_t& offset)
     return packet[offset++];
 }
 
+uint8_t mcbot::MCBot::peek_byte(uint8_t* packet, size_t offset)
+{
+    return packet[offset++];
+}
+
 float mcbot::MCBot::read_float(uint8_t* packet, size_t& offset)
 {
     uint32_t bytes = read_int(packet, offset);
@@ -281,6 +286,16 @@ mcbot::Buffer<int> mcbot::MCBot::read_int_array(int length, uint8_t* packet, siz
     return buffer;
 }
 
+mcbot::Buffer<int> mcbot::MCBot::read_var_int_array(int length, uint8_t* packet, size_t& offset)
+{
+    mcbot::Buffer<int> buffer = mcbot::Buffer<int>(length);
+    for (int i = 0; i < length; i++)
+    {
+        buffer.put(read_var_int(packet, offset));
+    }
+    return buffer;
+}
+
 mcbot::Buffer<long> mcbot::MCBot::read_long_array(int length, uint8_t* packet, size_t& offset)
 {
     mcbot::Buffer<long> buffer = mcbot::Buffer<long>(length);
@@ -377,12 +392,39 @@ mcbot::Position mcbot::MCBot::read_position(uint8_t* packet, size_t& offset)
     return mcbot::Position(x, y, z);
 }
 
-mcbot::Rotation mcbot::MCBot::read_rotation(uint8_t* packet, size_t& offset)
+template<typename T>
+mcbot::Vector<T> mcbot::MCBot::read_vector(uint8_t* packet, size_t& offset)
 {
-    float x = read_float(packet, offset);
-    float y = read_float(packet, offset);
-    float z = read_float(packet, offset);
-    return mcbot::Rotation(x, y, z);
+    T x, y, z;
+    if (std::is_same<T, float>())
+    {
+        x = read_float(packet, offset);
+        y = read_float(packet, offset);
+        z = read_float(packet, offset);
+    }
+    else if (std::is_same<T, double>())
+    {
+        x = read_double(packet, offset);
+        y = read_double(packet, offset);
+        z = read_double(packet, offset);
+    }
+    else if (std::is_same<T, short>())
+    {
+        x = read_short(packet, offset);
+        y = read_short(packet, offset);
+        z = read_short(packet, offset);
+    }
+    else if (std::is_same<T, int>())
+    {
+        x = read_int(packet, offset);
+        y = read_int(packet, offset);
+        z = read_int(packet, offset);
+    }
+    else
+    {
+        std::cerr << "Unsupported vector type: " << typeid(T).name() << std::endl;
+    }
+    return mcbot::Vector<T>(x, y, z);
 }
 
 mcbot::VillagerData mcbot::MCBot::read_villager_data(uint8_t* packet, size_t& offset)
@@ -421,13 +463,13 @@ std::list<mcbot::NBT> mcbot::MCBot::read_nbt_list(int32_t length, mcbot::NBTType
 
     for (int i = 0; i < length; i++)
     {
-        nbt_list.push_back(read_nbt(packet, offset, true, list_type));
+        nbt_list.push_back(read_nbt_part(packet, offset, false, true, list_type));
     }
 
     return nbt_list;
 }
 
-mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mcbot::NBTType list_type)
+mcbot::NBT mcbot::MCBot::read_nbt_part(uint8_t* packet, size_t& offset, bool parent, bool list, mcbot::NBTType list_type)
 {
     mcbot::NBTType type;
     mcbot::NBT nbt;
@@ -460,6 +502,11 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
 
         switch (type)
         {
+
+        case mcbot::NBTType::TAG_END:
+        {
+            return nbt;
+        }
 
         case mcbot::NBTType::TAG_BYTE:
         {
@@ -534,12 +581,12 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
         }
         case mcbot::NBTType::TAG_COMPOUND:
         {
-            nbt.add_nbt(name, read_nbt(packet, offset, false));
-            return nbt;
+            nbt.add_nbt(name, read_nbt_part(packet, offset, false));
+            break;
         }
         }
 
-        if (list)
+        if (parent || list)
         {
             return nbt;
         }
@@ -547,6 +594,11 @@ mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset, bool list, mc
     } while (true);
 
     return nbt;
+}
+
+mcbot::NBT mcbot::MCBot::read_nbt(uint8_t* packet, size_t& offset)
+{
+    return read_nbt_part(packet, offset, true);;
 }
 
 mcbot::EntityMetaData mcbot::MCBot::read_meta_data(uint8_t* packet, size_t& offset)
@@ -559,6 +611,7 @@ mcbot::EntityMetaData mcbot::MCBot::read_meta_data(uint8_t* packet, size_t& offs
         int a = index & 0x1F;
         int type = index >> 5;
 
+        std::cerr << "Type: " << type << std::endl;;
         switch (type)
         {
         case 0:
@@ -593,22 +646,25 @@ mcbot::EntityMetaData mcbot::MCBot::read_meta_data(uint8_t* packet, size_t& offs
 
         case 5:
         {
-            //meta_data.add_value(read_itemstack(packet, offset));
+            mcbot::Slot slot = read_slot(packet, offset);
+            meta_data.add_value(slot);
             break;
         }
 
         case 6:
         {
-            meta_data.add_value(read_position(packet, offset));
+            meta_data.add_value(read_vector<int>(packet, offset));
             break;
         }
 
         case 7:
         {
-            meta_data.add_value(read_rotation(packet, offset));
+            meta_data.add_value(read_vector<float>(packet, offset));
             break;
         }
 
+        default:
+            std::cerr << "UNKNOWN METADATA TYPE: " << type << std::endl;;
         }
 
         index = read_byte(packet, offset);
@@ -616,6 +672,7 @@ mcbot::EntityMetaData mcbot::MCBot::read_meta_data(uint8_t* packet, size_t& offs
 
     return meta_data;
 }
+
 
 int mcbot::MCBot::read_next_var_int()
 {
@@ -1096,16 +1153,19 @@ void mcbot::MCBot::send_encryption_response()
     BIO_free(bio);
     free(pem_formatted);
 
-    std::cout << "Public Key Info: " << std::endl;
-    BIO* keybio = BIO_new(BIO_s_mem());
-    RSA_print(keybio, rsa_public_key, 0);
-    char buffer[2048] = { 0 };
-    std::string res = "";
-    while (BIO_read(keybio, buffer, 2048) > 0)
+    if (this->debug)
     {
-        std::cout << buffer;
+        log_debug("Public Key Info: ");
+        BIO* keybio = BIO_new(BIO_s_mem());
+        RSA_print(keybio, rsa_public_key, 0);
+        char buffer[2048] = { 0 };
+        std::string res = "";
+        while (BIO_read(keybio, buffer, 2048) > 0)
+        {
+            log_debug(buffer);
+        }
+        BIO_free(keybio);
     }
-    BIO_free(keybio);
 
 
     unsigned char encrypted_shared_secret[256] = { 0 };
@@ -1287,6 +1347,9 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
             case 0x26:
                 this->recv_map_chunk_bulk(packet, length, offset);
                 break;
+            case 0x2A:
+                this->recv_world_particles(packet, length, offset);
+                break;
             case 0x2B:
                 this->recv_game_state_change(packet, length, offset);
                 break;
@@ -1352,7 +1415,7 @@ void mcbot::MCBot::recv_login_disconnect(uint8_t* packet, size_t length, size_t&
     std::cout << packet << std::endl;
     
     this->connected = false;
-    std::cout << "\tDisconnected" << std::endl;
+    log_info("Disconnected");
 
 }
 
@@ -1491,16 +1554,12 @@ void mcbot::MCBot::recv_position(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutPosition...");
 
-    double x = read_double(packet, offset);
-    double y = read_double(packet, offset);
-    double z = read_double(packet, offset);
+    mcbot::Vector<double> position = read_vector<double>(packet, offset);
     float yaw = read_float(packet, offset);
     float pitch = read_float(packet, offset);
     uint8_t flags = read_byte(packet, offset);
 
-    log_debug("X: " + std::to_string(x) +
-        "\n\tY: " + std::to_string(y) +
-        "\n\tZ: " + std::to_string(z) +
+    log_debug("Position: " + position.to_string() +
         "\n\tYaw: " + std::to_string(yaw) +
         "\n\tPitch: " + std::to_string(pitch) +
         "\n\tFlags: " + std::to_string((int)flags));
@@ -1540,23 +1599,19 @@ void mcbot::MCBot::recv_spawn_entity(uint8_t* packet, size_t length, size_t& off
 
     int entity_id = read_var_int(packet, offset);
     uint8_t type = read_byte(packet, offset);
-    int x = read_int(packet, offset);
-    int y = read_int(packet, offset);
-    int z = read_int(packet, offset);
+    mcbot::Vector<int> position = read_vector<int>(packet, offset);
     uint8_t pitch = read_byte(packet, offset);
     uint8_t yaw = read_byte(packet, offset);
     int data = read_int(packet, offset);
 
     if (data > 0)
     {
-        short mot_x = read_short(packet, offset);
-        short mot_y = read_short(packet, offset);
-        short mot_z = read_short(packet, offset);
+        mcbot::Vector<short> motion = read_vector<short>(packet, offset);
     }
 
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
-        "\n\tLocation: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+        "\n\tLocation:" + position.to_string());
 }
 
 void mcbot::MCBot::recv_entity_velocity(uint8_t* packet, size_t length, size_t& offset)
@@ -1564,13 +1619,11 @@ void mcbot::MCBot::recv_entity_velocity(uint8_t* packet, size_t length, size_t& 
     log_debug("--- Handling PacketPlayOutEntityVelocity...");
 
     int entity_id = read_var_int(packet, offset);
-    short mot_x = read_short(packet, offset);
-    short mot_y = read_short(packet, offset);
-    short mot_z = read_short(packet, offset);
+    mcbot::Vector<short> motion = read_vector<short>(packet, offset);
 
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
-        "\n\tVelocity: (" + std::to_string(mot_x) + ", " + std::to_string(mot_y) + ", " + std::to_string(mot_z) + ")");
+        "\n\tVelocity: " + motion.to_string());
 }
 
 void mcbot::MCBot::recv_entity_head_look(uint8_t* packet, size_t length, size_t& offset)
@@ -1674,6 +1727,38 @@ void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& o
     //log_debug("Loading Chunk (" << x << "," << z << ")" << std::endl;
 }
 
+void mcbot::MCBot::recv_world_particles(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("--- Handling PacketPlayOutWorldParticles...");
+
+    mcbot::ParticleType particle_id = (mcbot::ParticleType) read_int(packet, length);
+    bool long_distance = read_boolean(packet, length);
+    mcbot::Vector<float> position = read_vector<float>(packet, length);
+    mcbot::Vector<float> offset_vec = read_vector<float>(packet, length);
+    float particle_data = read_float(packet, length);
+    int particle_count = read_int(packet, length);
+
+    int data_length = 0;
+    if (particle_id == mcbot::ParticleType::ICON_CRACK)
+    {
+        data_length = 2;
+    }
+    else if (particle_id == mcbot::ParticleType::BLOCK_CRACK || particle_id == mcbot::ParticleType::BLOCK_DUST)
+    {
+        data_length = 1;
+    }
+
+    mcbot::Buffer<int> data = read_var_int_array(data_length, packet, offset);
+
+    log_debug(
+        "Particle ID: " + mcbot::to_string(particle_id) +
+        "\n\tLong Distance: " + std::to_string(long_distance) +
+        "\n\tPosition: " + position.to_string() +
+        "\n\tOffset: " + offset_vec.to_string() +
+        "\n\tParticle Data: " + std::to_string(particle_data)
+    );
+}
+
 void mcbot::MCBot::recv_game_state_change(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutGameStateChange...");
@@ -1690,18 +1775,14 @@ void mcbot::MCBot::recv_set_slot(uint8_t* packet, size_t length, size_t& offset)
 {
     log_debug("--- Handling PacketPlayOutSetSlot...");
 
-    for (int i = 0; i < length; i++)
-    {
-        std::cout << (int)packet[i] << " ";
-    }
-    std::cout << std::endl;
     uint8_t window_id = read_byte(packet, offset);
     uint16_t slot_number = read_short(packet, offset);
     mcbot::Slot slot = read_slot(packet, offset);
 
     log_debug(
         "Window ID: " + std::to_string(window_id) +
-        "\n\tSlot: " + std::to_string(slot_number)
+        "\n\tSlot Number: " + std::to_string(slot_number) +
+        "\n\tSlot: " + slot.to_string()
     );
 }
 
@@ -1748,7 +1829,8 @@ void mcbot::MCBot::recv_tile_entity_data(uint8_t* packet, size_t length, size_t&
 
     log_debug(
         "Location: " + location.to_string() +
-        "\n\tAction: " + mcbot::to_string(action)
+        "\n\tAction: " + mcbot::to_string(action) +
+        "\n\tNBT: " + nbt.to_string()
     );
 }
 

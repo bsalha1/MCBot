@@ -12,6 +12,7 @@ namespace mcbot
 	class NBT
 	{
 	private:
+		int pretty_pointer = 0;
 		std::map<std::string, char> bytes;
 		std::map<std::string, short> shorts;
 		std::map<std::string, int> ints;
@@ -40,6 +41,8 @@ namespace mcbot
 		void add_string(std::string name, std::string field);
 		void add_nbt_list(std::string name, std::list<mcbot::NBT> field);
 		void add_nbt(std::string name, mcbot::NBT field);
+
+		std::string to_string();
 
 	};
 }
