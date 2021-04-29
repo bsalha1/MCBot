@@ -140,6 +140,14 @@ namespace mcbot
 		TAG_LONG_ARRAY = 12
 	};
 
+	enum class TitleAction {
+		SET_TITLE = 0,
+		SET_SUBTITLE = 1,
+		SET_TIMES_AND_DISPLAY = 2,
+		HIDE = 3,
+		RESET = 4
+	};
+
 	enum class WorldBorderAction {
 		SET_SIZE = 0,
 		LERP_SIZE = 1,

@@ -178,7 +178,6 @@ namespace mcbot
 		void recv_entity_attributes(uint8_t* packet, size_t length, size_t& offset);
 		void recv_map_chunk(uint8_t* packet, size_t length, size_t& offset);
 		void recv_block_change(uint8_t* packet, size_t length, size_t& offset);
-		void recv_block_break(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_world_event(uint8_t* packet, size_t length, size_t& offset);

@@ -78,6 +78,19 @@ namespace mcbot
 		}
 	}
 
+	std::string to_string(mcbot::TitleAction c)
+	{
+		switch (c)
+		{
+		case mcbot::TitleAction::SET_TITLE: return "SET_TITLE";
+		case mcbot::TitleAction::SET_SUBTITLE: return "SET_SUBTITLE";
+		case mcbot::TitleAction::SET_TIMES_AND_DISPLAY: return "SET_TIMES_AND_DISPLAY";
+		case mcbot::TitleAction::HIDE: return "HIDE";
+		case mcbot::TitleAction::RESET: return "RESET";
+		default: return "UNKNOWN";
+		}
+	}
+
 	std::string to_string(mcbot::ParticleType c)
 	{
 		switch (c)

@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     char* email = argv[1];
     char* password = argv[2];
     mcbot::MCBot bot(email, password);
-    bot.set_debug(true);
+    bot.set_debug(false);
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID

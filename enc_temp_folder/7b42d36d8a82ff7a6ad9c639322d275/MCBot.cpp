@@ -1394,9 +1394,6 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
             case 0x23:
                 this->recv_block_change(packet, length, offset);
                 break;
-            case 0x25:
-                this->recv_block_break(packet, length, offset);
-                break;
             case 0x28:
                 this->recv_world_event(packet, length, offset);
                 break;
@@ -1991,19 +1988,6 @@ void mcbot::MCBot::recv_block_change(uint8_t* packet, size_t length, size_t& off
 {
     log_debug("--- Handling PacketPlayOutBlockChange...");
 
-    mcbot::Position location = read_position(packet, offset);
-    int block_id = read_var_int(packet, offset);
-
-    log_debug(
-        "Location: " + location.to_string() +
-        "\n\tBlock ID: " + std::to_string(block_id));
-}
-
-void mcbot::MCBot::recv_block_break(uint8_t* packet, size_t length, size_t& offset)
-{
-    log_debug("--- Handling PacketPlayOutBlockBreak...");
-
-    int entity_id = read_var_int(packet, offset);
     mcbot::Position location = read_position(packet, offset);
     int block_id = read_var_int(packet, offset);
 
