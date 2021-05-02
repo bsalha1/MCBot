@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     // Connect to server
     // - So we can send it packets
-    char* hostname = (char*) "moxmc.net";   
+    char* hostname = (char*) "play.reliableplugins.com";   
     char* port = (char*) "25565";
     if (bot.connect_server(hostname, port) < 0)
     {

@@ -1,6 +1,20 @@
 #include "Socket.h"
 #include "zlib.h"
 
+void write_var_int(int value, uint8_t* packet, size_t& offset)
+{
+    do
+    {
+        char temp = (char)(value & 0b01111111);
+        value >>= 7;
+        if (value != 0)
+        {
+            temp |= 0b10000000;
+        }
+        packet[offset++] = temp;
+    } while (value != 0);
+}
+
 int read_var_int(uint8_t* packet)
 {
     int num_read = 0;
@@ -140,22 +154,60 @@ int mcbot::Socket::decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* 
     return decrypted_len;
 }
 
-void mcbot::Socket::decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+int mcbot::Socket::decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
 {
     // Configure Stream
-    z_stream infstream;
-    infstream.zalloc = Z_NULL;
-    infstream.zfree = Z_NULL;
-    infstream.opaque = Z_NULL;
-    infstream.avail_in = (uInt)compressed_length;
-    infstream.next_in = (Bytef*)compressed;
-    infstream.avail_out = (uInt)decompressed_length;
-    infstream.next_out = (Bytef*)decompressed;
+    z_stream stream;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.avail_in = (uInt)compressed_length;
+    stream.next_in = (Bytef*)compressed;
+    stream.avail_out = (uInt)decompressed_length;
+    stream.next_out = (Bytef*)decompressed;
 
     // Decompress
-    inflateInit(&infstream);
-    inflate(&infstream, Z_NO_FLUSH);
-    inflateEnd(&infstream);
+    int ret = inflateInit(&stream);
+    if (ret != Z_OK)
+    {
+        return ret;
+    }
+
+    ret = inflate(&stream, Z_NO_FLUSH);
+    if (ret == Z_STREAM_ERROR)
+    {
+        return ret;
+    }
+    inflateEnd(&stream);
+    return Z_OK;
+}
+
+int mcbot::Socket::compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+{
+    // Configure Stream
+    z_stream stream;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.avail_in = (uInt)decompressed_length;
+    stream.next_in = (Bytef*)decompressed;
+    stream.avail_out = (uInt)compressed_length;
+    stream.next_out = (Bytef*)compressed;
+
+    // Compress
+    int ret = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
+    if (ret != Z_OK)
+    {
+        return ret;
+    }
+    
+    ret = deflate(&stream, Z_NO_FLUSH);
+    if (ret == Z_STREAM_ERROR)
+    {
+        return ret;
+    }
+    deflateEnd(&stream);
+    return Z_OK;
 }
 
 void mcbot::Socket::initialize_compression(int max_decompressed_length)
@@ -220,7 +272,57 @@ int mcbot::Socket::send_pack(uint8_t* packet, int length)
     {
         if (this->compression_enabled)
         {
-            // TODO
+            int data_length;
+            int packet_length;
+
+            if (length > this->max_uncompressed_length)
+            {
+                uint8_t* compressed_packet = (uint8_t *) calloc(length, sizeof(uint8_t));
+                compress(compressed_packet, length, packet, length);
+
+                uint8_t* encrypted_packet = (uint8_t*)calloc(length, sizeof(uint8_t));
+                int encrypted_length = encrypt(compressed_packet, length, encrypted_packet);
+
+                data_length = length;
+            }
+            else
+            {
+                std::cout << "Sending uncompressed encrypted" << std::endl;
+                uint8_t* encrypted_packet = (uint8_t*)calloc(length, sizeof(uint8_t));
+                int encrypted_length = encrypt(packet, length, encrypted_packet);
+
+                // Send Header
+                data_length = 0;
+                packet_length = encrypted_length + get_var_int_size(data_length);
+
+                int header_length = get_var_int_size(packet_length) + get_var_int_size(data_length);
+                uint8_t* header = (uint8_t*)calloc(header_length, sizeof(uint8_t));
+                size_t offset = 0;
+
+                write_var_int(packet_length, header, offset);
+                write_var_int(data_length, header, offset);
+                int ret = send(this->socket, (char*)header, header_length, 0);
+                
+                if (ret < 0)
+                {
+                    std::cerr << "Failed to send header packet" << std::endl;
+                    free(header);
+                    free(encrypted_packet);
+                    return ret;
+                }
+
+                ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);
+                if (ret < 0)
+                {
+                    free(header);
+                    free(encrypted_packet);
+                    return ret;
+                }
+
+                free(header);
+                free(encrypted_packet);
+                return ret;
+            }
         }
 
         char encrypted_packet[1028] = { 0 };
@@ -233,6 +335,15 @@ int mcbot::Socket::send_pack(uint8_t* packet, int length)
         {
             // TODO
         }
+
+        // Send Header
+        int header_length = get_var_int_size(length);
+        uint8_t* header = (uint8_t*)calloc(header_length, sizeof(uint8_t));
+        size_t offset = 0;
+
+        write_var_int(length, header, offset);
+        send(this->socket, (char*)header, header_length, 0);
+        free(header);
 
         return send(this->socket, (char*)packet, length, 0);
     }

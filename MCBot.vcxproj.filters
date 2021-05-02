@@ -69,9 +69,6 @@
     <ClCompile Include="EntityMetadata.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
-    <ClCompile Include="Rotation.cpp">
-      <Filter>Source Files\types</Filter>
-    </ClCompile>
     <ClCompile Include="Position.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
@@ -140,9 +137,6 @@
     <ClInclude Include="EntityMetadata.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
-    <ClInclude Include="Rotation.h">
-      <Filter>Header Files\types</Filter>
-    </ClInclude>
     <ClInclude Include="Position.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
@@ -160,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="AttributeModifier.h">
       <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

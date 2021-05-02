@@ -102,7 +102,8 @@ namespace mcbot
 		static void write_var_int(int value, uint8_t* packet, size_t packet_size, size_t& offset);
 		static size_t get_var_int_size(int value);
 		static void write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t& offset);
-		static void write_string_n(char* string, uint8_t* packet, size_t packet_size, size_t& offset);
+		static void write_string(char* string, uint8_t* packet, size_t packet_size, size_t& offset);
+		static void write_string(std::string string, uint8_t* packet, size_t packet_size, size_t& offset);
 		static void write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t& offset);
 		static void write_packet_length(uint8_t* packet, size_t packet_size, size_t& offset);
 		
@@ -130,7 +131,8 @@ namespace mcbot
 		void send_handshake(char* hostname, unsigned short port);
 		void send_login_start();
 		void send_encryption_response();
-		void send_message(char* message);
+		void send_keep_alive(int id);
+		void send_chat_message(std::string message);
 
 		int read_next_var_int();
 		int read_next_packet(int length, uint8_t* packet, int decompressed_length = 0);
@@ -147,6 +149,7 @@ namespace mcbot
 
 		// PLAY
 		void recv_play_disconnect(uint8_t* packet, size_t length, size_t& offset);
+		void recv_keep_alive(uint8_t* packet, size_t length, size_t& offset);
 		void recv_join_server(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_chat_message(uint8_t* packet, size_t size_read, size_t& offset);
 		void recv_update_time(uint8_t* packet, size_t length, size_t& offset);

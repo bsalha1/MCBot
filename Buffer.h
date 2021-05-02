@@ -21,6 +21,7 @@ namespace mcbot
 		~Buffer();
 
 		void put(T element);
+		T& get(int i);
 
 		T* get_array();
 
@@ -79,6 +80,12 @@ namespace mcbot
 	inline T* mcbot::Buffer<T>::get_array()
 	{
 		return this->arr;
+	}
+
+	template<class T>
+	inline T& mcbot::Buffer<T>::get(int i)
+	{
+		return this->arr[i];
 	}
 
 	template<class T>
