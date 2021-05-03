@@ -15,15 +15,14 @@
     <Filter Include="Source Files\encryption">
       <UniqueIdentifier>{fa5f81b5-e21a-4f3f-9942-d875cbe39389}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Source Files\minecraft">
       <UniqueIdentifier>{561d0e5d-e7ce-4c16-897f-88bdbe3e132d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\minecraft">
       <UniqueIdentifier>{fb612a50-55f1-4869-8f66-5b5471461976}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\packet">
+      <UniqueIdentifier>{cf51813a-06d8-45af-81fa-763da9247dc1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +86,12 @@
     <ClCompile Include="Color.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
+    <ClCompile Include="PacketEncoder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketDecoder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="JsonObject.h">
@@ -125,9 +130,6 @@
     <ClInclude Include="Slot.h">
       <Filter>Header Files\minecraft</Filter>
     </ClInclude>
-    <ClInclude Include="Buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NBT.h">
       <Filter>Header Files\minecraft</Filter>
     </ClInclude>
@@ -157,6 +159,15 @@
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>Header Files\minecraft</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketEncoder.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketDecoder.h">
+      <Filter>Header Files\packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

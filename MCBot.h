@@ -23,6 +23,7 @@ namespace mcbot
 	class MCBot
 	{
 	private:
+
 		// Configuration
 		bool debug;
 
@@ -57,54 +58,6 @@ namespace mcbot
 		// Runtime Minecraft Info
 		std::map<mcbot::UUID, mcbot::Player> uuid_to_player;
 		mcbot::WorldBorder world_border;
-
-		// Read Standard Values
-		static uint64_t read_long(uint8_t* packet, size_t& offset);
-		static int64_t read_var_long(uint8_t* packet, size_t& offset);
-		static uint32_t read_int(uint8_t* packet, size_t& offset);
-		static int32_t read_var_int(uint8_t* packet, size_t& offset);
-		static uint16_t read_short(uint8_t* packet, size_t& offset);
-		static uint8_t read_byte(uint8_t* bytes, size_t& offset);
-		static uint8_t peek_byte(uint8_t* packet, size_t offset);
-		static float read_float(uint8_t* packet, size_t& offset);
-		static double read_double(uint8_t* packet, size_t& offset);
-		static bool read_boolean(uint8_t* packet, size_t& offset);
-		static std::string read_string(uint8_t* packet, size_t& offset);
-		static std::string read_string(int length, uint8_t* packet, size_t& offset);
-
-		// Read Class Values
-		static mcbot::UUID read_uuid(uint8_t* packet, size_t& offset);
-		static mcbot::Slot read_slot(uint8_t* packet, size_t& offset);
-		static mcbot::Color read_color(uint8_t* packet, size_t& offset);
-		static mcbot::Particle read_particle(uint8_t* packet, size_t& offset);
-		static mcbot::Position read_position(uint8_t* packet, size_t& offset);
-		template<typename T>
-		static mcbot::Vector<T> read_vector(uint8_t* packet, size_t& offset);
-		static mcbot::VillagerData read_villager_data(uint8_t* packet, size_t& offset);
-		static mcbot::AttributeModifier read_attribute_modifier(uint8_t* packet, size_t& offset);
-		static mcbot::Attribute read_attribute(uint8_t* packet, size_t& offset);
-		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset);
-		static mcbot::NBT read_nbt_part(uint8_t* packet, size_t& offset, bool parent = true, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
-		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
-
-		// Read Array Values
-		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<int> read_var_int_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
-		static std::list<std::string> read_string_array(int length , uint8_t* packet, size_t& offset);
-		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
-		static std::list <mcbot::PlayerProperty> read_property_array(int length, uint8_t* packet, size_t& offset);
-		static std::list <mcbot::Slot> read_slot_array(int length, uint8_t* packet, size_t& offset);
-		static std::list<mcbot::NBT> read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset);
-
-		static void write_var_int(int value, uint8_t* packet, size_t& offset);
-		static size_t get_var_int_size(int value);
-		static void write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset);
-		static void write_string(char* string, uint8_t* packet, size_t& offset);
-		static void write_string(std::string string, uint8_t* packet, size_t& offset);
-		static void write_ushort(unsigned short num, uint8_t* packet, size_t& offset);
 		
 		void update_player_info(mcbot::PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 

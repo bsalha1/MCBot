@@ -157,6 +157,8 @@
     <ClCompile Include="DaftHash.cpp" />
     <ClCompile Include="Attribute.cpp" />
     <ClCompile Include="JsonObject.cpp" />
+    <ClCompile Include="PacketDecoder.cpp" />
+    <ClCompile Include="PacketEncoder.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="Position.cpp" />
     <ClCompile Include="main.cpp" />
@@ -181,6 +183,8 @@
     <ClInclude Include="Attribute.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="JsonObject.h" />
+    <ClInclude Include="PacketDecoder.h" />
+    <ClInclude Include="PacketEncoder.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="MCBot.h" />

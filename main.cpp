@@ -18,14 +18,17 @@ using namespace std::literals;
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc < 4)
     {
-        std::cerr << "Must enter username and password" << std::endl;
+        std::cerr << "Must enter username, password and IP address of server" << std::endl;
         return -1;
     }
 
     char* email = argv[1];
     char* password = argv[2];
+    char* hostname = argv[3];
+    char* port = (argc >= 5) ? argv[4] : (char*)"25565";
+
     mcbot::MCBot bot(email, password);
     bot.set_debug(false);
 
@@ -48,8 +51,6 @@ int main(int argc, char* argv[])
 
     // Connect to server
     // - So we can send it packets
-    char* hostname = (char*) "play.reliableplugins.com";   
-    char* port = (char*) "25565";
     if (bot.connect_server(hostname, port) < 0)
     {
         std::cout << "Failed to join server" << std::endl;
@@ -67,14 +68,13 @@ int main(int argc, char* argv[])
         }
     });
 
-    std::future_status status;
     do
     {
         std::string input;
         std::getline(std::cin, input);
         if (!bot.is_connected())
         {
-            return 0;
+            break;
         }
         bot.send_chat_message(input);
     } while (bot.is_connected());
