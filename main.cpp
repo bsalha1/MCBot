@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 #include <random>
+#include <thread>
+#include <future>
 
 #include "lib/httplib.h"
 #include "MCBot.h"
@@ -12,6 +14,7 @@
 #include "DaftHash.h"
 
 using namespace mcbot;
+using namespace std::literals;
 
 int main(int argc, char* argv[])
 {
@@ -56,9 +59,25 @@ int main(int argc, char* argv[])
     bot.send_handshake(hostname, atoi(port));
     bot.send_login_start();
 
-    while (bot.is_connected())
+    std::thread recv_thread([&bot]() {
+        while (bot.is_connected())
+        {
+            Sleep(1);
+            bot.recv_packet();
+        }
+    });
+
+    std::future_status status;
+    do
     {
-        Sleep(1);
-        bot.recv_packet();
-    }
+        std::string input;
+        std::getline(std::cin, input);
+        if (!bot.is_connected())
+        {
+            return 0;
+        }
+        bot.send_chat_message(input);
+    } while (bot.is_connected());
+
+    return 0;
 }

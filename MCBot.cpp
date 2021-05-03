@@ -733,7 +733,7 @@ int mcbot::MCBot::read_next_packet(int length, uint8_t* packet, int decompressed
     return bytes_read;
 }
 
-void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size, size_t& offset)
+void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t& offset)
 {
     do
     {
@@ -744,7 +744,7 @@ void mcbot::MCBot::write_var_int(int value, uint8_t* packet, size_t packet_size,
             temp |= 0b10000000;
         }
         packet[offset++] = temp;
-    } while (value != 0 && offset <= packet_size);
+    } while (value != 0);
 }
 
 size_t mcbot::MCBot::get_var_int_size(int value)
@@ -763,7 +763,7 @@ size_t mcbot::MCBot::get_var_int_size(int value)
     return size;
 }
 
-void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t& offset)
+void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset)
 {
     for (int i = 0; i < bytes_length; i++)
     {
@@ -771,10 +771,10 @@ void mcbot::MCBot::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* p
     }
 }
 
-void mcbot::MCBot::write_string(char* string, uint8_t* packet, size_t packet_size, size_t& offset)
+void mcbot::MCBot::write_string(char* string, uint8_t* packet, size_t& offset)
 {
     size_t string_length = strlen(string);
-    write_var_int(string_length, packet, packet_size, offset);
+    write_var_int(string_length, packet, offset);
 
     for (int i = 0; i < string_length; i++)
     {
@@ -782,36 +782,22 @@ void mcbot::MCBot::write_string(char* string, uint8_t* packet, size_t packet_siz
     }
 }
 
-void mcbot::MCBot::write_string(std::string string, uint8_t* packet, size_t packet_size, size_t& offset)
+void mcbot::MCBot::write_string(std::string string, uint8_t* packet, size_t& offset)
 {
     int length = string.length();
-    write_var_int(length, packet, packet_size, offset);
+    write_var_int(length, packet, offset);
 
     for (int i = 0; i < length; i++)
     {
         packet[offset++] = string[i];
     }
+    packet[offset] = 0;
 }
 
-void mcbot::MCBot::write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t& offset)
+void mcbot::MCBot::write_ushort(unsigned short num, uint8_t* packet, size_t& offset)
 {
     packet[offset++] = num >> 8;
     packet[offset++] = num & 0xFF;
-}
-
-void mcbot::MCBot::write_packet_length(uint8_t* packet, size_t packet_size, size_t& offset)
-{
-    int length = offset;
-    int packet_length_size = get_var_int_size(length);
-
-    for (int i = length - 1; i >= 0; i--)
-    {
-        packet[i + packet_length_size] = packet[i];
-    }
-
-    offset += packet_length_size;
-    size_t offset2 = 0;
-    write_var_int(length, packet, sizeof(packet), offset2);
 }
 
 void mcbot::MCBot::update_player_info(mcbot::PlayerInfoAction action, int length, uint8_t* packet, size_t& offset)
@@ -949,22 +935,26 @@ void mcbot::MCBot::log_debug(std::string message)
         return;
     }
 
-    std::cout << "[DEBUG] " << message << std::endl;
+    std::cout << "\33[2K\r" << "[DEBUG] " << message << std::endl;
+    std::cout << "> ";
 }
 
 void mcbot::MCBot::log_error(std::string message)
 {
-    std::cout << "[ERROR] " << message << std::endl;
+    std::cout << "\33[2K\r" << "[ERROR] " << message << std::endl;
+    std::cout << "> ";
 }
 
 void mcbot::MCBot::log_info(std::string message)
 {
-    std::cout << "[INFO] " << message << std::endl;
+    std::cout << "\33[2K\r" << "[INFO] " << message << std::endl;
+    std::cout << "> ";
 }
 
 void mcbot::MCBot::log_chat(std::string message)
 {
-    std::cout << "[CHAT] " << message << std::endl;
+    std::cout << "\33[2K\r" << "[CHAT] " << message << std::endl;
+    std::cout << "> ";
 }
 
 void mcbot::MCBot::set_debug(bool debug)
@@ -1100,11 +1090,11 @@ void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
     uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x00, packet, sizeof(packet), offset); // packet id
-    write_var_int(47, packet, sizeof(packet), offset);   // protocol version
-    write_string(hostname, packet, sizeof(packet), offset); // hostname
-    write_ushort(port, packet, sizeof(packet), offset); // port
-    write_var_int(2, packet, sizeof(packet), offset);   // next state
+    write_var_int(0x00, packet, offset); // packet id
+    write_var_int(47, packet, offset);   // protocol version
+    write_string(hostname, packet, offset); // hostnamWSe
+    write_ushort(port, packet, offset); // port
+    write_var_int(2, packet, offset);   // next state
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
@@ -1121,8 +1111,8 @@ void mcbot::MCBot::send_login_start()
     uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x00, packet, sizeof(packet), offset); // packet id
-    write_string((char*) this->username.c_str(), packet, sizeof(packet), offset); // username
+    write_var_int(0x00, packet, offset); // packet id
+    write_string((char*) this->username.c_str(), packet, offset); // username
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
@@ -1195,13 +1185,13 @@ void mcbot::MCBot::send_encryption_response()
     uint8_t packet[1028];
     size_t offset = 0;
 
-    write_var_int(0x01, packet, sizeof(packet), offset); // packet id
+    write_var_int(0x01, packet, offset); // packet id
 
-    write_var_int(encrypted_shared_secret_len, packet, sizeof(packet), offset); // shared secret length
-    write_byte_array(encrypted_shared_secret, encrypted_shared_secret_len, packet, sizeof(packet), offset); // shared secret
+    write_var_int(encrypted_shared_secret_len, packet, offset); // shared secret length
+    write_byte_array(encrypted_shared_secret, encrypted_shared_secret_len, packet, offset); // shared secret
 
-    write_var_int(encrypted_verify_token_len, packet, sizeof(packet), offset); // verify token length
-    write_byte_array(encrypted_verify_token, encrypted_verify_token_len, packet, sizeof(packet), offset); // verify token
+    write_var_int(encrypted_verify_token_len, packet, offset); // verify token length
+    write_byte_array(encrypted_verify_token, encrypted_verify_token_len, packet, offset); // verify token
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
@@ -1220,29 +1210,32 @@ void mcbot::MCBot::send_keep_alive(int id)
 {
     log_debug(">>> Sending PacketPlayInKeepAlive...");
 
-    uint8_t packet[1028];
+    int packet_id = 0x00;
+    uint8_t* packet = new uint8_t[get_var_int_size(id) + get_var_int_size(packet_id)];
     size_t offset = 0;
 
-    write_var_int(0x00, packet, sizeof(packet), offset); // packet id
-    write_var_int(id, packet, sizeof(packet), offset);
+    write_var_int(packet_id, packet, offset); // packet id
+    write_var_int(id, packet, offset);
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
         log_error("Failed to send packet");
         print_winsock_error();
     }
+
+    delete[] packet;
 }
 
 void mcbot::MCBot::send_chat_message(std::string message)
 {
     log_debug(">>> Sending PacketPlayInChat...");
 
-    uint8_t packet[1028];
+    int packet_id = 0x01;
+    uint8_t* packet = new uint8_t[message.length() + get_var_int_size(message.length()) + 1 + get_var_int_size(packet_id)]{ 0 };
     size_t offset = 0;
 
-    write_var_int(0x01, packet, sizeof(packet), offset); // packet id
-
-    write_string(message, packet, sizeof(packet), offset);
+    write_var_int(packet_id, packet, offset); 
+    write_string(message, packet, offset);
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
@@ -1251,8 +1244,10 @@ void mcbot::MCBot::send_chat_message(std::string message)
     }
     else
     {
-        log_chat("Sent: " + message);
+        log_debug("Message: " + message);
     }
+
+    delete[] packet;
 }
 
 void mcbot::MCBot::recv_packet()
@@ -1576,7 +1571,7 @@ void mcbot::MCBot::recv_play_disconnect(uint8_t* packet, size_t length, size_t& 
     std::string reason = read_string(packet, offset);
     this->connected = false;
 
-    log_debug("Reason: " + reason);
+    log_info("Disconnected: " + reason);
 }
 
 void mcbot::MCBot::recv_keep_alive(uint8_t* packet, size_t length, size_t& offset)

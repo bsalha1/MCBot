@@ -131,7 +131,7 @@ int mcbot::Socket::encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* 
 {
     int len;
     int encrypted_len;
-    if (1 != EVP_EncryptUpdate(encrypt_ctx, encrypted_text, &len, decrypted_text, decrypted_len))
+    if (EVP_EncryptUpdate(encrypt_ctx, encrypted_text, &len, decrypted_text, decrypted_len) != 1)
     {
         std::cerr << "EVP_EncryptUpdate error" << std::endl;
     }
@@ -145,7 +145,7 @@ int mcbot::Socket::decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* 
 {
     int len;
     int decrypted_len;
-    if (1 != EVP_DecryptUpdate(decrypt_ctx, decrypted_text, &len, encrypted_text, encrypted_len))
+    if (EVP_DecryptUpdate(decrypt_ctx, decrypted_text, &len, encrypted_text, encrypted_len) != 1)
     {
         std::cerr << "EVP_DecryptUpdate error" << std::endl;
     }
@@ -287,40 +287,56 @@ int mcbot::Socket::send_pack(uint8_t* packet, int length)
             }
             else
             {
-                std::cout << "Sending uncompressed encrypted" << std::endl;
-                uint8_t* encrypted_packet = (uint8_t*)calloc(length, sizeof(uint8_t));
-                int encrypted_length = encrypt(packet, length, encrypted_packet);
-
-                // Send Header
+                // Create Header
                 data_length = 0;
-                packet_length = encrypted_length + get_var_int_size(data_length);
+                packet_length = get_var_int_size(data_length) + length;
 
                 int header_length = get_var_int_size(packet_length) + get_var_int_size(data_length);
-                uint8_t* header = (uint8_t*)calloc(header_length, sizeof(uint8_t));
+                uint8_t* header = new uint8_t[header_length]{ 0 };
                 size_t offset = 0;
 
                 write_var_int(packet_length, header, offset);
                 write_var_int(data_length, header, offset);
-                int ret = send(this->socket, (char*)header, header_length, 0);
-                
+
+                // Encrypt Header
+                uint8_t* encrypted_header = new uint8_t[header_length]{ 0 };
+                int encrypted_header_length = encrypt(header, header_length, encrypted_header);
+
+                // Encrypt Data
+                uint8_t* encrypted_packet = new uint8_t[length]{ 0 };
+                int encrypted_length = encrypt(packet, length, encrypted_packet);
+
+                // Put Header on Top of Data
+                uint8_t* full_packet = new uint8_t[encrypted_header_length + encrypted_length]{ 0 };
+                for (int i = 0; i < encrypted_header_length + encrypted_length; i++)
+                {
+                    if (i < encrypted_header_length)
+                    {
+                        full_packet[i] = encrypted_header[i];
+                    }
+                    else
+                    {
+                        full_packet[i] = encrypted_packet[i - encrypted_header_length];
+                    }
+                }
+
+
+                // Send Header //
+                int ret = send(this->socket, (char*)full_packet, encrypted_header_length + encrypted_length, 0);
                 if (ret < 0)
                 {
                     std::cerr << "Failed to send header packet" << std::endl;
-                    free(header);
-                    free(encrypted_packet);
+                    delete[] header;
+                    delete[] encrypted_header;
+                    delete[] encrypted_packet;
+                    delete[] full_packet;
                     return ret;
                 }
 
-                ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);
-                if (ret < 0)
-                {
-                    free(header);
-                    free(encrypted_packet);
-                    return ret;
-                }
-
-                free(header);
-                free(encrypted_packet);
+                delete[] header;
+                delete[] encrypted_header;
+                delete[] encrypted_packet;
+                delete[] full_packet;
                 return ret;
             }
         }

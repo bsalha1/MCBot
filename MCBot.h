@@ -99,13 +99,12 @@ namespace mcbot
 		static std::list <mcbot::Slot> read_slot_array(int length, uint8_t* packet, size_t& offset);
 		static std::list<mcbot::NBT> read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset);
 
-		static void write_var_int(int value, uint8_t* packet, size_t packet_size, size_t& offset);
+		static void write_var_int(int value, uint8_t* packet, size_t& offset);
 		static size_t get_var_int_size(int value);
-		static void write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t packet_size, size_t& offset);
-		static void write_string(char* string, uint8_t* packet, size_t packet_size, size_t& offset);
-		static void write_string(std::string string, uint8_t* packet, size_t packet_size, size_t& offset);
-		static void write_ushort(unsigned short num, uint8_t* packet, size_t packet_size, size_t& offset);
-		static void write_packet_length(uint8_t* packet, size_t packet_size, size_t& offset);
+		static void write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset);
+		static void write_string(char* string, uint8_t* packet, size_t& offset);
+		static void write_string(std::string string, uint8_t* packet, size_t& offset);
+		static void write_ushort(unsigned short num, uint8_t* packet, size_t& offset);
 		
 		void update_player_info(mcbot::PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 
