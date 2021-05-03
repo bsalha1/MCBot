@@ -7,7 +7,6 @@
 #include "PacketEncoder.h"
 
 #include "StringUtils.h"
-#include "JsonObject.h"
 #include "DaftHash.h"
 #include "base64.h"
 
@@ -262,12 +261,12 @@ int mcbot::MCBot::login_mojang()
     auto response = cli.Post("/authenticate", content, "application/json");
 
     // Read Response //
-    auto response_json = mcbot::JsonObject::serialize(response->body);
-    this->access_token = response_json.get_string("accessToken");
+    auto response_json = nlohmann::json::parse(response->body);
+    this->access_token = response_json["accessToken"];
     
-    auto selected_profile = response_json.get_object("selectedProfile");
-    this->username = selected_profile.get_string("name");
-    this->uuid = selected_profile.get_string("id");
+    auto selected_profile = response_json["selectedProfile"];
+    this->username = selected_profile["name"];
+    this->uuid = selected_profile["id"];
 
     std::cout << "Logged into Mojang account:" << std::endl
         << "\tAccount resolved to " << this->username << std::endl;

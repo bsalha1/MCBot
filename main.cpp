@@ -10,7 +10,6 @@
 
 #include "lib/httplib.h"
 #include "MCBot.h"
-#include "JsonObject.h"
 #include "DaftHash.h"
 
 using namespace mcbot;
