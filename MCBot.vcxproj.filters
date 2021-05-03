@@ -24,6 +24,9 @@
     <Filter Include="Header Files\packet">
       <UniqueIdentifier>{cf51813a-06d8-45af-81fa-763da9247dc1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\packet">
+      <UniqueIdentifier>{e3912cae-e53f-4fa9-a138-dae8fa5ba8a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,9 +36,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MCBot.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Statistic.cpp">
@@ -86,11 +86,14 @@
     <ClCompile Include="Color.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
-    <ClCompile Include="PacketEncoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PacketDecoder.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketEncoder.cpp">
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="Socket.cpp">
+      <Filter>Source Files\packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,9 +101,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MCBot.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Socket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Enums.h">
@@ -167,6 +167,9 @@
       <Filter>Header Files\packet</Filter>
     </ClInclude>
     <ClInclude Include="PacketDecoder.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Socket.h">
       <Filter>Header Files\packet</Filter>
     </ClInclude>
   </ItemGroup>

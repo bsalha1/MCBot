@@ -16,18 +16,11 @@ void mcbot::PacketEncoder::write_var_int(int value, uint8_t* packet, size_t& off
 
 size_t mcbot::PacketEncoder::get_var_int_size(int value)
 {
-    size_t size = 0;
-    do
+    if (value == 0)
     {
-        char temp = (char)(value & 0b01111111);
-        value >>= 7;
-        if (value != 0)
-        {
-            temp |= 0b10000000;
-        }
-        size++;
-    } while (value != 0);
-    return size;
+        return 1;
+    }
+    return floor(log(value) / log(128)) + 1;
 }
 
 void mcbot::PacketEncoder::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset)

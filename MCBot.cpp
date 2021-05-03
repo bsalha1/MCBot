@@ -39,8 +39,6 @@ static std::string get_random_hex_bytes(std::size_t num_bytes)
     return out;
 }
 
-
-
 int mcbot::MCBot::read_next_var_int()
 {
     int num_read = 0;
@@ -81,12 +79,6 @@ int mcbot::MCBot::read_next_packet(int length, uint8_t* packet, int decompressed
         packet = NULL;
         return bytes_read;
     }
-    //else if (bytes_read > length)
-    //{
-    //    std::cerr << "Received packet of length " << bytes_read << " vs. " << length << " expected" << std::endl;
-        //packet = NULL;
-    //    return;
-    //}
     log_debug("Received Packet: " + std::to_string(bytes_read) + "bytes");
 
     return bytes_read;
@@ -214,10 +206,7 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
 
 mcbot::MCBot::~MCBot()
 {
-    /*if (this->public_key != nullptr)
-    {
-        free(this->public_key);
-    }*/
+
 }
 
 void mcbot::MCBot::log_debug(std::string message)
@@ -289,16 +278,20 @@ int mcbot::MCBot::login_mojang()
 int mcbot::MCBot::verify_access_token()
 {
     // Payload //
-    char content_format[] = 
+    const char *content_format = 
         "{"
             "\"accessToken\" : \"%s\""
         "}\r\n";
-    char content[1024] = { 0 };
-    sprintf_s(content, content_format, this->access_token.c_str());
+
+    int content_length = strlen(content_format) + this->access_token.length();
+    char* content = new char[content_length] {0};
+    sprintf_s(content, content_length, content_format, this->access_token.c_str());
 
     // Send Payload //
     httplib::Client cli("https://authserver.mojang.com");
     auto response = cli.Post("/validate", content, "application/json");
+
+    delete[] content;
 
     // If response is 204 then the access token is valid
     return response->status == 204 ? 0 : -1;
@@ -317,18 +310,22 @@ int mcbot::MCBot::send_session()
     
 
     // Payload //
-    char content_format[] =
+    const char* content_format =
         "{"
             "\"accessToken\" : \"%s\","
             "\"selectedProfile\": \"%s\","
             "\"serverId\": \"%s\""
         "}\r\n";
-    char content[1024] = { 0 };
-    sprintf_s(content, content_format, this->access_token.c_str(), this->uuid.c_str(), hash.c_str());
+
+    int content_length = strlen(content_format) + this->access_token.length() + this->uuid.length() + hash.length();
+    char* content = new char[content_length] {0};
+    sprintf_s(content, content_length, content_format, this->access_token.c_str(), this->uuid.c_str(), hash.c_str());
 
     // Send Payload //
     httplib::Client cli("https://sessionserver.mojang.com");
     auto response = cli.Post("/session/minecraft/join", content, "application/json");
+
+    delete[] content;
 
     // If response is 204 then session is valid
     return response->status == 204 ? 0 : -1;
@@ -384,9 +381,9 @@ void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
 
     PacketEncoder::write_var_int(0x00, packet, offset); // packet id
     PacketEncoder::write_var_int(47, packet, offset);   // protocol version
-    PacketEncoder::write_string(hostname, packet, offset); // hostnamWSe
+    PacketEncoder::write_string(hostname, packet, offset); // hostname
     PacketEncoder::write_ushort(port, packet, offset); // port
-    PacketEncoder::write_var_int(2, packet, offset);   // next state
+    PacketEncoder::write_var_int((int)mcbot::State::LOGIN, packet, offset); // next state
 
     if (this->sock.send_pack(packet, offset) <= 0)
     {
