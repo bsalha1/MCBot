@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     char* hostname = argv[3];
     char* port = (argc >= 5) ? argv[4] : (char*)"25565";
 
-    mcbot::MCBot bot(email, password);
+    MCBot bot(email, password);
     bot.set_debug(false);
 
     // Log in to Mojang auth servers
@@ -67,6 +67,36 @@ int main(int argc, char* argv[])
         }
     });
 
+    std::thread tick_thread([&bot]() {
+
+        Sleep(2000);
+
+        std::cout << "Sending settings" << std::endl;
+        bot.send_settings();
+        bot.send_held_item_slot(0);
+        bot.send_custom_payload("vanilla");
+
+        std::cout << "Sending positions" << std::endl;
+        bot.send_position(bot.get_player().get_position(), true);
+        bot.send_position(bot.get_player().get_position(), true);
+
+        double angle = 0;
+        while (bot.is_connected())
+        {
+            double x = 0.2*cos(angle);
+            double y = 0.2*sin(angle);
+            bot.send_position_look(bot.get_player().get_position().sum(x, 0, y), angle / 3.14 * 180, 0, true);
+            Sleep(50);
+
+            angle += 3.14 / 20.0;
+
+            if (angle >= 2 * 3.14)
+            {
+                angle = 0;
+            }
+        }
+    });
+
     do
     {
         std::string input;
@@ -76,7 +106,9 @@ int main(int argc, char* argv[])
             break;
         }
         bot.send_chat_message(input);
+
     } while (bot.is_connected());
+
 
     return 0;
 }

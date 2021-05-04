@@ -51,15 +51,17 @@ namespace mcbot
 
 
 		// Connection Info
-		mcbot::Socket sock;
+		Socket sock;
 		bool connected;
-		mcbot::State state;
+		bool ready;
+		State state;
+		Player player;
 
 		// Runtime Minecraft Info
-		std::map<mcbot::UUID, mcbot::Player> uuid_to_player;
-		mcbot::WorldBorder world_border;
+		std::map<UUID, Player> uuid_to_player;
+		WorldBorder world_border;
 		
-		void update_player_info(mcbot::PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
+		void update_player_info(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 
 	public:
 		MCBot(std::string email, std::string password);
@@ -85,6 +87,12 @@ namespace mcbot
 		void send_encryption_response();
 		void send_keep_alive(int id);
 		void send_chat_message(std::string message);
+		void send_position(Vector<double> position, bool on_ground);
+		void send_look(float yaw, float pitch, bool on_ground);
+		void send_position_look(Vector<double> position, float yaw, float pitch, bool on_ground);
+		void send_held_item_slot(short slot);
+		void send_settings();
+		void send_custom_payload(std::string message);
 
 		int read_next_var_int();
 		int read_next_packet(int length, uint8_t* packet, int decompressed_length = 0);
@@ -132,6 +140,7 @@ namespace mcbot
 		void recv_experience(uint8_t* packet, size_t length, size_t& offset);
 		void recv_entity_attributes(uint8_t* packet, size_t length, size_t& offset);
 		void recv_map_chunk(uint8_t* packet, size_t length, size_t& offset);
+		void recv_multi_block_change(uint8_t* packet, size_t length, size_t& offset);
 		void recv_block_change(uint8_t* packet, size_t length, size_t& offset);
 		void recv_block_break(uint8_t* packet, size_t length, size_t& offset);
 		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
@@ -158,7 +167,9 @@ namespace mcbot
 		void recv_player_list_header_footer(uint8_t* packet, size_t size_read, size_t& offset);
 
 		bool is_connected();
+		bool is_ready();
 		bool is_encrypted();
+		Player get_player();
 	};
 }
 

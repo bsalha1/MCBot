@@ -6,6 +6,7 @@
 #include "PlayerProperty.h"
 #include "UUID.h"
 #include "Enums.h"
+#include "Vector.h"
 
 namespace mcbot
 {
@@ -14,29 +15,42 @@ namespace mcbot
 	private:
 		mcbot::UUID uuid;
 		std::string name;
-		std::list<mcbot::PlayerProperty> properties;
+		std::list<PlayerProperty> properties;
 		mcbot::Gamemode gamemode;
 		int ping; // in milliseconds
-		bool has_a_display_name;
 		std::string display_name;
 
+		Vector<double> position;
+		float yaw;
+		float pitch;
+
 	public:
-		Player(mcbot::UUID uuid, std::string name,
-			std::list<mcbot::PlayerProperty> properties,
-			mcbot::Gamemode gamemode,
-			int ping, bool has_a_display_name, std::string display_name);
+		Player(UUID uuid, std::string name,
+			std::list<PlayerProperty> properties,
+			Gamemode gamemode,
+			int ping, std::string display_name);
 
 		Player(mcbot::UUID uuid);
 
 		Player();
 
-		void set_gamemode(mcbot::Gamemode gamemode);
+		void update_position(mcbot::Vector<double> position);
+
+		void update_rotation(float yaw, float pitch);
+
+		void set_gamemode(Gamemode gamemode);
 
 		void set_ping(int ping);
 
 		void set_display_name(std::string display_name);
 
-		mcbot::UUID get_uuid();
+		void set_name(std::string name);
+
+		void set_uuid(UUID uuid);
+
+		void set_properties(std::list<PlayerProperty> properties);
+
+		UUID get_uuid();
 
 		std::string get_name();
 
@@ -44,7 +58,13 @@ namespace mcbot
 
 		mcbot::Gamemode get_gamemode();
 
+		mcbot::Vector<double> get_position();
+
 		int get_ping();
+
+		float get_pitch();
+
+		float get_yaw();
 
 		bool has_display_name();
 

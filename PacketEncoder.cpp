@@ -54,8 +54,57 @@ void mcbot::PacketEncoder::write_string(std::string string, uint8_t* packet, siz
     packet[offset] = 0;
 }
 
-void mcbot::PacketEncoder::write_ushort(unsigned short num, uint8_t* packet, size_t& offset)
+void mcbot::PacketEncoder::write_boolean(bool value, uint8_t* packet, size_t& offset)
 {
-    packet[offset++] = num >> 8;
-    packet[offset++] = num & 0xFF;
+    if (value)
+    {
+        packet[offset++] = 1;
+    }
+    else
+    {
+        packet[offset++] = 0;
+    }
+}
+
+void mcbot::PacketEncoder::write_byte(uint8_t num, uint8_t* packet, size_t& offset)
+{
+    packet[offset++] = (num >> 0) & 0xFF;
+}
+
+void mcbot::PacketEncoder::write_short(uint16_t num, uint8_t* packet, size_t& offset)
+{
+    packet[offset++] = (num >> 8) & 0xFF;
+    packet[offset++] = (num >> 0) & 0xFF;
+}
+
+void mcbot::PacketEncoder::write_int(uint32_t num, uint8_t* packet, size_t& offset)
+{
+    packet[offset++] = (num >> 24) & 0xFF;
+    packet[offset++] = (num >> 16) & 0xFF;
+    packet[offset++] = (num >> 8) & 0xFF;
+    packet[offset++] = (num >> 0) & 0xFF;
+}
+
+void mcbot::PacketEncoder::write_long(uint64_t num, uint8_t* packet, size_t& offset)
+{
+    packet[offset++] = (num >> 56) & 0xFF;
+    packet[offset++] = (num >> 48) & 0xFF;
+    packet[offset++] = (num >> 40) & 0xFF;
+    packet[offset++] = (num >> 32) & 0xFF;
+    packet[offset++] = (num >> 24) & 0xFF;
+    packet[offset++] = (num >> 16) & 0xFF;
+    packet[offset++] = (num >> 8) & 0xFF;
+    packet[offset++] = (num >> 0) & 0xFF;
+}
+
+void mcbot::PacketEncoder::write_double(double num, uint8_t* packet, size_t& offset)
+{
+    uint64_t bytes = *((uint64_t*)&num);
+    write_long(bytes, packet, offset);
+}
+
+void mcbot::PacketEncoder::write_float(float num, uint8_t* packet, size_t& offset)
+{
+    uint32_t bytes = *((uint32_t*)&num);
+    write_int(bytes, packet, offset);
 }

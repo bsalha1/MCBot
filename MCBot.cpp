@@ -103,9 +103,17 @@ void mcbot::MCBot::update_player_info(mcbot::PlayerInfoAction action, int length
             mcbot::Gamemode gamemode = (mcbot::Gamemode) PacketDecoder::read_var_int(packet, offset);
             int ping = PacketDecoder::read_var_int(packet, offset);
             bool has_display_name = PacketDecoder::read_boolean(packet, offset);
-            std::string display_name = has_display_name ? PacketDecoder::read_string(packet, offset) : "";
+            std::string display_name = has_display_name ? PacketDecoder::read_string(packet, offset) : name;
 
-            player = mcbot::Player(uuid, name, properties, gamemode, ping, has_display_name, display_name);
+            player = mcbot::Player(uuid, name, properties, gamemode, ping, display_name);
+
+            if (name == this->username)
+            {
+                this->player.set_properties(properties);
+                this->player.set_gamemode(gamemode);
+                this->player.set_ping(ping);
+                this->player.set_display_name(display_name);
+            }
             
             this->uuid_to_player.insert(std::pair<mcbot::UUID, mcbot::Player>(uuid, player));
 
@@ -188,6 +196,7 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
 
     this->debug = false;
     this->connected = false;
+    this->ready = false;
     this->encryption_enabled = false;
     this->compression_enabled = false;
     this->uuid_to_player = std::map<mcbot::UUID, mcbot::Player>();
@@ -205,7 +214,8 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
 
 mcbot::MCBot::~MCBot()
 {
-
+    delete[] this->verify_token;
+    delete[] this->public_key;
 }
 
 void mcbot::MCBot::log_debug(std::string message)
@@ -381,7 +391,7 @@ void mcbot::MCBot::send_handshake(char* hostname, unsigned short port)
     PacketEncoder::write_var_int(0x00, packet, offset); // packet id
     PacketEncoder::write_var_int(47, packet, offset);   // protocol version
     PacketEncoder::write_string(hostname, packet, offset); // hostname
-    PacketEncoder::write_ushort(port, packet, offset); // port
+    PacketEncoder::write_short(port, packet, offset); // port
     PacketEncoder::write_var_int((int)mcbot::State::LOGIN, packet, offset); // next state
 
     if (this->sock.send_pack(packet, offset) <= 0)
@@ -434,7 +444,7 @@ void mcbot::MCBot::send_encryption_response()
     }
 
     int pem_formatted_size = strlen(pem_format) + temp.length() - 2;
-    char* pem_formatted = (char*) malloc(pem_formatted_size);
+    char* pem_formatted = new char[pem_formatted_size] {0};
     sprintf_s(pem_formatted, pem_formatted_size, pem_format, temp.c_str());
 
     // Get RSA corresponding to PEM
@@ -446,7 +456,8 @@ void mcbot::MCBot::send_encryption_response()
         printf("ERROR: Could not load PUBLIC KEY! PEM_PacketDecoder::read_bio_RSA_PUBKEY FAILED: %s\n", ERR_error_string(ERR_get_error(), NULL));
     }
     BIO_free(bio);
-    free(pem_formatted);
+
+    delete[] pem_formatted;
 
     if (this->debug)
     {
@@ -538,6 +549,152 @@ void mcbot::MCBot::send_chat_message(std::string message)
     delete[] packet;
 }
 
+void mcbot::MCBot::send_position(Vector<double> position, bool on_ground)
+{
+    log_debug(">>> Sending PacketPlayInPosition...");
+
+
+    int packet_id = 0x04;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_double(position.get_x(), packet, offset);
+    PacketEncoder::write_double(position.get_y(), packet, offset);
+    PacketEncoder::write_double(position.get_z(), packet, offset);
+    PacketEncoder::write_boolean(on_ground, packet, offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+
+    // Internal updates
+    this->player.update_position(position);
+}
+
+void mcbot::MCBot::send_look(float yaw, float pitch, bool on_ground)
+{
+    log_debug(">>> Sending PacketPlayInLook...");
+
+    int packet_id = 0x05;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_float(yaw, packet, offset);
+    PacketEncoder::write_float(pitch, packet, offset);
+    PacketEncoder::write_boolean(on_ground, packet, offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+
+    // Internal updates
+    this->player.update_rotation(yaw, pitch);
+}
+
+void mcbot::MCBot::send_position_look(Vector<double> position, float yaw, float pitch, bool on_ground)
+{
+    log_debug(">>> Sending PacketPlayInPositionLook...");
+
+    int packet_id = 0x06;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_double(position.get_x(), packet, offset);
+    PacketEncoder::write_double(position.get_y(), packet, offset);
+    PacketEncoder::write_double(position.get_z(), packet, offset);
+    PacketEncoder::write_float(yaw, packet, offset);
+    PacketEncoder::write_float(pitch, packet, offset);
+    PacketEncoder::write_boolean(on_ground, packet, offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+
+    // Internal updates
+    this->player.update_position(position);
+    this->player.update_rotation(yaw, pitch);
+}
+
+void mcbot::MCBot::send_held_item_slot(short slot)
+{
+    log_debug(">>> Sending PacketPlayInHeldItemSlot...");
+
+    int packet_id = 0x09;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_short(slot, packet, offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::MCBot::send_settings()
+{
+    log_debug(">>> Sending PacketPlayInSettings...");
+
+    int packet_id = 0x15;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_string("en_us", packet, offset);
+    PacketEncoder::write_byte(16, packet, offset); // render distance
+    PacketEncoder::write_byte(0, packet, offset); // chat mode
+    PacketEncoder::write_boolean(true, packet, offset); // chat colors
+    PacketEncoder::write_byte(0x7F, packet, offset); // skin parts
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::MCBot::send_custom_payload(std::string message)
+{
+    log_debug(">>> Sending PacketPlayInCustomPayload...");
+
+    int packet_id = 0x17;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_string(message, packet, offset);
+
+    if (this->sock.send_pack(packet, offset) <= 0)
+    {
+        log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+
 void mcbot::MCBot::recv_packet()
 {
     int length = this->read_next_var_int();
@@ -575,15 +732,15 @@ void mcbot::MCBot::recv_packet()
 
 void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length, size_t& offset)
 {
-    if (this->state == mcbot::State::HANDSHAKE)
+    if (this->state == State::HANDSHAKE)
     {
 
     }
-    else if (this->state == mcbot::State::STATUS)
+    else if (this->state == State::STATUS)
     {
 
     }
-    else if (this->state == mcbot::State::LOGIN)
+    else if (this->state == State::LOGIN)
     {
         switch (packet_id)
         {
@@ -603,7 +760,7 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
                 log_error("Unhandled " + mcbot::to_string(this->state) + " packet id: " + std::to_string(packet_id));
         }
     }
-    else if (this->state == mcbot::State::PLAY)
+    else if (this->state == State::PLAY)
     {
         switch (packet_id)
         {
@@ -700,6 +857,9 @@ void mcbot::MCBot::handle_recv_packet(int packet_id, uint8_t* packet, int length
             case 0x21:
                 this->recv_map_chunk(packet, length, offset);
                 break;
+            case 0x22:
+                this->recv_multi_block_change(packet, length, offset);
+                break;
             case 0x23:
                 this->recv_block_change(packet, length, offset);
                 break;
@@ -793,7 +953,6 @@ void mcbot::MCBot::recv_login_disconnect(uint8_t* packet, size_t length, size_t&
     
     this->connected = false;
     log_info("Disconnected");
-
 }
 
 void mcbot::MCBot::recv_set_compression(uint8_t* packet, size_t length, size_t& offset)
@@ -816,12 +975,12 @@ void mcbot::MCBot::recv_encryption_request(uint8_t* packet, size_t length, size_
 
     // Public Key //
     this->public_key_length = PacketDecoder::read_var_int(packet, offset);
-    this->public_key = (uint8_t*)calloc(public_key_length, sizeof(uint8_t));
+    this->public_key = new uint8_t[public_key_length];
     PacketDecoder::read_byte_array(this->public_key, public_key_length, packet, offset);
 
     // Verify Token //
     this->verify_token_length = PacketDecoder::read_var_int(packet, offset);
-    this->verify_token = (uint8_t*)calloc(verify_token_length, sizeof(uint8_t));
+    this->verify_token = new uint8_t[verify_token_length];
     PacketDecoder::read_byte_array(this->verify_token, verify_token_length, packet, offset);
 
     // Save Session //
@@ -869,6 +1028,8 @@ void mcbot::MCBot::recv_keep_alive(uint8_t* packet, size_t length, size_t& offse
     int id = PacketDecoder::read_var_int(packet, offset);
 
     send_keep_alive(id);
+
+    this->ready = true;
 }
 
 void mcbot::MCBot::recv_join_server(uint8_t* packet, size_t length, size_t& offset)
@@ -978,6 +1139,9 @@ void mcbot::MCBot::recv_position(uint8_t* packet, size_t length, size_t& offset)
     log_debug("<<< Handling PacketPlayOutPosition...");
 
     mcbot::Vector<double> position = PacketDecoder::read_vector<double>(packet, offset);
+
+    this->player.update_position(position);
+
     float yaw = PacketDecoder::read_float(packet, offset);
     float pitch = PacketDecoder::read_float(packet, offset);
     uint8_t flags = PacketDecoder::read_byte(packet, offset);
@@ -1317,16 +1481,36 @@ void mcbot::MCBot::recv_map_chunk(uint8_t* packet, size_t length, size_t& offset
 {
     log_debug("<<< Handling PacketPlayOutMapChunk...");
 
-    int x = PacketDecoder::read_int(packet, offset);
-    int z = PacketDecoder::read_int(packet, offset);
+    int chunk_x = PacketDecoder::read_int(packet, offset);
+    int chunk_z = PacketDecoder::read_int(packet, offset);
     bool ground_up_continuous = PacketDecoder::read_boolean(packet, offset);
     uint16_t primary_bitmask = PacketDecoder::read_short(packet, offset);
     int data_size = PacketDecoder::read_var_int(packet, offset);
     mcbot::Buffer<char> chunk_data = PacketDecoder::read_byte_array(data_size, packet, offset);
 
     log_debug(
-        "X: " + std::to_string(x) +
-        "\n\tZ: " + std::to_string(z));
+        "X: " + std::to_string(chunk_x) +
+        "\n\tZ: " + std::to_string(chunk_z));
+}
+
+void mcbot::MCBot::recv_multi_block_change(uint8_t* packet, size_t length, size_t& offset)
+{
+    log_debug("<<< Handling PacketPlayOutMultiBlockChange...");
+
+    int chunk_x = PacketDecoder::read_int(packet, offset);
+    int chunk_z = PacketDecoder::read_int(packet, offset);
+    int record_count = PacketDecoder::read_var_int(packet, offset);
+
+    for (int i = 0; i < record_count; i++)
+    {
+        uint8_t horizontal_position = PacketDecoder::read_byte(packet, offset);
+        uint8_t y_coordinate = PacketDecoder::read_byte(packet, offset);
+        int block_id = PacketDecoder::read_var_int(packet, offset);
+    }
+
+    log_debug(
+        "X: " + std::to_string(chunk_x) +
+        "\n\tZ: " + std::to_string(chunk_z));
 }
 
 void mcbot::MCBot::recv_block_change(uint8_t* packet, size_t length, size_t& offset)
@@ -1834,8 +2018,18 @@ bool mcbot::MCBot::is_connected()
     return this->connected;
 }
 
+bool mcbot::MCBot::is_ready()
+{
+    return this->ready;
+}
+
 bool mcbot::MCBot::is_encrypted()
 {
     return this->encryption_enabled;
+}
+
+mcbot::Player mcbot::MCBot::get_player()
+{
+    return this->player;
 }
 
