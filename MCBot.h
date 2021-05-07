@@ -3,14 +3,17 @@
 #include "Socket.h"
 #include "Buffer.h"
 
+#include "Chunk.h"
 #include "VillagerData.h"
+#include "Entity.h"
+#include "EntityLiving.h"
+#include "EntityPlayer.h"
 #include "EntityMetadata.h"
 #include "Attribute.h"
 #include "Color.h"
 #include "Enums.h"
 #include "Slot.h"
 #include "Statistic.h"
-#include "Player.h"
 #include "UUID.h"
 #include "NBT.h"
 #include "Particle.h"
@@ -55,10 +58,12 @@ namespace mcbot
 		bool connected;
 		bool ready;
 		State state;
-		Player player;
+		EntityPlayer player;
 
 		// Runtime Minecraft Info
-		std::map<UUID, Player> uuid_to_player;
+		std::map<UUID, EntityPlayer> uuid_to_player;
+		std::list<Entity> entities;
+		std::map<std::pair<int, int>, Chunk> chunks;
 		WorldBorder world_border;
 		
 		void update_player_info(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
@@ -66,6 +71,14 @@ namespace mcbot
 	public:
 		MCBot(std::string email, std::string password);
 		~MCBot();
+
+		// High-level methods
+		void move(mcbot::Vector<double> diff);
+		void move_to(mcbot::Vector<double> destination, double speed);
+		void move_to_ground();
+		void load_chunk(Chunk chunk);
+		Chunk get_chunk(int x, int z);
+		Chunk get_chunk(mcbot::Vector<double> location);
 
 		// Logging
 		void log_debug(std::string message);
@@ -166,10 +179,11 @@ namespace mcbot
 		void recv_title(uint8_t* packet, size_t length, size_t& offset);
 		void recv_player_list_header_footer(uint8_t* packet, size_t size_read, size_t& offset);
 
+		std::list<Entity> get_entities();
 		bool is_connected();
 		bool is_ready();
 		bool is_encrypted();
-		Player get_player();
+		EntityPlayer get_player();
 	};
 }
 

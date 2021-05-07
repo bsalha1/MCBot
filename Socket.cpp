@@ -266,7 +266,7 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
     }
 }
 
-int mcbot::Socket::send_pack(uint8_t* packet, int length)
+int mcbot::Socket::send_pack(uint8_t* packet, size_t length)
 {
     if (this->encryption_enabled)
     {

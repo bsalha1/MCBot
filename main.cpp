@@ -11,6 +11,7 @@
 #include "lib/httplib.h"
 #include "MCBot.h"
 #include "DaftHash.h"
+#include "ScriptRuntime.h"
 
 using namespace mcbot;
 using namespace std::literals;
@@ -77,24 +78,89 @@ int main(int argc, char* argv[])
         bot.send_custom_payload("vanilla");
 
         std::cout << "Sending positions" << std::endl;
-        bot.send_position(bot.get_player().get_position(), true);
-        bot.send_position(bot.get_player().get_position(), true);
+        bot.send_position(bot.get_player().get_location(), true);
+        bot.send_position(bot.get_player().get_location(), true);
 
-        double angle = 0;
-        while (bot.is_connected())
+        Entity target;
+        for (Entity entity : bot.get_entities())
         {
-            double x = 0.2*cos(angle);
-            double y = 0.2*sin(angle);
-            bot.send_position_look(bot.get_player().get_position().sum(x, 0, y), angle / 3.14 * 180, 0, true);
-            Sleep(50);
-
-            angle += 3.14 / 20.0;
-
-            if (angle >= 2 * 3.14)
+            if (entity.get_entity_type() == EntityType::PIG)
             {
-                angle = 0;
+                std::cout << "Found pig" << std::endl;
+                target = entity;
+                break;
             }
         }
+
+        bot.move_to_ground();
+
+        bot.move_to(mcbot::Vector<double>(454, 70, 150), 0.50);
+
+
+        //std::ofstream script_file("script.txt");
+        //script_file << "move_rel({1,0,0})" << std::endl;
+        //script_file << "move_rel({-1,0,0})" << std::endl;
+        //script_file << "move_rel({0,0,1})" << std::endl;
+        //script_file << "move_rel({0,0,-1})" << std::endl;
+        //script_file.close();
+
+        //std::list<std::string> commands;
+        //std::fstream newfile;
+        //newfile.open("script.txt", std::ios::in);
+        //if (newfile.is_open())
+        //{
+        //    std::string line;
+        //    while (getline(newfile, line))
+        //    {
+        //        std::string::iterator end_pos = std::remove(line.begin(), line.end(), ' ');
+        //        line.erase(end_pos, line.end());
+        //        commands.push_back(line);
+        //    }
+        //    newfile.close();
+        //}
+
+        //mcbot::ScriptRuntime script_runtime = mcbot::ScriptRuntime(bot);
+        //while (bot.is_connected())
+        //{
+        //    for (std::string command : commands)
+        //    {
+        //        std::string method = command.substr(0, command.find_first_of('('));
+        //        std::string args_string = command.substr(command.find_first_of('(') + 1, command.find_last_of(')') - (command.find_first_of('(') + 1));
+
+        //        std::list<std::string> args;
+        //        int i = 0;
+        //        do 
+        //        {
+        //            if (args_string[i] == '{')
+        //            {
+        //                std::string vector = "";
+        //                while (args_string[i] != '}')
+        //                {
+        //                    vector += args_string[i++];
+        //                }
+        //                vector += "}";
+        //                args.push_back(vector);
+        //            }
+        //            else
+        //            {
+        //                std::string arg = "";
+        //                while (args_string[i] != ',' && i < args_string.length())
+        //                {
+        //                    arg += args_string[i++];
+        //                }
+
+        //                if (arg.length() != 0)
+        //                {
+        //                    args.push_back(arg);
+        //                }
+        //            }
+        //            i++;
+        //        } while (i < args_string.length());
+
+        //        script_runtime.call_method(method, args);
+        //        Sleep(1000 / 20);
+        //    }
+        //}
     });
 
     do

@@ -34,9 +34,9 @@ void mcbot::NBT::add_double(std::string name, double field)
 	this->doubles.insert(std::pair<std::string, double>(name, field));
 }
 
-void mcbot::NBT::add_byte_array(std::string name, mcbot::Buffer<char> field)
+void mcbot::NBT::add_byte_array(std::string name, mcbot::Buffer<uint8_t> field)
 {
-	this->byte_arrays.insert(std::pair<std::string, mcbot::Buffer<char>>(name, field));
+	this->byte_arrays.insert(std::pair<std::string, mcbot::Buffer<uint8_t>>(name, field));
 }
 
 void mcbot::NBT::add_int_array(std::string name, mcbot::Buffer<int> field)

@@ -91,7 +91,7 @@ void mcbot::MCBot::update_player_info(mcbot::PlayerInfoAction action, int length
 
         log_debug("\tPlayer Update (" + uuid.to_string() + "): " + mcbot::to_string(action));
 
-        mcbot::Player player;
+        mcbot::EntityPlayer player;
 
         switch (action)
         {
@@ -105,7 +105,7 @@ void mcbot::MCBot::update_player_info(mcbot::PlayerInfoAction action, int length
             bool has_display_name = PacketDecoder::read_boolean(packet, offset);
             std::string display_name = has_display_name ? PacketDecoder::read_string(packet, offset) : name;
 
-            player = mcbot::Player(uuid, name, properties, gamemode, ping, display_name);
+            player = mcbot::EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
 
             if (name == this->username)
             {
@@ -115,7 +115,7 @@ void mcbot::MCBot::update_player_info(mcbot::PlayerInfoAction action, int length
                 this->player.set_display_name(display_name);
             }
             
-            this->uuid_to_player.insert(std::pair<mcbot::UUID, mcbot::Player>(uuid, player));
+            this->uuid_to_player.insert(std::pair<mcbot::UUID, mcbot::EntityPlayer>(uuid, player));
 
             log_debug("\t\tName: " + name + '\n'
                 + "\t\tGamemode: " + mcbot::to_string(gamemode) + '\n'
@@ -199,7 +199,7 @@ mcbot::MCBot::MCBot(std::string email, std::string password)
     this->ready = false;
     this->encryption_enabled = false;
     this->compression_enabled = false;
-    this->uuid_to_player = std::map<mcbot::UUID, mcbot::Player>();
+    this->uuid_to_player = std::map<mcbot::UUID, mcbot::EntityPlayer>();
     this->world_border = mcbot::WorldBorder();
 
     // Start WinSock DLL //
@@ -216,6 +216,86 @@ mcbot::MCBot::~MCBot()
 {
     delete[] this->verify_token;
     delete[] this->public_key;
+}
+
+void mcbot::MCBot::move_to(mcbot::Vector<double> destination, double speed)
+{
+    while (this->player.get_location().distance(destination) >= 1.0)
+    {
+        Vector<double> current_location = this->player.get_location();
+        Vector<double> direction = destination - current_location;
+        direction.scale(1 / direction.magnitude());
+
+        direction.scale(speed);
+
+        this->move(direction);
+
+        Sleep(1000 / 20);
+    }
+}
+
+void mcbot::MCBot::load_chunk(Chunk chunk)
+{
+    this->chunks.insert(std::pair<std::pair<int, int>, Chunk>(std::pair<int, int>(chunk.get_x(), chunk.get_z()), chunk));
+}
+
+mcbot::Chunk mcbot::MCBot::get_chunk(int x, int z)
+{
+    return this->chunks.at(std::pair<int, int>(x, z));
+}
+
+mcbot::Chunk mcbot::MCBot::get_chunk(mcbot::Vector<double> location)
+{
+    int x = ((int)floor(location.get_x())) >> 4;
+    int z = ((int)floor(location.get_z())) >> 4;
+    return this->chunks.at(std::pair<int, int>(x, z));
+}
+
+void mcbot::MCBot::move_to_ground()
+{
+    mcbot::Vector<double> loc = this->player.get_location();
+    Chunk chunk = get_chunk(loc);
+
+    while (loc.get_y() >= 0)
+    {
+        int block_id = chunk.get_block_id(loc);
+        if (block_id != 0)
+        {
+            break;
+        }
+
+        loc = loc - mcbot::Vector<double>(0, 1, 0);
+    }
+
+    this->move_to(loc, 0.5);
+}
+
+void mcbot::MCBot::move(mcbot::Vector<double> diff)
+{
+    mcbot::Vector<double> init = this->player.get_location();
+    mcbot::Vector<double> dest = init + diff;
+
+    Chunk dest_chunk = get_chunk(dest);
+    Chunk init_chunk = get_chunk(init);
+
+    std::array<int, 5*5*4> blocks;
+
+    int i = 0;
+    for (int x = -2; x <= 2; x++)
+    {
+        for (int y = -1; y <= 2; y++)
+        {
+            for (int z = -2; z <= 2; z++)
+            {
+                auto loc = init + mcbot::Vector<double>(x, y, z);
+                blocks[i] = init_chunk.get_block_id(loc);
+                i++;
+            }
+        }
+    }
+    std::cout << std::endl;
+
+    this->send_position(dest, true);
 }
 
 void mcbot::MCBot::log_debug(std::string message)
@@ -573,7 +653,7 @@ void mcbot::MCBot::send_position(Vector<double> position, bool on_ground)
     delete[] packet;
 
     // Internal updates
-    this->player.update_position(position);
+    this->player.update_location(position);
 }
 
 void mcbot::MCBot::send_look(float yaw, float pitch, bool on_ground)
@@ -626,7 +706,7 @@ void mcbot::MCBot::send_position_look(Vector<double> position, float yaw, float 
     delete[] packet;
 
     // Internal updates
-    this->player.update_position(position);
+    this->player.update_location(position);
     this->player.update_rotation(yaw, pitch);
 }
 
@@ -1140,7 +1220,7 @@ void mcbot::MCBot::recv_position(uint8_t* packet, size_t length, size_t& offset)
 
     mcbot::Vector<double> position = PacketDecoder::read_vector<double>(packet, offset);
 
-    this->player.update_position(position);
+    this->player.update_location(position);
 
     float yaw = PacketDecoder::read_float(packet, offset);
     float pitch = PacketDecoder::read_float(packet, offset);
@@ -1190,12 +1270,28 @@ void mcbot::MCBot::recv_named_entity_spawn(uint8_t* packet, size_t length, size_
     log_debug("<<< Handling PacketPlayOutNamedEntitySpawn...");
 
     int entity_id = PacketDecoder::read_var_int(packet, offset);
-    mcbot::UUID uuid = PacketDecoder::read_uuid(packet, offset);
-    mcbot::Position position = mcbot::Position(PacketDecoder::read_int(packet, offset), PacketDecoder::read_int(packet, offset), PacketDecoder::read_int(packet, offset));
+    UUID uuid = PacketDecoder::read_uuid(packet, offset);
+    mcbot::Vector<int> position = mcbot::Vector<int>(PacketDecoder::read_int(packet, offset), PacketDecoder::read_int(packet, offset), PacketDecoder::read_int(packet, offset));
     uint8_t pitch = PacketDecoder::read_byte(packet, offset);
     uint8_t yaw = PacketDecoder::read_byte(packet, offset);
     short current_item = PacketDecoder::read_short(packet, offset);
-    mcbot::EntityMetaData meta_data = PacketDecoder::read_meta_data(packet, offset);
+    EntityMetaData meta_data = PacketDecoder::read_meta_data(packet, offset);
+
+    if (this->uuid_to_player.count(uuid) == 0)
+    {
+        EntityPlayer player = EntityPlayer(entity_id, uuid);
+        player.update_location(position);
+        player.update_rotation(yaw, pitch);
+
+        this->uuid_to_player.insert(std::pair<UUID, EntityPlayer>(uuid, player));
+    }
+    else
+    {
+        EntityPlayer player = this->uuid_to_player.at(uuid);
+        player.set_id(entity_id);
+        player.update_location(position);
+        player.update_rotation(yaw, pitch);
+    }
 
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
@@ -1220,8 +1316,10 @@ void mcbot::MCBot::recv_spawn_entity(uint8_t* packet, size_t length, size_t& off
     log_debug("<<< Handling PacketPlayOutSpawnEntity...");
 
     int entity_id = PacketDecoder::read_var_int(packet, offset);
-    uint8_t type = PacketDecoder::read_byte(packet, offset);
+    EntityType type = (EntityType)PacketDecoder::read_byte(packet, offset);
     mcbot::Vector<int> position = PacketDecoder::read_vector<int>(packet, offset);
+    position.scale(1 / 32.0);
+
     uint8_t pitch = PacketDecoder::read_byte(packet, offset);
     uint8_t yaw = PacketDecoder::read_byte(packet, offset);
     int data = PacketDecoder::read_int(packet, offset);
@@ -1234,6 +1332,8 @@ void mcbot::MCBot::recv_spawn_entity(uint8_t* packet, size_t length, size_t& off
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
         "\n\tLocation:" + position.to_string());
+
+    this->entities.push_back(Entity(type, entity_id, position));
 }
 
 void mcbot::MCBot::recv_spawn_entity_living(uint8_t* packet, size_t length, size_t& offset)
@@ -1241,17 +1341,21 @@ void mcbot::MCBot::recv_spawn_entity_living(uint8_t* packet, size_t length, size
     log_debug("<<< Handling PacketPlayOutSpawnEntityLiving...");
 
     int entity_id = PacketDecoder::read_var_int(packet, offset);
-    uint8_t type = PacketDecoder::read_byte(packet, offset);
+    EntityType type = (EntityType)PacketDecoder::read_byte(packet, offset);
     mcbot::Vector<int> position = PacketDecoder::read_vector<int>(packet, offset);
+    position.scale(1 / 32.0);
+
     uint8_t pitch = PacketDecoder::read_byte(packet, offset);
     uint8_t yaw = PacketDecoder::read_byte(packet, offset);
     uint8_t head_pitch = PacketDecoder::read_byte(packet, offset);
     mcbot::Vector<short> motion = PacketDecoder::read_vector<short>(packet, offset);
-    mcbot::EntityMetaData meta_data = PacketDecoder::read_meta_data(packet, offset);
+    EntityMetaData meta_data = PacketDecoder::read_meta_data(packet, offset);
 
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
         "\n\tLocation:" + position.to_string());
+
+    this->entities.push_back(EntityLiving(type, entity_id, position));
 }
 
 void mcbot::MCBot::recv_spawn_entity_painting(uint8_t* packet, size_t length, size_t& offset)
@@ -1262,7 +1366,7 @@ void mcbot::MCBot::recv_spawn_entity_painting(uint8_t* packet, size_t length, si
     std::string title = PacketDecoder::read_string(packet, offset);
     mcbot::Position location = PacketDecoder::read_position(packet, offset);
     uint8_t direction = PacketDecoder::read_byte(packet, offset);
-
+    
     log_debug(
         "Entity ID: " + std::to_string(entity_id) +
         "\n\tLocation: " + location.to_string() +
@@ -1486,7 +1590,9 @@ void mcbot::MCBot::recv_map_chunk(uint8_t* packet, size_t length, size_t& offset
     bool ground_up_continuous = PacketDecoder::read_boolean(packet, offset);
     uint16_t primary_bitmask = PacketDecoder::read_short(packet, offset);
     int data_size = PacketDecoder::read_var_int(packet, offset);
-    mcbot::Buffer<char> chunk_data = PacketDecoder::read_byte_array(data_size, packet, offset);
+
+    Chunk chunk = PacketDecoder::read_chunk(chunk_x, chunk_z, ground_up_continuous, true, primary_bitmask, packet, offset);
+    this->load_chunk(chunk);
 
     log_debug(
         "X: " + std::to_string(chunk_x) +
@@ -1539,24 +1645,14 @@ void mcbot::MCBot::recv_block_break(uint8_t* packet, size_t length, size_t& offs
         "\n\tDestroy Stage: " + std::to_string((int)destroy_stage));
 }
 
-int bitCount(uint32_t i)
+int chunk_data_size(int num_sections, bool skylight_sent, bool ground_up_continuous)
 {
-    i = i - ((i >> 1) & 0x55555555);
-    i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
-    i = (i + (i >> 4)) & 0x0f0f0f0f;
-    i = i + (i >> 8);
-    i = i + (i >> 16);
-    return i & 0x3f;
-}
+    int block_ids_size = num_sections * 2 * 16 * 16 * 16;
+    int emitted_light_size = num_sections * 16 * 16 * 16 / 2;
+    int sky_light_size = skylight_sent ? num_sections * 16 * 16 * 16 / 2 : 0;
+    int ground_up_continuous_size = ground_up_continuous ? 256 : 0;
 
-int chunk_data_size(int i, bool skylight_sent)
-{
-    int j = i * 2 * 16 * 16 * 16;
-    int k = i * 16 * 16 * 16 / 2;
-    int l = skylight_sent ? i * 16 * 16 * 16 / 2 : 0;
-    int i1 = 256;
-
-    return j + k + l + i1;
+    return block_ids_size + emitted_light_size + sky_light_size + ground_up_continuous_size;
 }
 
 void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& offset)
@@ -1565,21 +1661,21 @@ void mcbot::MCBot::recv_map_chunk_bulk(uint8_t* packet, size_t length, size_t& o
 
     bool sky_light_sent = PacketDecoder::read_boolean(packet, offset);
     int chunk_column_count = PacketDecoder::read_var_int(packet, offset);
-    mcbot::Buffer<mcbot::Buffer<char>> chunks = mcbot::Buffer<mcbot::Buffer<char>>(chunk_column_count);
+    std::list<Chunk> chunks = std::list<Chunk>();
     
     for (int i = 0; i < chunk_column_count; i++)
     {
         int x = PacketDecoder::read_int(packet, offset);
         int z = PacketDecoder::read_int(packet, offset);
-        unsigned short primary_bit_mask = PacketDecoder::read_short(packet, offset);
-        chunks.put(mcbot::Buffer<char>(chunk_data_size(bitCount(primary_bit_mask), sky_light_sent)));
+        uint16_t primary_bit_mask = PacketDecoder::read_short(packet, offset);
+        chunks.push_back(Chunk(x, z, primary_bit_mask));
         log_debug("Loading Chunk (" + std::to_string(x) + "," + std::to_string(z) + ")");
     }
 
-    for (int i = 0; i < chunk_column_count; i++)
+    for (Chunk chunk : chunks)
     {
-        mcbot::Buffer<char>& chunk_data = chunks.get(i);
-        chunk_data = PacketDecoder::read_byte_array(chunk_data.get_max_size(), packet, offset);
+        PacketDecoder::read_chunk_bulk(chunk, sky_light_sent, packet, offset);
+        this->load_chunk(chunk);
     }
 }
 
@@ -1879,7 +1975,7 @@ void mcbot::MCBot::recv_plugin_message(uint8_t* packet, size_t length, size_t& o
     log_debug("<<< Handling PacketPlayOutCustomPayload...");
 
     std::string plugin_channel = PacketDecoder::read_string(packet, offset);
-    mcbot::Buffer<char> data = PacketDecoder::read_byte_array(length - offset, packet, offset);
+    mcbot::Buffer<uint8_t> data = PacketDecoder::read_byte_array(length - offset, packet, offset);
 
     log_debug(
         "Plugin Channel: " + plugin_channel +
@@ -2013,6 +2109,11 @@ void mcbot::MCBot::recv_player_list_header_footer(uint8_t* packet, size_t length
         "\n\tFooter: " + footer);
 }
 
+std::list<mcbot::Entity> mcbot::MCBot::get_entities()
+{
+    return this->entities;
+}
+
 bool mcbot::MCBot::is_connected()
 {
     return this->connected;
@@ -2028,7 +2129,7 @@ bool mcbot::MCBot::is_encrypted()
     return this->encryption_enabled;
 }
 
-mcbot::Player mcbot::MCBot::get_player()
+mcbot::EntityPlayer mcbot::MCBot::get_player()
 {
     return this->player;
 }

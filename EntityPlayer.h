@@ -3,6 +3,8 @@
 #include <iostream>
 #include <list>
 
+#include "EntityLiving.h"
+#include "Enums.h"
 #include "PlayerProperty.h"
 #include "UUID.h"
 #include "Enums.h"
@@ -10,7 +12,7 @@
 
 namespace mcbot
 {
-	class Player
+	class EntityPlayer : public EntityLiving 
 	{
 	private:
 		mcbot::UUID uuid;
@@ -20,21 +22,21 @@ namespace mcbot
 		int ping; // in milliseconds
 		std::string display_name;
 
-		Vector<double> position;
 		float yaw;
 		float pitch;
 
 	public:
-		Player(UUID uuid, std::string name,
+		EntityPlayer(int entity_id, UUID uuid, std::string name,
 			std::list<PlayerProperty> properties,
 			Gamemode gamemode,
 			int ping, std::string display_name);
 
-		Player(mcbot::UUID uuid);
+		EntityPlayer(int entity_id, UUID uuid);
 
-		Player();
+		EntityPlayer();
 
-		void update_position(mcbot::Vector<double> position);
+		void update_location(mcbot::Vector<double> location);
+		void update_location(mcbot::Vector<int> location);
 
 		void update_rotation(float yaw, float pitch);
 
@@ -58,7 +60,7 @@ namespace mcbot
 
 		mcbot::Gamemode get_gamemode();
 
-		mcbot::Vector<double> get_position();
+		mcbot::Vector<double> get_location();
 
 		int get_ping();
 

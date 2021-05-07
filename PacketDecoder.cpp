@@ -70,6 +70,17 @@ uint16_t mcbot::PacketDecoder::read_short(uint8_t* packet, size_t& offset)
     return result;
 }
 
+uint16_t mcbot::PacketDecoder::read_short_le(uint8_t* packet, size_t& offset)
+{
+    uint8_t byte2 = packet[offset++];
+    uint8_t byte1 = packet[offset++];
+
+    uint16_t result =
+        byte2 << 0 |
+        byte1 << 8;
+    return result;
+}
+
 uint64_t mcbot::PacketDecoder::read_long(uint8_t* packet, size_t& offset)
 {
     uint8_t byte8 = packet[offset++];
@@ -233,14 +244,36 @@ void mcbot::PacketDecoder::read_byte_array(uint8_t* bytes, int length, uint8_t* 
     }
 }
 
-mcbot::Buffer<char> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
+mcbot::Buffer<uint8_t> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
 {
-    mcbot::Buffer<char> buffer = mcbot::Buffer<char>(length);
+    mcbot::Buffer<uint8_t> buffer = mcbot::Buffer<uint8_t>(length);
     for (int i = 0; i < length; i++)
     {
         buffer.put(packet[offset++]);
     }
     return buffer;
+}
+
+mcbot::Buffer<uint16_t> mcbot::PacketDecoder::read_short_array(int length, uint8_t* packet, size_t& offset)
+{
+    mcbot::Buffer<uint16_t> buffer = mcbot::Buffer<uint16_t>(length);
+    for (int i = 0; i < length; i++)
+    {
+        buffer.put(read_short(packet, offset));
+    }
+    return buffer;
+
+}
+
+mcbot::Buffer<uint16_t> mcbot::PacketDecoder::read_short_le_array(int length, uint8_t* packet, size_t& offset)
+{
+    mcbot::Buffer<uint16_t> buffer = mcbot::Buffer<uint16_t>(length);
+    for (int i = 0; i < length; i++)
+    {
+        buffer.put(read_short_le(packet, offset));
+    }
+    return buffer;
+
 }
 
 mcbot::Buffer<int> mcbot::PacketDecoder::read_int_array(int length, uint8_t* packet, size_t& offset)
@@ -602,4 +635,96 @@ mcbot::EntityMetaData mcbot::PacketDecoder::read_meta_data(uint8_t* packet, size
     }
 
     return meta_data;
+}
+
+mcbot::Chunk mcbot::PacketDecoder::read_chunk(int x, int z, bool ground_up_continuous, bool sky_light_sent, uint16_t primary_bitmask, uint8_t* packet, size_t& offset)
+{ 
+    Chunk chunk = Chunk(x, z, primary_bitmask);
+
+    int i = 0;
+    while (i < 15)
+    {
+        i++;
+    }
+
+    for (int section_num = 0; section_num < 16; section_num++)
+    {
+        if (((primary_bitmask >> section_num) & 1) == 0)
+        {
+            continue;
+        }
+
+        ChunkSection chunk_section;
+
+        mcbot::Buffer<uint16_t> block_ids = PacketDecoder::read_short_array(16 * 16 * 16, packet, offset);
+        chunk_section.set_block_ids(block_ids);
+
+        mcbot::Buffer<uint8_t> emitted_light = PacketDecoder::read_byte_array(16 * 16 * 16 / 2, packet, offset);
+        chunk_section.set_emitted_light(emitted_light);
+
+        if (sky_light_sent)
+        {
+            mcbot::Buffer<uint8_t> sky_light = PacketDecoder::read_byte_array(16 * 16 * 16 / 2, packet, offset);
+            chunk_section.set_sky_light(sky_light);
+        }
+
+        if (ground_up_continuous)
+        {
+            mcbot::Buffer<uint8_t> biome_index = PacketDecoder::read_byte_array(16 * 16, packet, offset);
+            chunk_section.set_biome_index(biome_index);
+        }
+
+        chunk.add_section(section_num, chunk_section);
+    }
+
+    return chunk;
+}
+
+mcbot::Chunk mcbot::PacketDecoder::read_chunk_bulk(Chunk& chunk, bool sky_light_sent, uint8_t* packet, size_t& offset)
+{
+    std::list<ChunkSection> sections = std::list<ChunkSection>(chunk.get_num_sections());
+
+    for (ChunkSection& section : sections)
+    {
+        mcbot::Buffer<uint16_t> block_ids = PacketDecoder::read_short_le_array(16 * 16 * 16, packet, offset);
+        section.set_block_ids(block_ids);
+    }
+
+    for (ChunkSection& section : sections)
+    {
+        mcbot::Buffer<uint8_t> emitted_light = PacketDecoder::read_byte_array(16 * 16 * 16 / 2, packet, offset);
+        section.set_emitted_light(emitted_light);
+    }
+
+    if (sky_light_sent)
+    {
+        for (ChunkSection& section : sections)
+        {
+            mcbot::Buffer<uint8_t> sky_light = PacketDecoder::read_byte_array(16 * 16 * 16 / 2, packet, offset);
+            section.set_sky_light(sky_light);
+        }
+    }
+    
+    mcbot::Buffer<uint8_t> biome_index = PacketDecoder::read_byte_array(16 * 16, packet, offset);
+    chunk.set_biome_index(biome_index.to_array<256>());
+
+    int section_num = 0;
+
+    std::list<int> section_nums;
+    while (section_num < 16)
+    {
+        if (((chunk.get_primary_bit_mask() >> section_num) & 1) != 0)
+        {
+            section_nums.push_back(section_num);
+        }
+        section_num++;
+    }
+
+    std::list<int>::iterator section_it = section_nums.begin();
+    for (ChunkSection section : sections)
+    {
+        chunk.add_section(*(section_it++), section);
+    }
+
+    return chunk;
 }

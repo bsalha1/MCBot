@@ -27,6 +27,18 @@
     <Filter Include="Source Files\packet">
       <UniqueIdentifier>{e3912cae-e53f-4fa9-a138-dae8fa5ba8a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\script">
+      <UniqueIdentifier>{14b06971-e929-44b8-96ca-7753bdd7cbea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\script">
+      <UniqueIdentifier>{ad21d0da-65ed-4f7d-afea-c96e8cfca407}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\minecraft\entity">
+      <UniqueIdentifier>{d4cb9e3b-ec57-42c3-a214-e80a5c4aac34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\minecraft\entity">
+      <UniqueIdentifier>{5e50ed52-b823-43b2-bab2-e076e8d8dad0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -44,9 +56,6 @@
     <ClCompile Include="DaftHash.cpp">
       <Filter>Source Files\encryption</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
     <ClCompile Include="PlayerProperty.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
@@ -62,22 +71,10 @@
     <ClCompile Include="NBT.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
-    <ClCompile Include="EntityMetadata.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
     <ClCompile Include="Position.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
     <ClCompile Include="Particle.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
-    <ClCompile Include="VillagerData.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
-    <ClCompile Include="Attribute.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
-    <ClCompile Include="AttributeModifier.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
     <ClCompile Include="Color.cpp">
@@ -91,6 +88,39 @@
     </ClCompile>
     <ClCompile Include="Socket.cpp">
       <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptRuntime.cpp">
+      <Filter>Source Files\script</Filter>
+    </ClCompile>
+    <ClCompile Include="Attribute.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="AttributeModifier.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityMetadata.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="VillagerData.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityLiving.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityPlayer.cpp">
+      <Filter>Source Files\minecraft\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>Source Files\minecraft</Filter>
+    </ClCompile>
+    <ClCompile Include="ChunkSection.cpp">
+      <Filter>Source Files\minecraft</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,9 +138,6 @@
     </ClInclude>
     <ClInclude Include="DaftHash.h">
       <Filter>Header Files\encryption</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Header Files\minecraft</Filter>
     </ClInclude>
     <ClInclude Include="PlayerProperty.h">
       <Filter>Header Files\minecraft</Filter>
@@ -130,22 +157,10 @@
     <ClInclude Include="StringUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EntityMetadata.h">
-      <Filter>Header Files\minecraft</Filter>
-    </ClInclude>
     <ClInclude Include="Position.h">
       <Filter>Header Files\minecraft</Filter>
     </ClInclude>
     <ClInclude Include="Particle.h">
-      <Filter>Header Files\minecraft</Filter>
-    </ClInclude>
-    <ClInclude Include="VillagerData.h">
-      <Filter>Header Files\minecraft</Filter>
-    </ClInclude>
-    <ClInclude Include="Attribute.h">
-      <Filter>Header Files\minecraft</Filter>
-    </ClInclude>
-    <ClInclude Include="AttributeModifier.h">
       <Filter>Header Files\minecraft</Filter>
     </ClInclude>
     <ClInclude Include="Vector.h">
@@ -165,6 +180,36 @@
     </ClInclude>
     <ClInclude Include="Socket.h">
       <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptRuntime.h">
+      <Filter>Header Files\script</Filter>
+    </ClInclude>
+    <ClInclude Include="Attribute.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="AttributeModifier.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityMetadata.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="VillagerData.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityLiving.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityPlayer.h">
+      <Filter>Header Files\minecraft\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.h">
+      <Filter>Header Files\minecraft</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkSection.h">
+      <Filter>Header Files\minecraft</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

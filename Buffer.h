@@ -30,6 +30,19 @@ namespace mcbot
 		int get_max_size();
 
 		std::string to_string();
+
+		template<unsigned int I>
+		std::array<T, I> to_array();
+
+		T operator[](int i) const
+		{
+			return arr[i];
+		}
+		
+		T& operator[](int i)
+		{
+			return arr[i];
+		}
 	};
 
 	template<class T>
@@ -109,6 +122,24 @@ namespace mcbot
 			str += std::to_string(this->arr[i]) + " ";
 		}
 		return str;
+	}
+
+	template<class T> template<unsigned int I>
+	inline std::array<T, I> Buffer<T>::to_array()
+	{
+		if (I > this->max_size)
+		{
+			std::cerr << "Size mismatch" << std::endl;
+		}
+
+		std::array<T, I> arr;
+
+		for (int i = 0; i < I; i++)
+		{
+			arr[i] = this->arr[i];
+		}
+
+		return arr;
 	}
 
 }

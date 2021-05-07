@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <array>
 
+#include "Chunk.h"
 #include "UUID.h"
 #include "Slot.h"
 #include "Color.h"
@@ -30,6 +32,7 @@ namespace mcbot
 		static uint32_t read_int(uint8_t* packet, size_t& offset);
 		static int32_t read_var_int(uint8_t* packet, size_t& offset);
 		static uint16_t read_short(uint8_t* packet, size_t& offset);
+		static uint16_t read_short_le(uint8_t* packet, size_t& offset);
 		static uint8_t read_byte(uint8_t* bytes, size_t& offset);
 		static uint8_t peek_byte(uint8_t* packet, size_t offset);
 		static float read_float(uint8_t* packet, size_t& offset);
@@ -52,10 +55,14 @@ namespace mcbot
 		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset);
 		static mcbot::NBT read_nbt_part(uint8_t* packet, size_t& offset, bool parent = true, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
 		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
+		static mcbot::Chunk read_chunk(int x, int z, bool ground_up_continuous, bool sky_light_sent, uint16_t primary_bitmask, uint8_t* packet, size_t& offset);
+		static mcbot::Chunk read_chunk_bulk(Chunk& chunk, bool sky_light_sent, uint8_t* packet, size_t& offset);
 
 		// Read Array Values
 		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<uint8_t> read_byte_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<uint16_t> read_short_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<uint16_t> read_short_le_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<int> read_var_int_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
@@ -103,6 +110,7 @@ namespace mcbot
 		else
 		{
 			std::cerr << "Unsupported vector type: " << typeid(T).name() << std::endl;
+			return mcbot::Vector<T>();
 		}
 		return mcbot::Vector<T>(x, y, z);
 	}

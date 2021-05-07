@@ -1,0 +1,4 @@
+move_rel({1,0,0})
+move_rel({-1,0,0})
+move_rel({0,0,1})
+move_rel({0,0,-1})
