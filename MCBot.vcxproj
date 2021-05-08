@@ -153,8 +153,11 @@
   <ItemGroup>
     <ClCompile Include="AttributeModifier.cpp" />
     <ClCompile Include="base64.cpp" />
+    <ClCompile Include="Block.cpp" />
+    <ClCompile Include="BlockUtils.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="ChunkSection.cpp" />
+    <ClCompile Include="CollisionException.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="DaftHash.cpp" />
     <ClCompile Include="Attribute.cpp" />
@@ -182,9 +185,12 @@
   <ItemGroup>
     <ClInclude Include="AttributeModifier.h" />
     <ClInclude Include="base64.h" />
+    <ClInclude Include="Block.h" />
+    <ClInclude Include="BlockUtils.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="ChunkSection.h" />
+    <ClInclude Include="CollisionException.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="DaftHash.h" />
     <ClInclude Include="Attribute.h" />

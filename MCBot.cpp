@@ -218,17 +218,102 @@ mcbot::MCBot::~MCBot()
     delete[] this->public_key;
 }
 
-void mcbot::MCBot::move_to(mcbot::Vector<double> destination, double speed)
+void mcbot::MCBot::move_to(mcbot::Vector<double> destination, double speed, bool ignore_ground)
 {
-    while (this->player.get_location().distance(destination) >= 1.0)
+    while (this->player.get_location().distance(destination) >= 0)
     {
         Vector<double> current_location = this->player.get_location();
         Vector<double> direction = destination - current_location;
-        direction.scale(1 / direction.magnitude());
 
+        direction.scale(1 / direction.magnitude());
         direction.scale(speed);
 
-        this->move(direction);
+        // If we are close enough, just move us to the location instantly
+        if (this->player.get_location().distance(destination) <= 1.0)
+        {
+            this->send_position(destination, true);
+            return;
+        }
+
+        try
+        {
+            this->move(direction);
+        }
+        catch (const CollisionException & e)
+        {
+            std::cerr << e.what() << std::endl;
+            this->send_position(direction + mcbot::Vector<double>(0, 1, 0), true);
+        }
+
+        if (!ignore_ground && !this->on_ground())
+        {
+            this->move_to_ground(0.10);
+        }
+
+        Sleep(1000 / 20);
+    }
+}
+
+void mcbot::MCBot::move_to(double x, double z, int speed)
+{
+    mcbot::Vector<double> dest = mcbot::Vector<double>(x, 0, z);
+    mcbot::Vector<double> init = this->player.get_location();
+
+    auto diff = dest - init;
+
+    double dx = abs(diff.get_x()) / diff.get_x();
+    double dz = abs(diff.get_z()) / diff.get_z();
+    
+    for (double x = init.get_x(); x != dest.get_x(); x += dx)
+    {
+        Vector<double> current_location = this->player.get_location();
+
+        try
+        {
+            this->move(dx, 0);
+        }
+        catch (const CollisionException & e)
+        {
+            std::cerr << e.what() << std::endl;
+            this->send_position(this->player.get_location() + mcbot::Vector<double>(0, 1, 0), false);
+            Sleep(1000 / 20 * speed);
+            this->send_position(this->player.get_location() + mcbot::Vector<double>(abs(dx)/dx, 0, 0) , true);
+            Sleep(1000 / 20 * speed);
+            continue;
+        }
+
+        if (!this->on_ground())
+        {
+            Sleep(1000 / 20 * speed);
+            this->move_to_ground(0.10);
+        }
+
+        Sleep(1000 / 20 * speed);
+    }
+
+
+    for (double z = init.get_z(); z != dest.get_z(); z += dz)
+    {
+        Vector<double> current_location = this->player.get_location();
+
+        try
+        {
+            this->move(0, dz);
+        }
+        catch (const CollisionException & e)
+        {
+            std::cerr << e.what() << std::endl;
+            this->send_position(this->player.get_location() + mcbot::Vector<double>(0, 1, 0), false);
+            Sleep(1000 / 20);
+            this->send_position(this->player.get_location() + mcbot::Vector<double>(0, 0, abs(dz)/dz), true);
+            continue;
+        }
+
+        if (!this->on_ground())
+        {
+            Sleep(1000 / 20);
+            this->move_to_ground(0.10);
+        }
 
         Sleep(1000 / 20);
     }
@@ -251,23 +336,41 @@ mcbot::Chunk mcbot::MCBot::get_chunk(mcbot::Vector<double> location)
     return this->chunks.at(std::pair<int, int>(x, z));
 }
 
-void mcbot::MCBot::move_to_ground()
+mcbot::Vector<double> mcbot::MCBot::get_ground_location(mcbot::Vector<double> location)
 {
-    mcbot::Vector<double> loc = this->player.get_location();
-    Chunk chunk = get_chunk(loc);
+    Chunk chunk = get_chunk(location);
+    location.set_y(floor(location.get_y()));
 
-    while (loc.get_y() >= 0)
+    while (location.get_y() >= 0)
     {
-        int block_id = chunk.get_block_id(loc);
-        if (block_id != 0)
+        Block block = Block(chunk.get_block_id(location));
+        if (!block.is_weak())
         {
             break;
         }
-
-        loc = loc - mcbot::Vector<double>(0, 1, 0);
+        location = location - mcbot::Vector<double>(0, 1, 0);
     }
 
-    this->move_to(loc, 0.5);
+    return location;
+}
+
+void mcbot::MCBot::move_to_ground(double speed)
+{
+    if (this->on_ground())
+    {
+        return;
+    }
+    std::cout << "Moving to ground" << std::endl;
+    mcbot::Vector<double> dest = this->get_ground_location(this->player.get_location()) + mcbot::Vector<double>(0, 1, 0);
+    this->move_to(dest, speed, true);
+}
+
+bool mcbot::MCBot::on_ground()
+{
+    mcbot::Vector<double> player_location = this->player.get_location();
+    mcbot::Vector<double> ground_location = this->get_ground_location(player_location) + mcbot::Vector<double>(0, 1, 0);
+
+    return player_location.get_y() == ground_location.get_y();
 }
 
 void mcbot::MCBot::move(mcbot::Vector<double> diff)
@@ -278,22 +381,34 @@ void mcbot::MCBot::move(mcbot::Vector<double> diff)
     Chunk dest_chunk = get_chunk(dest);
     Chunk init_chunk = get_chunk(init);
 
-    std::array<int, 5*5*4> blocks;
+    int dest_block_id = dest_chunk.get_block_id(dest);
 
-    int i = 0;
-    for (int x = -2; x <= 2; x++)
+    // Collision detection
+    if (dest_block_id != 0 && dest_block_id != 31)
     {
-        for (int y = -1; y <= 2; y++)
-        {
-            for (int z = -2; z <= 2; z++)
-            {
-                auto loc = init + mcbot::Vector<double>(x, y, z);
-                blocks[i] = init_chunk.get_block_id(loc);
-                i++;
-            }
-        }
+        throw CollisionException(dest_block_id, dest);
     }
-    std::cout << std::endl;
+
+    this->send_position(dest, true);
+}
+
+void mcbot::MCBot::move(double dx, double dz) 
+{
+    mcbot::Vector<double> dr = mcbot::Vector<double>(dx, 0, dz);
+    mcbot::Vector<double> init = this->player.get_location();
+    mcbot::Vector<double> dest = init + dr;
+
+    Chunk dest_chunk = get_chunk(dest);
+    Chunk init_chunk = get_chunk(init);
+    Block dest_block = Block(dest_chunk.get_block_id(dest));
+
+
+    // Collision detection
+    if (!dest_block.is_weak())
+    {
+        std::cout << dest_block.get_id() << std::endl;
+        throw CollisionException(dest_block, dest);
+    }
 
     this->send_position(dest, true);
 }

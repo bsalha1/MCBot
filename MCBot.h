@@ -3,7 +3,10 @@
 #include "Socket.h"
 #include "Buffer.h"
 
+#include "CollisionException.h"
+
 #include "Chunk.h"
+#include "Block.h"
 #include "VillagerData.h"
 #include "Entity.h"
 #include "EntityLiving.h"
@@ -74,8 +77,12 @@ namespace mcbot
 
 		// High-level methods
 		void move(mcbot::Vector<double> diff);
-		void move_to(mcbot::Vector<double> destination, double speed);
-		void move_to_ground();
+		void move(double dx, double dz);
+		void move_to(mcbot::Vector<double> destination, double speed, bool ignore_ground);
+		void move_to(double x, double z, int speed);
+		void move_to_ground(double speed);
+		bool on_ground();
+		mcbot::Vector<double> get_ground_location(mcbot::Vector<double> location);
 		void load_chunk(Chunk chunk);
 		Chunk get_chunk(int x, int z);
 		Chunk get_chunk(mcbot::Vector<double> location);

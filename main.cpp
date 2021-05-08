@@ -70,16 +70,28 @@ int main(int argc, char* argv[])
 
     std::thread tick_thread([&bot]() {
 
-        Sleep(2000);
+        Sleep(4000);
 
         std::cout << "Sending settings" << std::endl;
         bot.send_settings();
         bot.send_held_item_slot(0);
         bot.send_custom_payload("vanilla");
 
-        std::cout << "Sending positions" << std::endl;
+        // Echo back player location (enables further sending of locations)
         bot.send_position(bot.get_player().get_location(), true);
+
+        Sleep(1000 / 20);
         bot.send_position(bot.get_player().get_location(), true);
+
+        // Move to better center of a block to make math easier
+        mcbot::Vector<double> clean_position = bot.get_player().get_location();
+        clean_position.floor();
+        clean_position = clean_position + mcbot::Vector<double>(0.5, 0, 0.5);
+
+        Sleep(1000 / 20);
+        bot.send_position(clean_position, true);
+        Sleep(1000 / 20);
+        bot.send_position(clean_position, true);
 
         Entity target;
         for (Entity entity : bot.get_entities())
@@ -92,9 +104,8 @@ int main(int argc, char* argv[])
             }
         }
 
-        bot.move_to_ground();
-
-        bot.move_to(mcbot::Vector<double>(454, 70, 150), 0.50);
+        bot.move_to_ground(0.10);
+        bot.move_to(115.50, 300.50, 3);
 
 
         //std::ofstream script_file("script.txt");

@@ -18,9 +18,11 @@ namespace mcbot
 		T z;
 	public:
 		Vector(T x, T y, T z);
+		Vector(T x, T y);
 		Vector();
 
 		void scale(T factor);
+		void floor();
 
 		T magnitude();
 
@@ -49,6 +51,14 @@ namespace mcbot
 	}
 
 	template<typename T>
+	inline Vector<T>::Vector(T x, T y)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = 0;
+	}
+
+	template<typename T>
 	inline Vector<T>::Vector()
 	{
 	}
@@ -59,6 +69,19 @@ namespace mcbot
 		this->x *= factor;
 		this->y *= factor;
 		this->z *= factor;
+	}
+
+	template<typename T>
+	inline void Vector<T>::floor()
+	{
+		if (!std::is_same<T, double>() && !std::is_same<T, float>())
+		{
+			std::cerr << "Failed to floor vector: not float or double type" << std::endl;
+			return;
+		}
+		this->x = std::floor(this->x);
+		this->y = std::floor(this->y);
+		this->z = std::floor(this->z);
 	}
 
 	template<typename T>
