@@ -51,6 +51,12 @@
     <Filter Include="Source Files\minecraft\block">
       <UniqueIdentifier>{0872e5f6-70a8-4b3a-bc0d-0ba8da95e082}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{856cc845-e271-478b-a2d5-9aac69b3ac62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{8cbcff80-1a5e-412b-ac28-c1a8e2e1a120}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -153,7 +159,7 @@
       <Filter>Source Files\packet</Filter>
     </ClCompile>
     <ClCompile Include="StringUtils.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -186,9 +192,6 @@
     </ClInclude>
     <ClInclude Include="NBT.h">
       <Filter>Header Files\minecraft</Filter>
-    </ClInclude>
-    <ClInclude Include="StringUtils.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Position.h">
       <Filter>Header Files\minecraft</Filter>
@@ -261,6 +264,9 @@
     </ClInclude>
     <ClInclude Include="MojangSession.h">
       <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

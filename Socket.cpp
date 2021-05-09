@@ -1,19 +1,6 @@
 #include "Socket.h"
 #include "zlib.h"
-
-void write_var_int(int value, uint8_t* packet, size_t& offset)
-{
-    do
-    {
-        char temp = (char)(value & 0b01111111);
-        value >>= 7;
-        if (value != 0)
-        {
-            temp |= 0b10000000;
-        }
-        packet[offset++] = temp;
-    } while (value != 0);
-}
+#include "PacketEncoder.h"
 
 int read_var_int(uint8_t* packet)
 {
@@ -232,7 +219,7 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
             if (decompressed_length == 0)
             {
                 memcpy(packet, decrypted_packet, decrypted_packet_length);
-                free(decrypted_packet);
+                delete[] decrypted_packet;
             }
             else
             {
@@ -262,83 +249,63 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
 
 int mcbot::Socket::send_pack(uint8_t* packet, size_t length)
 {
-    if (this->encryption_enabled)
+    uint8_t* header = NULL;
+    int header_length;
+    size_t offset = 0;
+
+    // Create Header //
+    if (this->compression_enabled)
     {
-        if (this->compression_enabled)
+        int data_length;
+        int packet_length;
+
+        if (length > this->max_uncompressed_length)
         {
-            int data_length;
-            int packet_length;
-
-            if (length > this->max_uncompressed_length)
-            {
-                // TODO
-                data_length = length;
-            }
-            else
-            {
-                // Create Header
-                data_length = 0;
-                packet_length = get_var_int_size(data_length) + length;
-
-                int header_length = get_var_int_size(packet_length) + get_var_int_size(data_length);
-                uint8_t* header = new uint8_t[header_length]{ 0 };
-                size_t offset = 0;
-
-                write_var_int(packet_length, header, offset);
-                write_var_int(data_length, header, offset);
-
-                // Put Header on Top of Data
-                int full_length = header_length + length;
-                uint8_t* full_packet = new uint8_t[full_length]{ 0 };
-                for (int i = 0; i < full_length; i++)
-                {
-                    if (i < header_length)
-                    {
-                        full_packet[i] = header[i];
-                    }
-                    else
-                    {
-                        full_packet[i] = packet[i - header_length];
-                    }
-                }
-                
-                uint8_t* encrypted_packet = new uint8_t[full_length]{ 0 };
-                int encrypted_length = encrypt(full_packet, full_length, encrypted_packet);
-                delete[] full_packet;
-
-
-                // Send Header //
-                int ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);
-                if (ret < 0)
-                {
-                    std::cerr << "Failed to send header packet" << std::endl;
-                    delete[] encrypted_packet;
-                    return ret;
-                }
-
-                delete[] encrypted_packet;
-                return ret;
-            }
+            // TODO
+            data_length = length;
         }
-        else 
+        else
         {
-            uint8_t* encrypted_packet = new uint8_t[length]{ 0 };
-            int encrypted_len = encrypt((uint8_t*)packet, length, encrypted_packet);
-            return send(this->socket, (char*) encrypted_packet, encrypted_len, 0);
+            data_length = 0;
+            packet_length = get_var_int_size(data_length) + length;
         }
+
+        header_length = get_var_int_size(packet_length) + get_var_int_size(data_length);
+        header = new uint8_t[header_length]{ 0 };
+        PacketEncoder::write_var_int(packet_length, header, offset);
+        PacketEncoder::write_var_int(data_length, header, offset);
     }
     else
     {
-        // Send Header
-        int header_length = get_var_int_size(length);
-        uint8_t* header = new uint8_t[header_length]{ 0 };
-        size_t offset = 0;
+        header_length = get_var_int_size(length);
+        header = new uint8_t[header_length]{ 0 };
+        PacketEncoder::write_var_int(length, header, offset);
+    }
 
-        write_var_int(length, header, offset);
-        send(this->socket, (char*)header, header_length, 0);
-        delete[] header;
+    // Put Header On Top //
+    int full_length = header_length + length;
+    uint8_t* full_packet = new uint8_t[full_length]{ 0 };
+    std::copy(header, header + header_length, full_packet);
+    std::copy(packet, packet + length, full_packet + header_length);
 
-        return send(this->socket, (char*)packet, length, 0);
+    // Send Packet
+    if (this->encryption_enabled)
+    {
+        // Encrypt //
+        uint8_t* encrypted_packet = new uint8_t[full_length]{ 0 };
+        int encrypted_length = encrypt((uint8_t*)full_packet, full_length, encrypted_packet);
+        delete[] full_packet;
+
+        // Send //
+        int ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);
+        delete[] encrypted_packet;
+        return ret;
+    }
+    else
+    {
+        int ret = send(this->socket, (char*)full_packet, full_length, 0);
+        delete[] full_packet;
+        return  ret;
     }
 }
 
