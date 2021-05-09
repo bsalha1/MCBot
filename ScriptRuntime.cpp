@@ -47,7 +47,7 @@ void mcbot::ScriptRuntime::move_rel(std::list<std::string> args)
 
     Vector<double> vector = get_vector(*(it++));
 
-    this->bot.send_position(this->bot.get_player().get_location() + vector, true);
+    //this->bot->get_packet_sender().send_position(this->bot.get_player().get_location() + vector, true);
 }
 
 void mcbot::ScriptRuntime::move_rel_look(std::list<std::string> args)
@@ -58,5 +58,5 @@ void mcbot::ScriptRuntime::move_rel_look(std::list<std::string> args)
     float yaw = std::stof(*(it++));
     float pitch = std::stof(*(it++));
 
-    this->bot.send_position_look(this->bot.get_player().get_location() + vector, yaw, pitch, true);
+    //this->bot.get_packet_sender().send_position_look(this->bot.get_player().get_location() + vector, yaw, pitch, true);
 }

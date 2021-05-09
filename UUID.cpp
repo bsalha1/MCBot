@@ -52,7 +52,12 @@ std::ostream& mcbot::operator<<(std::ostream& os, UUID uuid)
 	return os;
 }
 
-bool mcbot::operator<(UUID uuid1, UUID uuid2)
+bool mcbot::operator==(const UUID& lhs, const UUID& rhs)
+{
+	return lhs.msb == rhs.msb && lhs.lsb == rhs.lsb;
+}
+
+bool mcbot::operator<(const UUID & uuid1, const UUID & uuid2)
 {
 	if (uuid1.msb > uuid2.msb)
 	{

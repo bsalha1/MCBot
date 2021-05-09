@@ -20,7 +20,8 @@ namespace mcbot
 
 		friend std::ostream& operator<<(std::ostream& os, UUID uuid);
 
-		friend bool operator<(UUID uuid1, UUID uuid2);
+		friend bool operator<(const UUID & lhs, const UUID & rhs);
+		friend bool operator==(const UUID & lhs, const UUID & rhs);
 	};
 }
 

@@ -143,6 +143,21 @@
     <ClCompile Include="BlockUtils.cpp">
       <Filter>Source Files\minecraft\block</Filter>
     </ClCompile>
+    <ClCompile Include="PacketReceiver.cpp">
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketSender.cpp">
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="EncryptionSession.cpp">
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="MojangSession.cpp">
+      <Filter>Source Files\packet</Filter>
+    </ClCompile>
+    <ClCompile Include="StringUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MCBot.h">
@@ -240,6 +255,18 @@
     </ClInclude>
     <ClInclude Include="BlockUtils.h">
       <Filter>Header Files\minecraft\block</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketReceiver.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketSender.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="MojangSession.h">
+      <Filter>Header Files\packet</Filter>
+    </ClInclude>
+    <ClInclude Include="EncryptionSession.h">
+      <Filter>Header Files\packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -71,6 +71,9 @@ namespace mcbot
 		bool has_display_name();
 
 		std::string get_display_name();
+
+		friend bool operator==(const EntityPlayer& lhs, const EntityPlayer& rhs);
+		friend bool operator!=(const EntityPlayer& lhs, const EntityPlayer& rhs);
 	};
 }
 

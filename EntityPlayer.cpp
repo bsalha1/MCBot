@@ -136,3 +136,13 @@ std::string mcbot::EntityPlayer::get_display_name()
 {
 	return this->display_name;
 }
+
+bool mcbot::operator==(const EntityPlayer& lhs, const EntityPlayer& rhs)
+{
+	return lhs.uuid == rhs.uuid;
+}
+
+bool mcbot::operator!=(const EntityPlayer& lhs, const EntityPlayer& rhs)
+{
+	return !(lhs == rhs);
+}

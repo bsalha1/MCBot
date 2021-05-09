@@ -10,6 +10,8 @@
 
 #include "lib/httplib.h"
 #include "MCBot.h"
+#include "PacketReceiver.h"
+#include "PacketSender.h"
 #include "DaftHash.h"
 #include "ScriptRuntime.h"
 
@@ -29,21 +31,21 @@ int main(int argc, char* argv[])
     char* hostname = argv[3];
     char* port = (argc >= 5) ? argv[4] : (char*)"25565";
 
-    MCBot bot(email, password);
+    MCBot bot = MCBot();
     bot.set_debug(false);
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID
     // - To obtain an access token
     std::cout << "Logging in to Mojang authservers..." << std::endl;
-    if (bot.login_mojang() < 0)
+    if (bot.get_packet_sender().login_mojang(email, password) < 0)
     {
         std::cerr << "Failed to log in to Mojang authservers!" << std::endl;
         return -1;
     }
 
     std::cout << "Verifying access token..." << std::endl;
-    if (bot.verify_access_token() < 0)
+    if (bot.get_packet_sender().verify_access_token() < 0)
     {
         std::cerr << "Invalid access token!" << std::endl;
         return -1;
@@ -57,14 +59,14 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    bot.send_handshake(hostname, atoi(port));
-    bot.send_login_start();
+    bot.get_packet_sender().send_handshake(hostname, atoi(port));
+    bot.get_packet_sender().send_login_start();
 
     std::thread recv_thread([&bot]() {
         while (bot.is_connected())
         {
             Sleep(1);
-            bot.recv_packet();
+            bot.get_packet_receiver().recv_packet();
         }
     });
 
@@ -73,15 +75,15 @@ int main(int argc, char* argv[])
         Sleep(4000);
 
         std::cout << "Sending settings" << std::endl;
-        bot.send_settings();
-        bot.send_held_item_slot(0);
-        bot.send_custom_payload("vanilla");
+        bot.get_packet_sender().send_settings();
+        bot.get_packet_sender().send_held_item_slot(0);
+        bot.get_packet_sender().send_custom_payload("vanilla");
 
         // Echo back player location (enables further sending of locations)
-        bot.send_position(bot.get_player().get_location(), true);
+        bot.get_packet_sender().send_position(bot.get_player().get_location(), true);
 
         Sleep(1000 / 20);
-        bot.send_position(bot.get_player().get_location(), true);
+        bot.get_packet_sender().send_position(bot.get_player().get_location(), true);
 
         // Move to better center of a block to make math easier
         mcbot::Vector<double> clean_position = bot.get_player().get_location();
@@ -89,23 +91,24 @@ int main(int argc, char* argv[])
         clean_position = clean_position + mcbot::Vector<double>(0.5, 0, 0.5);
 
         Sleep(1000 / 20);
-        bot.send_position(clean_position, true);
+        bot.get_packet_sender().send_position(clean_position, true);
         Sleep(1000 / 20);
-        bot.send_position(clean_position, true);
+        bot.get_packet_sender().send_position(clean_position, true);
 
-        Entity target;
-        for (Entity entity : bot.get_entities())
+        EntityPlayer target;
+        for (EntityPlayer entity : bot.get_players())
         {
-            if (entity.get_entity_type() == EntityType::PIG)
+            if (entity != bot.get_player())
             {
-                std::cout << "Found pig" << std::endl;
+                std::cout << "Found player: " << entity.get_name() << std::endl;
                 target = entity;
                 break;
             }
         }
 
+        mcbot::Vector<double> target_location = target.get_location();
         bot.move_to_ground(0.10);
-        bot.move_to(115.50, 300.50, 3);
+        bot.move_to(target_location.get_x(), target_location.get_z(), 3);
 
 
         //std::ofstream script_file("script.txt");
@@ -182,7 +185,7 @@ int main(int argc, char* argv[])
         {
             break;
         }
-        bot.send_chat_message(input);
+        bot.get_packet_sender().send_chat_message(input);
 
     } while (bot.is_connected());
 
