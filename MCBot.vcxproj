@@ -161,7 +161,6 @@
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="DaftHash.cpp" />
     <ClCompile Include="Attribute.cpp" />
-    <ClCompile Include="EncryptionSession.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityLiving.cpp" />
     <ClCompile Include="MojangSession.cpp" />
@@ -199,7 +198,6 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="DaftHash.h" />
     <ClInclude Include="Attribute.h" />
-    <ClInclude Include="EncryptionSession.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="EntityLiving.h" />
     <ClInclude Include="Enums.h" />

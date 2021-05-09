@@ -149,9 +149,6 @@
     <ClCompile Include="PacketSender.cpp">
       <Filter>Source Files\packet</Filter>
     </ClCompile>
-    <ClCompile Include="EncryptionSession.cpp">
-      <Filter>Source Files\packet</Filter>
-    </ClCompile>
     <ClCompile Include="MojangSession.cpp">
       <Filter>Source Files\packet</Filter>
     </ClCompile>
@@ -263,9 +260,6 @@
       <Filter>Header Files\packet</Filter>
     </ClInclude>
     <ClInclude Include="MojangSession.h">
-      <Filter>Header Files\packet</Filter>
-    </ClInclude>
-    <ClInclude Include="EncryptionSession.h">
       <Filter>Header Files\packet</Filter>
     </ClInclude>
   </ItemGroup>

@@ -519,7 +519,7 @@ void mcbot::PacketReceiver::recv_position(uint8_t* packet, size_t length, size_t
 
     mcbot::Vector<double> position = PacketDecoder::read_vector<double>(packet, offset);
 
-    this->bot->player.update_location(position);
+    this->bot->get_player().update_location(position);
 
     float yaw = PacketDecoder::read_float(packet, offset);
     float pitch = PacketDecoder::read_float(packet, offset);

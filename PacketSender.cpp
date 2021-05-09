@@ -300,7 +300,7 @@ void mcbot::PacketSender::send_position(Vector<double> position, bool on_ground)
     delete[] packet;
 
     // Internal updates
-    this->bot->player.update_location(position);
+    this->bot->get_player().update_location(position);
 }
 
 void mcbot::PacketSender::send_look(float yaw, float pitch, bool on_ground)
@@ -325,7 +325,7 @@ void mcbot::PacketSender::send_look(float yaw, float pitch, bool on_ground)
     delete[] packet;
 
     // Internal updates
-    this->bot->player.update_rotation(yaw, pitch);
+    this->bot->get_player().update_rotation(yaw, pitch);
 }
 
 void mcbot::PacketSender::send_position_look(Vector<double> position, float yaw, float pitch, bool on_ground)
@@ -353,8 +353,8 @@ void mcbot::PacketSender::send_position_look(Vector<double> position, float yaw,
     delete[] packet;
 
     // Internal updates
-    this->bot->player.update_location(position);
-    this->bot->player.update_rotation(yaw, pitch);
+    this->bot->get_player().update_location(position);
+    this->bot->get_player().update_rotation(yaw, pitch);
 }
 
 void mcbot::PacketSender::send_held_item_slot(short slot)

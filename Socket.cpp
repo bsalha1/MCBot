@@ -220,12 +220,12 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
 {
     if (this->encryption_enabled)
     {
-        uint8_t* encrypted_packet = (uint8_t*) calloc(length, sizeof(uint8_t));
-        uint8_t* decrypted_packet = (uint8_t*) calloc(length, sizeof(uint8_t));
+        uint8_t* encrypted_packet = new uint8_t[length]{ 0 };
+        uint8_t* decrypted_packet = new uint8_t[length]{ 0 };
         int bytes_read = recv(this->socket, (char*)encrypted_packet, length, 0);
 
         int decrypted_packet_length = decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
-        free(encrypted_packet);
+        delete[] encrypted_packet;
 
         if (this->compression_enabled && length > 1)
         {
@@ -236,32 +236,26 @@ int mcbot::Socket::recv_packet(uint8_t* packet, int length, int decompressed_len
             }
             else
             {
-                uint8_t* decompressed_packet = (uint8_t*)calloc(decompressed_length, sizeof(uint8_t));
+                uint8_t* decompressed_packet = new uint8_t[decompressed_length]{ 0 };
 
                 decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
-                free(decrypted_packet);
-
                 memcpy(packet, decompressed_packet, decompressed_length);
-                free(decompressed_packet);
 
+                delete[] decrypted_packet;
+                delete[] decompressed_packet;
                 return decompressed_length;
             }
         }
         else
         {
             memcpy(packet, decrypted_packet, decrypted_packet_length);
-            free(decrypted_packet);
+            delete[] decrypted_packet;
         }
         return decrypted_packet_length;
 
     }
     else
     {
-        if (this->compression_enabled)
-        {
-            // TODO
-        }
-
         return recv(this->socket, (char*) packet, length, 0);
     }
 }
@@ -277,12 +271,7 @@ int mcbot::Socket::send_pack(uint8_t* packet, size_t length)
 
             if (length > this->max_uncompressed_length)
             {
-                uint8_t* compressed_packet = (uint8_t *) calloc(length, sizeof(uint8_t));
-                compress(compressed_packet, length, packet, length);
-
-                uint8_t* encrypted_packet = (uint8_t*)calloc(length, sizeof(uint8_t));
-                int encrypted_length = encrypt(compressed_packet, length, encrypted_packet);
-
+                // TODO
                 data_length = length;
             }
             else
@@ -298,68 +287,56 @@ int mcbot::Socket::send_pack(uint8_t* packet, size_t length)
                 write_var_int(packet_length, header, offset);
                 write_var_int(data_length, header, offset);
 
-                // Encrypt Header
-                uint8_t* encrypted_header = new uint8_t[header_length]{ 0 };
-                int encrypted_header_length = encrypt(header, header_length, encrypted_header);
-
-                // Encrypt Data
-                uint8_t* encrypted_packet = new uint8_t[length]{ 0 };
-                int encrypted_length = encrypt(packet, length, encrypted_packet);
-
                 // Put Header on Top of Data
-                uint8_t* full_packet = new uint8_t[encrypted_header_length + encrypted_length]{ 0 };
-                for (int i = 0; i < encrypted_header_length + encrypted_length; i++)
+                int full_length = header_length + length;
+                uint8_t* full_packet = new uint8_t[full_length]{ 0 };
+                for (int i = 0; i < full_length; i++)
                 {
-                    if (i < encrypted_header_length)
+                    if (i < header_length)
                     {
-                        full_packet[i] = encrypted_header[i];
+                        full_packet[i] = header[i];
                     }
                     else
                     {
-                        full_packet[i] = encrypted_packet[i - encrypted_header_length];
+                        full_packet[i] = packet[i - header_length];
                     }
                 }
+                
+                uint8_t* encrypted_packet = new uint8_t[full_length]{ 0 };
+                int encrypted_length = encrypt(full_packet, full_length, encrypted_packet);
+                delete[] full_packet;
 
 
                 // Send Header //
-                int ret = send(this->socket, (char*)full_packet, encrypted_header_length + encrypted_length, 0);
+                int ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);
                 if (ret < 0)
                 {
                     std::cerr << "Failed to send header packet" << std::endl;
-                    delete[] header;
-                    delete[] encrypted_header;
                     delete[] encrypted_packet;
-                    delete[] full_packet;
                     return ret;
                 }
 
-                delete[] header;
-                delete[] encrypted_header;
                 delete[] encrypted_packet;
-                delete[] full_packet;
                 return ret;
             }
         }
-
-        char encrypted_packet[1028] = { 0 };
-        int encrypted_len = encrypt((uint8_t*)packet, length, (uint8_t*)encrypted_packet);
-        return send(this->socket, encrypted_packet, encrypted_len, 0);
+        else 
+        {
+            uint8_t* encrypted_packet = new uint8_t[length]{ 0 };
+            int encrypted_len = encrypt((uint8_t*)packet, length, encrypted_packet);
+            return send(this->socket, (char*) encrypted_packet, encrypted_len, 0);
+        }
     }
     else
     {
-        if (this->compression_enabled)
-        {
-            // TODO
-        }
-
         // Send Header
         int header_length = get_var_int_size(length);
-        uint8_t* header = (uint8_t*)calloc(header_length, sizeof(uint8_t));
+        uint8_t* header = new uint8_t[header_length]{ 0 };
         size_t offset = 0;
 
         write_var_int(length, header, offset);
         send(this->socket, (char*)header, header_length, 0);
-        free(header);
+        delete[] header;
 
         return send(this->socket, (char*)packet, length, 0);
     }
