@@ -1,4 +1,5 @@
 #include "PacketEncoder.h"
+#include <cstdarg>
 
 void mcbot::PacketEncoder::write_var_int(int value, uint8_t* packet, size_t& offset)
 {
@@ -14,13 +15,25 @@ void mcbot::PacketEncoder::write_var_int(int value, uint8_t* packet, size_t& off
     } while (value != 0);
 }
 
-size_t mcbot::PacketEncoder::get_var_int_size(int value)
+int mcbot::PacketEncoder::get_var_int_size(int value)
 {
     if (value == 0)
     {
         return 1;
     }
     return floor(log(value) / log(128)) + 1;
+}
+
+int mcbot::PacketEncoder::get_var_int_size(std::initializer_list<int> values)
+{
+    int size = 0;
+
+    for (int value : values)
+    {
+        size += get_var_int_size(value);
+    }
+
+    return size;
 }
 
 void mcbot::PacketEncoder::write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset)

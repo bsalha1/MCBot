@@ -7,7 +7,7 @@ namespace mcbot
 	class EntityLiving : public Entity
 	{
 	public:
-		EntityLiving(EntityType entity_type, int id, mcbot::Vector<int> initial_location);
+		EntityLiving(EntityType entity_type, int id);
 	};
 }
 

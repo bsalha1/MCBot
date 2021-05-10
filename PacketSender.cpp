@@ -237,7 +237,7 @@ void mcbot::PacketSender::send_keep_alive(int id)
     this->bot->log_debug(">>> Sending PacketPlayInKeepAlive...");
 
     int packet_id = 0x00;
-    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(id) + PacketEncoder::get_var_int_size(packet_id)];
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size({ packet_id, id })];
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset); // packet id
@@ -257,7 +257,7 @@ void mcbot::PacketSender::send_chat_message(std::string message)
     this->bot->log_debug(">>> Sending PacketPlayInChat...");
 
     int packet_id = 0x01;
-    uint8_t* packet = new uint8_t[message.length() + PacketEncoder::get_var_int_size(message.length()) + 1 + PacketEncoder::get_var_int_size(packet_id)]{ 0 };
+    uint8_t* packet = new uint8_t[message.length() + PacketEncoder::get_var_int_size({ packet_id, (int)message.length()}) + 1]{ 0 };
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset);
@@ -271,6 +271,27 @@ void mcbot::PacketSender::send_chat_message(std::string message)
     else
     {
         this->bot->log_debug("Message: " + message);
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_use_entity(int entity_id, mcbot::EntityAction action)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInUseEntity...");
+
+    int packet_id = 0x02;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size({packet_id, entity_id, (int)action})]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_var_int(entity_id, packet, offset);
+    PacketEncoder::write_var_int((int)action, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
     }
 
     delete[] packet;

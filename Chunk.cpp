@@ -31,6 +31,11 @@ int mcbot::Chunk::get_block_id(int x, int y, int z)
     return section.get_block_id(x, y, z);
 }
 
+int mcbot::Chunk::get_block_id(mcbot::Vector<int> location)
+{
+    return this->get_block_id(location.get_x(), location.get_y(), location.get_z());
+}
+
 int mcbot::Chunk::get_block_id(mcbot::Vector<double> location)
 {
     int x = (int)floor(location.get_x());
@@ -38,6 +43,18 @@ int mcbot::Chunk::get_block_id(mcbot::Vector<double> location)
     int z = (int)floor(location.get_z());
 
     return this->get_block_id(x, y, z);
+}
+
+void mcbot::Chunk::update_block(int x, int y, int z, int block_id)
+{
+    ChunkSection& section = this->chunk_sections[y >> 4];
+    section.set_block_id(x, y, z, block_id);
+}
+
+void mcbot::Chunk::update_block(mcbot::Vector<int> location, int block_id)
+{
+    ChunkSection& section = this->chunk_sections[location.get_y() >> 4];
+    section.set_block_id(location.get_x(), location.get_y(), location.get_z(), block_id);
 }
 
 void mcbot::Chunk::add_section(int i, ChunkSection section)

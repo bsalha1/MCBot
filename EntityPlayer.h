@@ -22,9 +22,6 @@ namespace mcbot
 		int ping; // in milliseconds
 		std::string display_name;
 
-		float yaw;
-		float pitch;
-
 	public:
 		EntityPlayer(int entity_id, UUID uuid, std::string name,
 			std::list<PlayerProperty> properties,
@@ -34,11 +31,6 @@ namespace mcbot
 		EntityPlayer(int entity_id, UUID uuid);
 
 		EntityPlayer();
-
-		void update_location(mcbot::Vector<double> location);
-		void update_location(mcbot::Vector<int> location);
-
-		void update_rotation(float yaw, float pitch);
 
 		void set_gamemode(Gamemode gamemode);
 

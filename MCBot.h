@@ -52,7 +52,7 @@ namespace mcbot
 		// Runtime Minecraft Info
 		EntityPlayer player;
 		std::map<UUID, EntityPlayer> uuid_to_player;
-		std::list<Entity> entities;
+		std::map<int, Entity> entities;
 		std::map<std::pair<int, int>, Chunk> chunks;
 		WorldBorder world_border;
 		
@@ -70,18 +70,23 @@ namespace mcbot
 		void move_to_ground(double speed);
 		bool on_ground();
 		mcbot::Vector<double> get_ground_location(mcbot::Vector<double> location);
+		void attack_entity(Entity entity);
 
 		// Entity Management
 		void register_entity(Entity entity);
+		void remove_entity(int id);
+		bool is_entity_registered(int id);
 		void register_player(UUID uuid, EntityPlayer player);
 		EntityPlayer& get_player(UUID uuid);
-		bool is_registered(UUID uuid);
+		Entity& get_entity(int id);
+		bool is_player_registered(UUID uuid);
 		void update_player_info(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 
 		// Chunk Management
 		void load_chunk(Chunk chunk);
-		Chunk get_chunk(int x, int z);
-		Chunk get_chunk(mcbot::Vector<double> location);
+		Chunk& get_chunk(int x, int z);
+		Chunk& get_chunk(mcbot::Vector<int> location);
+		Chunk& get_chunk(mcbot::Vector<double> location);
 
 		// Logging
 		void log_debug(std::string message);

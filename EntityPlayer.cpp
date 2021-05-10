@@ -3,7 +3,7 @@
 mcbot::EntityPlayer::EntityPlayer(int entity_id, mcbot::UUID uuid, std::string name,
 	std::list<mcbot::PlayerProperty> properties, 
 	mcbot::Gamemode gamemode, 
-	int ping, std::string display_name) : EntityLiving(EntityType::PLAYER, entity_id, mcbot::Vector<int>())
+	int ping, std::string display_name) : EntityLiving(EntityType::PLAYER, entity_id)
 {
 	this->uuid = uuid;
 	this->name = name;
@@ -11,11 +11,9 @@ mcbot::EntityPlayer::EntityPlayer(int entity_id, mcbot::UUID uuid, std::string n
 	this->gamemode = gamemode;
 	this->ping = ping;
 	this->display_name = display_name;
-	this->yaw = 0;
-	this->pitch = 0;
 }
 
-mcbot::EntityPlayer::EntityPlayer(int entity_id, UUID uuid) : EntityLiving(EntityType::PLAYER, entity_id, mcbot::Vector<int>())
+mcbot::EntityPlayer::EntityPlayer(int entity_id, UUID uuid) : EntityLiving(EntityType::PLAYER, entity_id)
 {
 	this->uuid = uuid;
 	this->name = "";
@@ -23,11 +21,9 @@ mcbot::EntityPlayer::EntityPlayer(int entity_id, UUID uuid) : EntityLiving(Entit
 	this->gamemode = mcbot::Gamemode::SURVIVAL;
 	this->ping = -1;
 	this->display_name = "";
-	this->yaw = 0;
-	this->pitch = 0;
 }
 
-mcbot::EntityPlayer::EntityPlayer() : EntityLiving(EntityType::PLAYER, -1, mcbot::Vector<int>())
+mcbot::EntityPlayer::EntityPlayer() : EntityLiving(EntityType::PLAYER, -1)
 {
 	this->uuid = UUID();
 	this->name = "";
@@ -35,26 +31,6 @@ mcbot::EntityPlayer::EntityPlayer() : EntityLiving(EntityType::PLAYER, -1, mcbot
 	this->gamemode = mcbot::Gamemode::SURVIVAL;
 	this->ping = -1;
 	this->display_name = "";
-	this->yaw = 0;
-	this->pitch = 0;
-}
-
-void mcbot::EntityPlayer::update_location(mcbot::Vector<double> location)
-{
-	this->location = location;
-}
-
-void mcbot::EntityPlayer::update_location(mcbot::Vector<int> location)
-{
-	this->location.set_x(location.get_x());
-	this->location.set_y(location.get_y());
-	this->location.set_z(location.get_z());
-}
-
-void mcbot::EntityPlayer::update_rotation(float yaw, float pitch)
-{
-	this->yaw = yaw;
-	this->pitch = pitch;
 }
 
 void mcbot::EntityPlayer::set_gamemode(mcbot::Gamemode gamemode)

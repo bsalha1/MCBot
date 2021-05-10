@@ -1,13 +1,15 @@
 #include "Entity.h"
 
-mcbot::Entity::Entity(EntityType entity_type, int id, mcbot::Vector<int> initial_location)
+mcbot::Entity::Entity(EntityType entity_type, int id)
 {
 	this->entity_type = entity_type;
 	this->id = id;
-	this->location = mcbot::Vector<double>();
-	this->location.set_x(initial_location.get_x());
-	this->location.set_y(initial_location.get_y());
-	this->location.set_z(initial_location.get_z());
+}
+
+mcbot::Entity::Entity(int id)
+{
+	this->entity_type = EntityType::UNKNOWN;
+	this->id = id;
 }
 
 mcbot::Entity::Entity()
@@ -21,7 +23,35 @@ mcbot::EntityType mcbot::Entity::get_entity_type()
 	return this->entity_type;
 }
 
-mcbot::Vector<double> mcbot::Entity::get_location()
+void mcbot::Entity::update_location(mcbot::Vector<double> location)
+{
+	this->location = location;
+}
+
+void mcbot::Entity::update_location(mcbot::Vector<int> location)
+{
+	this->location.set_x(location.get_x());
+	this->location.set_y(location.get_y());
+	this->location.set_z(location.get_z());
+}
+
+void mcbot::Entity::update_motion(mcbot::Vector<double> motion)
+{
+	this->location = this->location + motion;
+}
+
+void mcbot::Entity::update_rotation(float yaw, float pitch)
+{
+	this->yaw = yaw;
+	this->pitch = pitch;
+}
+
+void mcbot::Entity::update_yaw(float yaw)
+{
+	this->yaw = yaw;
+}
+
+mcbot::Vector<double>& mcbot::Entity::get_location()
 {
 	return this->location;
 }

@@ -289,24 +289,40 @@ void mcbot::MCBot::move_to(double x, double z, int ticks_per_move)
         {
             std::cerr << e.what() << std::endl;
             this->packet_sender->send_position(this->player.get_location() + mcbot::Vector<double>(0, 1, 0), false);
-            Sleep(1000 / 20);
+            Sleep(1000 / 20 * ticks_per_move);
             this->packet_sender->send_position(this->player.get_location() + mcbot::Vector<double>(0, 0, abs(dz)/dz), true);
+            Sleep(1000 / 20 * ticks_per_move);
             continue;
         }
 
         if (!this->on_ground())
         {
-            Sleep(1000 / 20);
+            Sleep(1000 / 20 * ticks_per_move);
             this->move_to_ground(0.10);
         }
 
-        Sleep(1000 / 20);
+        Sleep(1000 / 20 * ticks_per_move);
     }
+}
+
+void mcbot::MCBot::attack_entity(Entity entity)
+{
+    this->packet_sender->send_use_entity(entity.get_id(), EntityAction::ATTACK);
 }
 
 void mcbot::MCBot::register_entity(Entity entity)
 {
-    this->entities.push_back(entity);
+    this->entities.insert(std::pair<int, Entity>(entity.get_id(), entity));
+}
+
+void mcbot::MCBot::remove_entity(int id)
+{
+    this->entities.erase(id);
+}
+
+bool mcbot::MCBot::is_entity_registered(int id)
+{
+    return this->entities.find(id) != this->entities.end();
 }
 
 void mcbot::MCBot::register_player(UUID uuid, EntityPlayer player)
@@ -319,7 +335,12 @@ mcbot::EntityPlayer& mcbot::MCBot::get_player(UUID uuid)
     return this->uuid_to_player[uuid];
 }
 
-bool mcbot::MCBot::is_registered(UUID uuid)
+mcbot::Entity& mcbot::MCBot::get_entity(int id)
+{
+    return this->entities[id];
+}
+
+bool mcbot::MCBot::is_player_registered(UUID uuid)
 {
     return this->uuid_to_player.find(uuid) != this->uuid_to_player.end();
 }
@@ -329,16 +350,21 @@ void mcbot::MCBot::load_chunk(Chunk chunk)
     this->chunks.insert(std::pair<std::pair<int, int>, Chunk>(std::pair<int, int>(chunk.get_x(), chunk.get_z()), chunk));
 }
 
-mcbot::Chunk mcbot::MCBot::get_chunk(int x, int z)
+mcbot::Chunk& mcbot::MCBot::get_chunk(int x, int z)
 {
-    return this->chunks.at(std::pair<int, int>(x, z));
+    return this->chunks[std::pair<int, int>(x, z)];
 }
 
-mcbot::Chunk mcbot::MCBot::get_chunk(mcbot::Vector<double> location)
+mcbot::Chunk& mcbot::MCBot::get_chunk(mcbot::Vector<int> location)
+{
+    return this->chunks[std::pair<int, int>(location.get_x() >> 4, location.get_z() >> 4)];
+}
+
+mcbot::Chunk& mcbot::MCBot::get_chunk(mcbot::Vector<double> location)
 {
     int x = ((int)floor(location.get_x())) >> 4;
     int z = ((int)floor(location.get_z())) >> 4;
-    return this->chunks.at(std::pair<int, int>(x, z));
+    return this->chunks[std::pair<int, int>(x, z)];
 }
 
 mcbot::Vector<double> mcbot::MCBot::get_ground_location(mcbot::Vector<double> location)
@@ -365,7 +391,6 @@ void mcbot::MCBot::move_to_ground(double speed)
     {
         return;
     }
-    std::cout << "Moving to ground" << std::endl;
     mcbot::Vector<double> dest = this->get_ground_location(this->player.get_location()) + mcbot::Vector<double>(0, 1, 0);
     this->move_to(dest, speed, true);
 }
@@ -383,8 +408,8 @@ void mcbot::MCBot::move(mcbot::Vector<double> diff)
     mcbot::Vector<double> init = this->player.get_location();
     mcbot::Vector<double> dest = init + diff;
 
-    Chunk dest_chunk = get_chunk(dest);
-    Chunk init_chunk = get_chunk(init);
+    Chunk& dest_chunk = this->get_chunk(dest);
+    Chunk& init_chunk = this->get_chunk(init);
 
     int dest_block_id = dest_chunk.get_block_id(dest);
 
@@ -403,8 +428,8 @@ void mcbot::MCBot::move(double dx, double dz)
     mcbot::Vector<double> init = this->player.get_location();
     mcbot::Vector<double> dest = init + dr;
 
-    Chunk dest_chunk = get_chunk(dest);
-    Chunk init_chunk = get_chunk(init);
+    Chunk& dest_chunk = this->get_chunk(dest);
+    Chunk& init_chunk = this->get_chunk(init);
     Block dest_block = Block(dest_chunk.get_block_id(dest));
 
 
@@ -415,7 +440,8 @@ void mcbot::MCBot::move(double dx, double dz)
         throw CollisionException(dest_block, dest);
     }
 
-    this->packet_sender->send_position(dest, true);
+    float yaw = dx > 0 ? -90 : dx < 0 ? 90 : dz > 0 ? 0 : dz < 0 ? 180 : 0;
+    this->packet_sender->send_position_look(dest, yaw, 0, true);
 }
 
 void mcbot::MCBot::log_debug(std::string message)
@@ -474,7 +500,13 @@ mcbot::MojangSession mcbot::MCBot::get_session()
 
 std::list<mcbot::Entity> mcbot::MCBot::get_entities()
 {
-    return this->entities;
+    typedef std::map<int, Entity> map_type;
+    std::list<Entity> value_list;
+    for (map_type::const_iterator it = this->entities.begin(); it != this->entities.end(); ++it)
+    {
+        value_list.push_back(it->second);
+    }
+    return value_list;
 }
 
 std::list<mcbot::EntityPlayer> mcbot::MCBot::get_players()

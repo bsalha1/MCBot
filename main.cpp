@@ -95,20 +95,29 @@ int main(int argc, char* argv[])
         Sleep(1000 / 20);
         bot.get_packet_sender().send_position(clean_position, true);
 
-        EntityPlayer target;
-        for (EntityPlayer entity : bot.get_players())
+        int target_id = 0;
+        for (Entity entity : bot.get_entities())
         {
-            if (entity != bot.get_player())
+            if (entity.get_entity_type() == EntityType::MUSHROOM_COW)
             {
-                std::cout << "Found player: " << entity.get_name() << std::endl;
-                target = entity;
+                std::cout << "Found player: " << entity.get_id()<< std::endl;
+                target_id = entity.get_id();
                 break;
             }
         }
 
-        mcbot::Vector<double> target_location = target.get_location();
+        //mcbot::Vector<double> target_location = target.get_location();
         bot.move_to_ground(0.10);
-        bot.move_to(target_location.get_x(), target_location.get_z(), 3);
+
+        Entity& entity = bot.get_entity(target_id);
+        while (true)
+        {
+            mcbot::Vector<double> target_location = entity.get_location();
+            std::cout << target_location.to_string() << std::endl;
+            bot.move_to(target_location.get_x(), target_location.get_z(), 4);
+            Sleep(1000);
+        }
+        //bot.attack_entity(target);
 
 
         //std::ofstream script_file("script.txt");

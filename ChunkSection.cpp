@@ -18,6 +18,15 @@ int mcbot::ChunkSection::get_block_id(mcbot::Vector<double> location)
 	return this->get_block_id(x, y, z);
 }
 
+void mcbot::ChunkSection::set_block_id(int x, int y, int z, int block_id)
+{
+	x &= 0xF;
+	y &= 0xF;
+	z &= 0xF;
+
+	this->block_ids[y << 8 | z << 4 | x] = block_id << 4;
+}
+
 void mcbot::ChunkSection::set_block_ids(mcbot::Buffer<uint16_t> block_ids)
 {
 	this->block_ids = block_ids.to_array<4096>();

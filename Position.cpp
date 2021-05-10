@@ -22,6 +22,11 @@ int32_t mcbot::Position::get_z()
 	return this->z;
 }
 
+mcbot::Vector<int> mcbot::Position::to_vector()
+{
+	return mcbot::Vector<int>(this->x, this->y, this->z);
+}
+
 std::string mcbot::Position::to_string()
 {
 	return "(" + std::to_string(this->x) + "," + std::to_string(this->y) + "," + std::to_string(this->z) + ")";

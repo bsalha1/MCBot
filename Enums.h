@@ -40,6 +40,12 @@ namespace mcbot
 		EAST = 5
 	};
 
+	enum class EntityAction {
+		INTERACT = 0,
+		ATTACK = 1,
+		INTERACT_AT = 2
+	};
+
 	enum class EntityType {
 		UNKNOWN = -1,
 		PLAYER = 0, // Player is not actually ID 0, it is just sent in a different packet

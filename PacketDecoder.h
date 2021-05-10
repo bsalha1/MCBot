@@ -89,7 +89,7 @@ namespace mcbot
 			y = read_double(packet, offset);
 			z = read_double(packet, offset);
 		}
-		else if (std::is_same<T, uint8_t>())
+		else if (std::is_same<T, uint8_t>() || std::is_same<T, int8_t>())
 		{
 			x = read_byte(packet, offset);
 			y = read_byte(packet, offset);

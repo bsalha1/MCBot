@@ -33,6 +33,7 @@ namespace mcbot
 		void send_encryption_response(uint8_t* public_key, int public_key_length, uint8_t* verify_token, int verify_token_length, std::string shared_secret);
 		void send_keep_alive(int id);
 		void send_chat_message(std::string message);
+		void send_use_entity(int entity_id, mcbot::EntityAction action);
 		void send_position(Vector<double> position, bool on_ground);
 		void send_look(float yaw, float pitch, bool on_ground);
 		void send_position_look(Vector<double> position, float yaw, float pitch, bool on_ground);

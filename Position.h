@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "Vector.h"
+
 namespace mcbot
 {
 	class Position
@@ -17,6 +19,8 @@ namespace mcbot
 		int32_t get_x();
 		int16_t get_y();
 		int32_t get_z();
+
+		mcbot::Vector<int> to_vector();
 
 		std::string to_string();
 	};

@@ -23,7 +23,11 @@ namespace mcbot
 		Chunk(int x, int z, uint16_t primary_bit_mask);
 
 		int get_block_id(int x, int y, int z);
+		int get_block_id(mcbot::Vector<int> location);
 		int get_block_id(mcbot::Vector<double> location);
+
+		void update_block(int x, int y, int z, int block_id);
+		void update_block(mcbot::Vector<int> location, int block_id);
 
 		void add_section(int i, ChunkSection section);
 
