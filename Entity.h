@@ -10,6 +10,7 @@ namespace mcbot
 	private:
 		EntityType entity_type;
 		int id;
+		bool dead;
 
 	protected:
 		mcbot::Vector<double> location;
@@ -21,7 +22,6 @@ namespace mcbot
 		Entity(int id);
 		Entity();
 
-		EntityType get_entity_type();
 
 		mcbot::Vector<double>& get_location();
 		void update_location(mcbot::Vector<double> location);
@@ -30,9 +30,13 @@ namespace mcbot
 		void update_rotation(float yaw, float pitch);
 		void update_yaw(float yaw);
 
+		void die();
+
 		void set_id(int id);
 
 		int get_id();
+		EntityType get_entity_type();
+		bool is_dead();
 	};
 }
 

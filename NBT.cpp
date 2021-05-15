@@ -1,52 +1,53 @@
 #include "NBT.h"
+#include "Enums.h"
 
 mcbot::NBT::NBT()
 {
 }
 
-void mcbot::NBT::add_byte(std::string name, char field)
+void mcbot::NBT::add_byte(std::string name, int8_t field)
 {
-	this->bytes.insert(std::pair<std::string, char>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_BYTE, name, field));
 }
 
-void mcbot::NBT::add_short(std::string name, short field)
+void mcbot::NBT::add_short(std::string name, int16_t field)
 {
-	this->shorts.insert(std::pair<std::string, short>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_SHORT, name, field));
 }
 
-void mcbot::NBT::add_int(std::string name, int field)
+void mcbot::NBT::add_int(std::string name, int32_t field)
 {
-	this->ints.insert(std::pair<std::string, int>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_INT, name, field));
 }
 
-void mcbot::NBT::add_long(std::string name, long field)
+void mcbot::NBT::add_long(std::string name, int64_t field)
 {
-	this->longs.insert(std::pair<std::string, long>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_LONG, name, field));
 }
 
 void mcbot::NBT::add_float(std::string name, float field)
 {
-	this->floats.insert(std::pair<std::string, float>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_FLOAT, name, field));
 }
 
 void mcbot::NBT::add_double(std::string name, double field)
 {
-	this->doubles.insert(std::pair<std::string, double>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_DOUBLE, name, field));
 }
 
-void mcbot::NBT::add_byte_array(std::string name, mcbot::Buffer<uint8_t> field)
+void mcbot::NBT::add_byte_array(std::string name, mcbot::Buffer<int8_t> field)
 {
-	this->byte_arrays.insert(std::pair<std::string, mcbot::Buffer<uint8_t>>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_BYTE_ARRAY, name, field));
 }
 
-void mcbot::NBT::add_int_array(std::string name, mcbot::Buffer<int> field)
+void mcbot::NBT::add_int_array(std::string name, mcbot::Buffer<int32_t> field)
 {
-	this->int_arrays.insert(std::pair<std::string, mcbot::Buffer<int>>(name, field));
+	this->tags.push_back(NBTTag(NBTType::TAG_INT_ARRAY, name, field));
 }
 
-void mcbot::NBT::add_long_array(std::string name, mcbot::Buffer<long> field)
+void mcbot::NBT::add_long_array(std::string name, mcbot::Buffer<int64_t> field)
 {
-	this->long_arrays.insert(std::pair<std::string, mcbot::Buffer<long>>(name, field));
+	this->long_arrays.insert(std::pair<std::string, mcbot::Buffer<int64_t>>(name, field));
 }
 
 void mcbot::NBT::add_string(std::string name, std::string field)
@@ -62,6 +63,97 @@ void mcbot::NBT::add_nbt_list(std::string name, std::list<mcbot::NBT> field)
 void mcbot::NBT::add_nbt(std::string name, mcbot::NBT field)
 {
 	this->nbt_compounds.insert(std::pair<std::string, mcbot::NBT>(name, field));
+}
+
+void mcbot::NBT::serialize(uint8_t* packet, size_t& offset)
+{
+	for (auto pair : this->bytes)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_BYTE, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_byte(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->shorts)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_SHORT, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_short(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->ints)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_INT, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_int(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->longs)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_LONG, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_long(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->floats)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_FLOAT, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_float(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->doubles)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_DOUBLE, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_double(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->byte_arrays)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_BYTE_ARRAY, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_byte_array((uint8_t*)pair.second.get_array(), pair.second.get_current_size(), packet, offset);
+	}
+
+	for (auto pair : this->int_arrays)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_INT_ARRAY, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_int_array((uint32_t*)pair.second.get_array(), pair.second.get_current_size(), packet, offset);
+	}
+
+	for (auto pair : this->long_arrays)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_LONG_ARRAY, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_long_array((uint64_t*)pair.second.get_array(), pair.second.get_current_size(), packet, offset);
+	}
+
+	for (auto pair : this->strings)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_STRING, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		PacketEncoder::write_nbt_string(pair.second, packet, offset);
+	}
+
+	for (auto pair : this->nbt_lists)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_LIST, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		for (auto nbt : pair.second)
+		{
+			nbt.serialize(packet, offset);
+		}
+	}
+
+	for (auto pair : this->nbt_compounds)
+	{
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_COMPOUND, packet, offset);
+		PacketEncoder::write_nbt_string(pair.first, packet, offset);
+		pair.second.serialize(packet, offset);
+		PacketEncoder::write_byte((uint8_t)NBTType::TAG_END, packet, offset);
+	}
 }
 
 std::string insert_spaces(int num_spaces)

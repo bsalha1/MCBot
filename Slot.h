@@ -4,7 +4,7 @@
 
 namespace mcbot
 {
-	class Slot
+	class Slot : Serializable<Slot>
 	{
 	private:
 		short item_id;
@@ -16,6 +16,8 @@ namespace mcbot
 		Slot();
 
 		Slot(short item_id, int item_count, short data, mcbot::NBT nbt);
+
+		void serialize(Slot object, uint8_t* packet, size_t& offset) override;\
 
 		std::string to_string();
 	};

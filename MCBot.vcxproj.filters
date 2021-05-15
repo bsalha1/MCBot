@@ -161,6 +161,9 @@
     <ClCompile Include="StringUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="Serializable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MCBot.h">
@@ -267,6 +270,9 @@
     </ClInclude>
     <ClInclude Include="StringUtils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Serializable.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -40,7 +40,23 @@ void mcbot::PacketEncoder::write_byte_array(uint8_t* bytes, int bytes_length, ui
 {
     for (int i = 0; i < bytes_length; i++)
     {
-        packet[offset++] = bytes[i];
+        write_byte(bytes[i], packet, offset);
+    }
+}
+
+void mcbot::PacketEncoder::write_int_array(uint32_t* ints, int ints_length, uint8_t* packet, size_t& offset)
+{
+    for (int i = 0; i < ints_length; i++)
+    {
+        write_int(ints[i], packet, offset);
+    }
+}
+
+void mcbot::PacketEncoder::write_long_array(uint64_t* longs, int longs_length, uint8_t* packet, size_t& offset)
+{
+    for (int i = 0; i < longs_length; i++)
+    {
+        write_long(longs[i], packet, offset);
     }
 }
 
@@ -64,7 +80,23 @@ void mcbot::PacketEncoder::write_string(std::string string, uint8_t* packet, siz
     {
         packet[offset++] = string[i];
     }
-    packet[offset] = 0;
+}
+
+void mcbot::PacketEncoder::write_nbt_string(std::string string, uint8_t* packet, size_t& offset)
+{
+    if (string == "NONE")
+    {
+        write_short(0, packet, offset);
+        return;
+    }
+
+    int length = string.length();
+    write_short(length, packet, offset);
+
+    for (int i = 0; i < length; i++)
+    {
+        packet[offset++] = string[i];
+    }
 }
 
 void mcbot::PacketEncoder::write_boolean(bool value, uint8_t* packet, size_t& offset)
@@ -120,4 +152,23 @@ void mcbot::PacketEncoder::write_float(float num, uint8_t* packet, size_t& offse
 {
     uint32_t bytes = *((uint32_t*)&num);
     write_int(bytes, packet, offset);
+}
+
+void mcbot::PacketEncoder::write_position(int x, int y, int z, uint8_t* packet, size_t& offset)
+{
+    uint64_t bytes = x & 0x3FFFFFF;
+    bytes |= (y & 0xFFF) >> 26;
+    bytes |= (z & 0x3FFFFFF) >> 38;
+    write_long(bytes, packet, offset);
+}
+
+
+void mcbot::PacketEncoder::write_slot(mcbot::Slot slot, uint8_t* packet, size_t& offset)
+{
+
+}
+
+void mcbot::PacketEncoder::write_nbt(mcbot::NBT nbt, uint8_t* packet, size_t& offset)
+{
+    nbt.
 }

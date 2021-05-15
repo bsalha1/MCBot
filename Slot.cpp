@@ -15,6 +15,11 @@ mcbot::Slot::Slot(short item_id, int item_count, short data, mcbot::NBT nbt)
 	this->nbt = nbt;
 }
 
+void mcbot::Slot::serialize(Slot object, uint8_t* packet, size_t& offset)
+{
+
+}
+
 std::string mcbot::Slot::to_string()
 {
 	return "[id:" + std::to_string(item_id) + 

@@ -60,7 +60,7 @@ namespace mcbot
 
 		// Read Array Values
 		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<uint8_t> read_byte_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<uint16_t> read_short_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<uint16_t> read_short_le_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);

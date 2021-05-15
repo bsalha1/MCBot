@@ -743,6 +743,7 @@ void mcbot::PacketReceiver::recv_entity_destroy(uint8_t* packet, size_t length, 
 
     for (int id : entity_ids)
     {
+        this->bot->get_entity(id).die();
         this->bot->remove_entity(id);
     }
 }
@@ -940,13 +941,13 @@ void mcbot::PacketReceiver::recv_map_chunk(uint8_t* packet, size_t length, size_
     bool ground_up_continuous = PacketDecoder::read_boolean(packet, offset);
     uint16_t primary_bitmask = PacketDecoder::read_short(packet, offset);
     int data_size = PacketDecoder::read_var_int(packet, offset);
-
     Chunk chunk = PacketDecoder::read_chunk(chunk_x, chunk_z, ground_up_continuous, true, primary_bitmask, packet, offset);
-    this->bot->load_chunk(chunk);
-
+    
     bot->log_debug(
         "X: " + std::to_string(chunk_x) +
         "\n\tZ: " + std::to_string(chunk_z));
+
+    this->bot->load_chunk(chunk);
 }
 
 void mcbot::PacketReceiver::recv_multi_block_change(uint8_t* packet, size_t length, size_t& offset)

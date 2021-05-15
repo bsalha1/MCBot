@@ -307,7 +307,7 @@ void mcbot::MCBot::move_to(double x, double z, int ticks_per_move)
 
 void mcbot::MCBot::attack_entity(Entity entity)
 {
-    this->packet_sender->send_use_entity(entity.get_id(), EntityAction::ATTACK);
+    this->packet_sender->send_use_entity(entity.get_id(), UseEntityType::ATTACK);
 }
 
 void mcbot::MCBot::register_entity(Entity entity)

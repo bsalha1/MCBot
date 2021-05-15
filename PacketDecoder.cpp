@@ -244,9 +244,9 @@ void mcbot::PacketDecoder::read_byte_array(uint8_t* bytes, int length, uint8_t* 
     }
 }
 
-mcbot::Buffer<uint8_t> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
+mcbot::Buffer<char> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
 {
-    mcbot::Buffer<uint8_t> buffer = mcbot::Buffer<uint8_t>(length);
+    mcbot::Buffer<char> buffer = mcbot::Buffer<char>(length);
     for (int i = 0; i < length; i++)
     {
         buffer.put(packet[offset++]);
@@ -563,7 +563,7 @@ mcbot::NBT mcbot::PacketDecoder::read_nbt_part(uint8_t* packet, size_t& offset, 
 
 mcbot::NBT mcbot::PacketDecoder::read_nbt(uint8_t* packet, size_t& offset)
 {
-    return read_nbt_part(packet, offset, true);;
+    return read_nbt_part(packet, offset, true);
 }
 
 mcbot::EntityMetaData mcbot::PacketDecoder::read_meta_data(uint8_t* packet, size_t& offset)

@@ -276,7 +276,7 @@ void mcbot::PacketSender::send_chat_message(std::string message)
     delete[] packet;
 }
 
-void mcbot::PacketSender::send_use_entity(int entity_id, mcbot::EntityAction action)
+void mcbot::PacketSender::send_use_entity(int entity_id, mcbot::UseEntityType action)
 {
     this->bot->log_debug(">>> Sending PacketPlayInUseEntity...");
 
@@ -303,7 +303,7 @@ void mcbot::PacketSender::send_position(Vector<double> position, bool on_ground)
 
 
     int packet_id = 0x04;
-    uint8_t* packet = new uint8_t[1024]{ 0 };
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 3 * sizeof(double) + 1]{ 0 };
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset);
@@ -329,7 +329,7 @@ void mcbot::PacketSender::send_look(float yaw, float pitch, bool on_ground)
     this->bot->log_debug(">>> Sending PacketPlayInLook...");
 
     int packet_id = 0x05;
-    uint8_t* packet = new uint8_t[1024]{ 0 };
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 2 * sizeof(float) + 1]{ 0 };
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset);
@@ -354,7 +354,7 @@ void mcbot::PacketSender::send_position_look(Vector<double> position, float yaw,
     this->bot->log_debug(">>> Sending PacketPlayInPositionLook...");
 
     int packet_id = 0x06;
-    uint8_t* packet = new uint8_t[1024]{ 0 };
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 3 * sizeof(double) + 2  * sizeof(float) + 1]{ 0 };
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset);
@@ -378,16 +378,215 @@ void mcbot::PacketSender::send_position_look(Vector<double> position, float yaw,
     this->bot->get_player().update_rotation(yaw, pitch);
 }
 
+void mcbot::PacketSender::send_block_dig(DigStatus status, mcbot::Vector<int> location, BlockFace face)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInBlockDig...");
+
+    int packet_id = 0x07;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 10]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_byte((uint8_t)status, packet, offset);
+    PacketEncoder::write_position(location.get_x(), location.get_y(), location.get_z(), packet, offset);
+    PacketEncoder::write_byte((uint8_t)face, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_block_place(mcbot::Vector<int> location, BlockFace face, Slot held_item, mcbot::Vector<uint8_t> cursor_position)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInBlockPlace...");
+
+    int packet_id = 0x08;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 10]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_position(location.get_x(), location.get_y(), location.get_z(), packet, offset);
+    PacketEncoder::write_byte((uint8_t)face, packet, offset);
+    PacketEncoder::write_short()
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
 void mcbot::PacketSender::send_held_item_slot(short slot)
 {
     this->bot->log_debug(">>> Sending PacketPlayInHeldItemSlot...");
 
     int packet_id = 0x09;
-    uint8_t* packet = new uint8_t[1024]{ 0 };
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + sizeof(short)]{ 0 };
     size_t offset = 0;
 
     PacketEncoder::write_var_int(packet_id, packet, offset);
     PacketEncoder::write_short(slot, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_arm_animation()
+{
+    this->bot->log_debug(">>> Sending PacketPlayInArmAnimation...");
+
+    int packet_id = 0x0A;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id)]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+
+void mcbot::PacketSender::send_entity_action(int player_id, EntityAction action, int param)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInEntityAction...");
+
+    int packet_id = 0x0B;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size({packet_id, player_id, (int)action, param})]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_var_int(player_id, packet, offset);
+    PacketEncoder::write_var_int((int)action, packet, offset);
+    PacketEncoder::write_var_int(param, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_set_creative_slot(short slot, Slot item)
+{
+    //this->bot->log_debug(">>> Sending PacketPlayInSetCreativeSlot...");
+
+    //int packet_id = 0x10;
+    //uint8_t* packet = new uint8_t[1024]{ 0 };
+    //size_t offset = 0;
+
+    //PacketEncoder::write_var_int(packet_id, packet, offset);
+    //PacketEncoder::write_short(slot, packet, offset);
+
+    //if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    //{
+    //    this->bot->log_error("Failed to send packet");
+    //    print_winsock_error();
+    //}
+
+    //delete[] packet;
+}
+
+void mcbot::PacketSender::send_enchant_item(uint8_t window_id, uint8_t enchantment)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInEnchantItem..");
+
+    int packet_id = 0x11;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_byte(window_id, packet, offset);
+    PacketEncoder::write_byte(enchantment, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_update_sign(mcbot::Vector<int> location, std::string line1, std::string line2, std::string line3, std::string line4)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInUpdateSign...");
+
+    int packet_id = 0x12;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_position(location.get_x(), location.get_y(), location.get_z(), packet, offset);
+    PacketEncoder::write_string(line1, packet, offset);
+    PacketEncoder::write_string(line2, packet, offset);
+    PacketEncoder::write_string(line3, packet, offset);
+    PacketEncoder::write_string(line4, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_abilities(uint8_t flags, float flying_speed, float walking_speed)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInAbilities...");
+
+    int packet_id = 0x13;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + sizeof(uint8_t) + 2 * sizeof(float)]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_byte(flags, packet, offset);
+    PacketEncoder::write_float(flying_speed, packet, offset);
+    PacketEncoder::write_float(walking_speed, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_tab_complete(std::string text, bool has_position, mcbot::Vector<int> block_position)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInTabComplete...");
+
+    int packet_id = 0x14;
+    uint8_t* packet = new uint8_t[1024]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_string(text, packet, offset);
+    PacketEncoder::write_boolean(has_position, packet, offset);
+
+    if (has_position)
+    {
+        PacketEncoder::write_position(block_position.get_x(), block_position.get_y(), block_position.get_z(), packet, offset);
+    }
 
     if (this->bot->get_socket().send_pack(packet, offset) <= 0)
     {
@@ -412,6 +611,26 @@ void mcbot::PacketSender::send_settings()
     PacketEncoder::write_byte(0, packet, offset); // chat mode
     PacketEncoder::write_boolean(true, packet, offset); // chat colors
     PacketEncoder::write_byte(0x7F, packet, offset); // skin parts
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
+void mcbot::PacketSender::send_client_command(ClientStatus status)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInClientCommand...");
+
+    int packet_id = 0x16;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + PacketEncoder::get_var_int_size((int)status)]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_var_int((int)status, packet, offset);
 
     if (this->bot->get_socket().send_pack(packet, offset) <= 0)
     {

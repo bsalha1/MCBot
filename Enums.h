@@ -40,7 +40,42 @@ namespace mcbot
 		EAST = 5
 	};
 
+	enum class DigStatus {
+		STARTED = 0,
+		CANCELLED = 1,
+		FINISHED = 2,
+		DROP_ITEM_STACK = 3,
+		DROP_ITEM = 4,
+		FINISH_EATING = 5,
+		SHOOT_ARROW = 5
+	};
+
+	enum class ClientStatus {
+		PERFORM_RESPAWN = 0,
+		REQUEST_STATS = 1,
+		TAKING_INVENTORY_ACHIEVEMENT = 2
+	};
+
 	enum class EntityAction {
+		SNEAK_START = 0,
+		SNEAK_STOP = 1,
+		BED_LEAVE = 2,
+		SPRINT_START = 3,
+		SPRINT_STOP = 4,
+		HORSE_JUMP = 5,
+		HORSE_INVENTORY_OPEN = 6
+	};
+
+	enum class BlockFace {
+		Y_NEG = 0,
+		Y_POS = 1,
+		Z_NEG = 2,
+		Z_POS = 3,
+		X_NEG = 4,
+		X_POS = 5
+	};
+
+	enum class UseEntityType {
 		INTERACT = 0,
 		ATTACK = 1,
 		INTERACT_AT = 2
@@ -114,7 +149,8 @@ namespace mcbot
 	};
 
 	enum class EntityStatus {
-		RESET_MOB_SPAWN_MINECART = 1, // Also rabbit jump animation
+		RESET_MOB_SPAWN_MINECART = 1,
+		RABBIT_JUMP_ANIMATION = 1,
 		HURT = 2,
 		DEAD = 3,
 		IRON_GOLEM_THROW = 4,
@@ -122,7 +158,8 @@ namespace mcbot
 		TAMED = 7,
 		WOLF_SHAKING = 8,
 		EATING = 9,
-		SHEEP_EATING = 10, // Also TNT ignite sound
+		SHEEP_EATING = 10,
+		TNT_IGNITE_SOUND = 10,
 		IRON_GOLEM_ROSE = 11,
 		VILLAGER_MATING = 12,
 		VILLAGER_ANGRY = 13,
@@ -198,6 +235,7 @@ namespace mcbot
 	};
 
 	enum class NBTType {
+		UNKNOWN = -1,
 		TAG_END = 0,
 		TAG_BYTE = 1,
 		TAG_SHORT = 2,
