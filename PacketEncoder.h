@@ -26,8 +26,8 @@ namespace mcbot
 		static void write_double(double num, uint8_t* packet, size_t& offset);
 		static void write_float(float num, uint8_t* packet, size_t& offset);
 		static void write_position(int x, int y, int z, uint8_t* packet, size_t& offset);
-		static void write_slot(Slot slot, uint8_t* packet, size_t& offset);
-		static void write_nbt(mcbot::NBT nbt, uint8_t* packet, size_t& offset);
+		static void write_slot(mcbot::Slot slot, uint8_t* packet, size_t& offset);
+		static void write_nbt(mcbot::NBTTagCompound nbt, uint8_t* packet, size_t& offset);
 	};
 }
 

@@ -1,23 +1,24 @@
 #pragma once
 
-#include "NBT.h"
+#include "Serializable.h"
+#include "NBTTagCompound.h"
 
 namespace mcbot
 {
-	class Slot : Serializable<Slot>
+	class Slot : Serializable
 	{
 	private:
 		short item_id;
 		uint8_t item_count;
 		short data;
-		mcbot::NBT nbt;
+		mcbot::NBTTagCompound nbt;
 
 	public:
 		Slot();
 
-		Slot(short item_id, int item_count, short data, mcbot::NBT nbt);
+		Slot(short item_id, int item_count, short data, mcbot::NBTTagCompound nbt);
 
-		void serialize(Slot object, uint8_t* packet, size_t& offset) override;\
+		void serialize(uint8_t* packet, size_t& offset) override;
 
 		std::string to_string();
 	};

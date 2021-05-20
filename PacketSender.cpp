@@ -402,7 +402,7 @@ void mcbot::PacketSender::send_block_dig(DigStatus status, mcbot::Vector<int> lo
 
 void mcbot::PacketSender::send_block_place(mcbot::Vector<int> location, BlockFace face, Slot held_item, mcbot::Vector<uint8_t> cursor_position)
 {
-    this->bot->log_debug(">>> Sending PacketPlayInBlockPlace...");
+    /*this->bot->log_debug(">>> Sending PacketPlayInBlockPlace...");
 
     int packet_id = 0x08;
     uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 10]{ 0 };
@@ -419,7 +419,7 @@ void mcbot::PacketSender::send_block_place(mcbot::Vector<int> location, BlockFac
         print_winsock_error();
     }
 
-    delete[] packet;
+    delete[] packet;*/
 }
 
 void mcbot::PacketSender::send_held_item_slot(short slot)

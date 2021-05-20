@@ -3,11 +3,12 @@
 #include <iostream>
 #include <boost/any.hpp>
 
+#include "Serializable.h"
 #include "Enums.h"
 
 namespace mcbot
 {
-	class NBTTag
+	class NBTTag : Serializable
 	{
 	private:
 		NBTType type;
@@ -19,8 +20,10 @@ namespace mcbot
 		NBTTag(NBTType type, std::string name);
 		NBTTag();
 
-		std::string get_name();
+		void serialize(uint8_t* packet, size_t& offset) override;
 
+		std::string get_name();
+		NBTType get_type();
 		boost::any get_value();
 	};
 }

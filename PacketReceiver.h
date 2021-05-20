@@ -22,7 +22,7 @@
 #include "Slot.h"
 #include "Statistic.h"
 #include "UUID.h"
-#include "NBT.h"
+#include "NBTTagCompound.h"
 #include "Particle.h"
 #include "WorldBorder.h"
 #include "Position.h"

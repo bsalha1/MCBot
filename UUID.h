@@ -18,7 +18,7 @@ namespace mcbot
 
 		std::string to_string();
 
-		friend std::ostream& operator<<(std::ostream& os, UUID uuid);
+		//friend std::ostream& operator<<(std::ostream& os, UUID uuid);
 
 		friend bool operator<(const UUID & lhs, const UUID & rhs);
 		friend bool operator==(const UUID & lhs, const UUID & rhs);

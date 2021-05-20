@@ -13,7 +13,8 @@
 #include "VillagerData.h"
 #include "AttributeModifier.h"
 #include "Attribute.h"
-#include "NBT.h"
+#include "NBTTagCompound.h"
+#include "NBTList.h"
 #include "Enums.h"
 #include "EntityMetaData.h"
 #include "Statistic.h"
@@ -52,17 +53,24 @@ namespace mcbot
 		static mcbot::VillagerData read_villager_data(uint8_t* packet, size_t& offset);
 		static mcbot::AttributeModifier read_attribute_modifier(uint8_t* packet, size_t& offset);
 		static mcbot::Attribute read_attribute(uint8_t* packet, size_t& offset);
-		static mcbot::NBT read_nbt(uint8_t* packet, size_t& offset);
-		static mcbot::NBT read_nbt_part(uint8_t* packet, size_t& offset, bool parent = true, bool list = false, mcbot::NBTType list_type = mcbot::NBTType::TAG_END);
 		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
 		static mcbot::Chunk read_chunk(int x, int z, bool ground_up_continuous, bool sky_light_sent, uint16_t primary_bitmask, uint8_t* packet, size_t& offset);
 		static mcbot::Chunk read_chunk_bulk(Chunk& chunk, bool sky_light_sent, uint8_t* packet, size_t& offset);
 
+		// Read NBT
+		static mcbot::NBTTagCompound read_nbt(uint8_t* packet, size_t& offset);
+		static std::string read_nbt_string(uint8_t* packet, size_t& offset);
+		static mcbot::NBTTag read_next_nbt_tag(uint8_t* packet, size_t& offset);
+		static mcbot::NBTTag read_nbt_tag(mcbot::NBTType type, uint8_t* packet, size_t& offset, bool has_name = true);
+		static mcbot::NBTTag read_nbt_tag(mcbot::NBTType type, std::string name, uint8_t* packet, size_t& offset);
+		static mcbot::NBTTagCompound read_nbt_tag_compound(uint8_t* packet, size_t& offset, bool parent = false);
+		static mcbot::NBTList read_nbt_list(uint8_t* packet, size_t& offset);
+
 		// Read Array Values
 		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<char> read_byte_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<uint8_t> read_byte_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<uint16_t> read_short_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<uint16_t> read_short_le_array(int length, uint8_t* packet, size_t& offset);
+		static mcbot::Buffer<uint16_t> read_short_le_array(int length, uint8_t* packet, size_t& offset); // little-endian
 		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<int> read_var_int_array(int length, uint8_t* packet, size_t& offset);
 		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
@@ -70,7 +78,6 @@ namespace mcbot
 		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
 		static std::list <mcbot::PlayerProperty> read_property_array(int length, uint8_t* packet, size_t& offset);
 		static std::list <mcbot::Slot> read_slot_array(int length, uint8_t* packet, size_t& offset);
-		static std::list<mcbot::NBT> read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset);
 	};
 
 	template<typename T>

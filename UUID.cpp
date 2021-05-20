@@ -46,11 +46,11 @@ std::string mcbot::UUID::to_string()
 	return str;
 }
 
-std::ostream& mcbot::operator<<(std::ostream& os, UUID uuid)
+/*std::ostream& mcbot::operator<<(std::ostream& os, UUID uuid)
 {
 	os << uuid.to_string();
 	return os;
-}
+}*/
 
 bool mcbot::operator==(const UUID& lhs, const UUID& rhs)
 {

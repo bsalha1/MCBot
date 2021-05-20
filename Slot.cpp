@@ -1,4 +1,5 @@
 #include "Slot.h"
+#include "PacketEncoder.h"
 
 mcbot::Slot::Slot()
 {
@@ -7,7 +8,7 @@ mcbot::Slot::Slot()
 	this->data = -1;
 }
 
-mcbot::Slot::Slot(short item_id, int item_count, short data, mcbot::NBT nbt)
+mcbot::Slot::Slot(short item_id, int item_count, short data, mcbot::NBTTagCompound nbt)
 {
 	this->item_id = item_id;
 	this->item_count = item_count;
@@ -15,9 +16,12 @@ mcbot::Slot::Slot(short item_id, int item_count, short data, mcbot::NBT nbt)
 	this->nbt = nbt;
 }
 
-void mcbot::Slot::serialize(Slot object, uint8_t* packet, size_t& offset)
+void mcbot::Slot::serialize(uint8_t* packet, size_t& offset)
 {
-
+	PacketEncoder::write_short(this->item_id, packet, offset);
+	PacketEncoder::write_byte(this->item_count, packet, offset);
+	PacketEncoder::write_short(this->data, packet, offset);
+	this->nbt.serialize(packet, offset);
 }
 
 std::string mcbot::Slot::to_string()

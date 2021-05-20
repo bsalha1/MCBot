@@ -111,7 +111,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>C:\out\STATIC\x64\Release\lib\libssl.lib;C:\out\STATIC\x64\Release\lib\libcrypto.lib;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64\Crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -164,6 +164,8 @@
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityLiving.cpp" />
     <ClCompile Include="MojangSession.cpp" />
+    <ClCompile Include="NBTList.cpp" />
+    <ClCompile Include="NBTTag.cpp" />
     <ClCompile Include="PacketDecoder.cpp" />
     <ClCompile Include="PacketEncoder.cpp" />
     <ClCompile Include="PacketReceiver.cpp" />
@@ -173,7 +175,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MCBot.cpp" />
     <ClCompile Include="EntityMetadata.cpp" />
-    <ClCompile Include="NBT.cpp" />
+    <ClCompile Include="NBTTagCompound.cpp" />
     <ClCompile Include="EntityPlayer.cpp" />
     <ClCompile Include="PlayerProperty.cpp" />
     <ClCompile Include="ScriptRuntime.cpp" />
@@ -203,6 +205,8 @@
     <ClInclude Include="EntityLiving.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="MojangSession.h" />
+    <ClInclude Include="NBTList.h" />
+    <ClInclude Include="NBTTag.h" />
     <ClInclude Include="PacketDecoder.h" />
     <ClInclude Include="PacketEncoder.h" />
     <ClInclude Include="PacketReceiver.h" />
@@ -211,7 +215,7 @@
     <ClInclude Include="Position.h" />
     <ClInclude Include="MCBot.h" />
     <ClInclude Include="EntityMetadata.h" />
-    <ClInclude Include="NBT.h" />
+    <ClInclude Include="NBTTagCompound.h" />
     <ClInclude Include="EntityPlayer.h" />
     <ClInclude Include="PlayerProperty.h" />
     <ClInclude Include="ScriptRuntime.h" />
@@ -233,6 +237,7 @@
     <Import Project="packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets" Condition="Exists('packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets')" />
     <Import Project="packages\boost.1.76.0.0\build\boost.targets" Condition="Exists('packages\boost.1.76.0.0\build\boost.targets')" />
     <Import Project="packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets" Condition="Exists('packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets')" />
+    <Import Project="packages\openssl-vc140-static-32_64.1.1.1\build\native\openssl-vc140-static-32_64.targets" Condition="Exists('packages\openssl-vc140-static-32_64.1.1.1\build\native\openssl-vc140-static-32_64.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -241,5 +246,6 @@
     <Error Condition="!Exists('packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib-msvc14-x64.1.2.11.7795\build\native\zlib-msvc14-x64.targets'))" />
     <Error Condition="!Exists('packages\boost.1.76.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\boost.1.76.0.0\build\boost.targets'))" />
     <Error Condition="!Exists('packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\nlohmann.json.3.9.1\build\native\nlohmann.json.targets'))" />
+    <Error Condition="!Exists('packages\openssl-vc140-static-32_64.1.1.1\build\native\openssl-vc140-static-32_64.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl-vc140-static-32_64.1.1.1\build\native\openssl-vc140-static-32_64.targets'))" />
   </Target>
 </Project>

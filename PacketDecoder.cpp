@@ -1,4 +1,5 @@
 #include "PacketDecoder.h"
+#include "StringUtils.h"
 
 int32_t mcbot::PacketDecoder::read_var_int(uint8_t* packet, size_t& offset)
 {
@@ -184,7 +185,7 @@ mcbot::Slot mcbot::PacketDecoder::read_slot(uint8_t* packet, size_t& offset)
     {
         uint8_t item_count = read_byte(packet, offset);
         short data = read_short(packet, offset);
-        mcbot::NBT nbt = read_nbt(packet, offset);
+        mcbot::NBTTagCompound nbt = read_nbt(packet, offset);
         return mcbot::Slot(item_id, item_count, data, nbt);
     }
     else
@@ -244,9 +245,9 @@ void mcbot::PacketDecoder::read_byte_array(uint8_t* bytes, int length, uint8_t* 
     }
 }
 
-mcbot::Buffer<char> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
+mcbot::Buffer<uint8_t> mcbot::PacketDecoder::read_byte_array(int length, uint8_t* packet, size_t& offset)
 {
-    mcbot::Buffer<char> buffer = mcbot::Buffer<char>(length);
+    mcbot::Buffer<uint8_t> buffer = mcbot::Buffer<uint8_t>(length);
     for (int i = 0; i < length; i++)
     {
         buffer.put(packet[offset++]);
@@ -422,148 +423,121 @@ mcbot::Attribute mcbot::PacketDecoder::read_attribute(uint8_t* packet, size_t& o
     return mcbot::Attribute(key, value, modifiers);
 }
 
-std::list<mcbot::NBT> mcbot::PacketDecoder::read_nbt_list(int32_t length, mcbot::NBTType list_type, uint8_t* packet, size_t& offset)
+mcbot::NBTList mcbot::PacketDecoder::read_nbt_list(uint8_t* packet, size_t& offset)
 {
-    std::list<mcbot::NBT> nbt_list;
+    mcbot::NBTType list_type = (mcbot::NBTType)read_byte(packet, offset);
+    mcbot::NBTList nbt_list = mcbot::NBTList(list_type);
 
-    for (int i = 0; i < length; i++)
+    int32_t list_length = read_int(packet, offset);
+    std::cout << "<" << StringUtils::to_string(list_type) << ">" "[" << list_length << "]";
+    for (int i = 0; i < list_length; i++)
     {
-        nbt_list.push_back(read_nbt_part(packet, offset, false, true, list_type));
+        nbt_list.add_element(read_nbt_tag(list_type, packet, offset, false));
     }
 
     return nbt_list;
 }
 
-mcbot::NBT mcbot::PacketDecoder::read_nbt_part(uint8_t* packet, size_t& offset, bool parent, bool list, mcbot::NBTType list_type)
+std::string mcbot::PacketDecoder::read_nbt_string(uint8_t* packet, size_t& offset)
 {
-    mcbot::NBTType type;
-    mcbot::NBT nbt;
-
-    if (list)
+    uint16_t length = read_short(packet, offset);
+    std::string str = "";
+    for (size_t i = 0; i < length; i++)
     {
-        type = list_type;
+        str += packet[offset++];
     }
+    return str;
+}
+
+mcbot::NBTTag mcbot::PacketDecoder::read_next_nbt_tag(uint8_t* packet, size_t& offset)
+{
+    mcbot::NBTType type = (mcbot::NBTType)read_byte(packet, offset);
+
+    return read_nbt_tag(type, packet, offset);
+}
+
+mcbot::NBTTag mcbot::PacketDecoder::read_nbt_tag(mcbot::NBTType type, uint8_t* packet, size_t& offset, bool has_name)
+{
+    std::string name;
+    if (type != mcbot::NBTType::TAG_END && has_name)
+    {
+        uint16_t name_length = read_short(packet, offset);
+        name = read_string(name_length, packet, offset);
+    }
+    else
+    {
+        name = "NONE";
+    }
+
+    return read_nbt_tag(type, name, packet, offset);
+}
+
+mcbot::NBTTag mcbot::PacketDecoder::read_nbt_tag(mcbot::NBTType type, std::string name, uint8_t* packet, size_t& offset)
+{
+    switch (type)
+    {
+    case NBTType::TAG_BYTE:
+        return NBTTag(type, name, (int8_t)read_byte(packet, offset));
+    case NBTType::TAG_SHORT:
+        return NBTTag(type, name, (int16_t)read_short(packet, offset));
+    case NBTType::TAG_INT:
+        return NBTTag(type, name, (int32_t)read_int(packet, offset));
+    case NBTType::TAG_LONG:
+        return NBTTag(type, name, (int64_t)read_long(packet, offset));
+    case NBTType::TAG_FLOAT:
+        return NBTTag(type, name, (float)read_float(packet, offset));
+    case NBTType::TAG_DOUBLE:
+        return NBTTag(type, name, (double)read_double(packet, offset));
+    case NBTType::TAG_STRING:
+        return NBTTag(type, name, read_nbt_string(packet, offset));
+    case NBTType::TAG_BYTE_ARRAY:
+    {
+        int16_t length = read_int(packet, offset);
+        return NBTTag(type, name, read_byte_array(length, packet, offset));
+    }
+    case NBTType::TAG_INT_ARRAY:
+    {
+        int16_t length = read_int(packet, offset);
+        return NBTTag(type, name, read_int_array(length, packet, offset));
+    }
+    case NBTType::TAG_LONG_ARRAY:
+    {
+        int16_t length = read_int(packet, offset);
+        return NBTTag(type, name, read_long_array(length, packet, offset));
+    }
+    case NBTType::TAG_LIST:
+        return NBTTag(type, name, read_nbt_list(packet, offset));
+    case NBTType::TAG_COMPOUND:
+        return NBTTag(type, name, read_nbt_tag_compound(packet, offset));
+    case NBTType::TAG_END:
+        return NBTTag(NBTType::TAG_END, "NONE", 0);
+    }
+
+    return NBTTag(NBTType::UNKNOWN, name, -1);
+}
+
+mcbot::NBTTagCompound mcbot::PacketDecoder::read_nbt(uint8_t* packet, size_t& offset)
+{
+    return read_nbt_tag_compound(packet, offset, true);
+}
+
+mcbot::NBTTagCompound mcbot::PacketDecoder::read_nbt_tag_compound(uint8_t* packet, size_t& offset, bool parent)
+{
+    mcbot::NBTTagCompound tag_compound = mcbot::NBTTagCompound();
+    mcbot::NBTTag tag;
 
     do
     {
-        // Lists have no names and contain all the same types 
-        std::string name;
-        if (!list)
+        tag = read_next_nbt_tag(packet, offset);
+        tag_compound.add_tag(tag);
+
+        if (parent)
         {
-            type = (mcbot::NBTType) read_byte(packet, offset);
-
-            if (type == mcbot::NBTType::TAG_END)
-            {
-                return nbt;
-            }
-
-            uint16_t name_length = read_short(packet, offset);
-            name = read_string(name_length, packet, offset);
+            return tag_compound;
         }
-        else
-        {
-            name = "NONE";
-        }
+    } while (tag.get_type() != mcbot::NBTType::TAG_END);
 
-        switch (type)
-        {
-
-        case mcbot::NBTType::TAG_END:
-        {
-            return nbt;
-        }
-
-        case mcbot::NBTType::TAG_BYTE:
-        {
-            nbt.add_byte(name, read_byte(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_SHORT:
-        {
-            nbt.add_short(name, read_short(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_INT:
-        {
-            nbt.add_int(name, read_int(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_LONG:
-        {
-            nbt.add_long(name, read_long(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_FLOAT:
-        {
-            nbt.add_float(name, read_float(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_DOUBLE:
-        {
-            nbt.add_double(name, read_double(packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_BYTE_ARRAY:
-        {
-            int32_t length = read_int(packet, offset);
-            nbt.add_byte_array(name, read_byte_array(length, packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_INT_ARRAY:
-        {
-            int32_t length = read_int(packet, offset);
-            nbt.add_int_array(name, read_int_array(length, packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_LONG_ARRAY:
-        {
-            int32_t length = read_int(packet, offset);
-            nbt.add_long_array(name, read_long_array(length, packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_STRING:
-        {
-            uint16_t length = read_short(packet, offset);
-            nbt.add_string(name, read_string(length, packet, offset));
-            break;
-        }
-
-        case mcbot::NBTType::TAG_LIST:
-        {
-            mcbot::NBTType list_type = (mcbot::NBTType) read_byte(packet, offset);
-            int32_t length = read_int(packet, offset);
-            nbt.add_nbt_list(name, read_nbt_list(length, list_type, packet, offset));
-            break;
-        }
-        case mcbot::NBTType::TAG_COMPOUND:
-        {
-            nbt.add_nbt(name, read_nbt_part(packet, offset, false));
-            break;
-        }
-        }
-
-        if (parent || list)
-        {
-            return nbt;
-        }
-
-    } while (true);
-
-    return nbt;
-}
-
-mcbot::NBT mcbot::PacketDecoder::read_nbt(uint8_t* packet, size_t& offset)
-{
-    return read_nbt_part(packet, offset, true);
+    return tag_compound;
 }
 
 mcbot::EntityMetaData mcbot::PacketDecoder::read_meta_data(uint8_t* packet, size_t& offset)

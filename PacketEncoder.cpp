@@ -165,10 +165,10 @@ void mcbot::PacketEncoder::write_position(int x, int y, int z, uint8_t* packet, 
 
 void mcbot::PacketEncoder::write_slot(mcbot::Slot slot, uint8_t* packet, size_t& offset)
 {
-
+    slot.serialize(packet, offset);
 }
 
-void mcbot::PacketEncoder::write_nbt(mcbot::NBT nbt, uint8_t* packet, size_t& offset)
+void mcbot::PacketEncoder::write_nbt(mcbot::NBTTagCompound nbt, uint8_t* packet, size_t& offset)
 {
-    nbt.
+    nbt.serialize(packet, offset);
 }
