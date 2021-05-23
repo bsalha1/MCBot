@@ -330,6 +330,16 @@ void mcbot::MCBot::register_player(UUID uuid, EntityPlayer player)
     this->uuid_to_player.insert(std::pair<UUID, EntityPlayer>(uuid, player));
 }
 
+void mcbot::MCBot::unregister_player(EntityPlayer player)
+{
+    this->unregister_player(player.get_uuid());
+}
+
+void mcbot::MCBot::unregister_player(UUID uuid)
+{
+    this->uuid_to_player.erase(uuid);
+}
+
 mcbot::EntityPlayer& mcbot::MCBot::get_player(UUID uuid)
 {
     return this->uuid_to_player[uuid];

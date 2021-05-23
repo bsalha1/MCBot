@@ -77,6 +77,8 @@ namespace mcbot
 		void remove_entity(int id);
 		bool is_entity_registered(int id);
 		void register_player(UUID uuid, EntityPlayer player);
+		void unregister_player(EntityPlayer player);
+		void unregister_player(UUID uuid);
 		EntityPlayer& get_player(UUID uuid);
 		Entity& get_entity(int id);
 		bool is_player_registered(UUID uuid);

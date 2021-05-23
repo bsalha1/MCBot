@@ -110,13 +110,13 @@ int main(int argc, char* argv[])
         bot.move_to_ground(0.10);
 
         Entity& entity = bot.get_entity(target_id);
-        while (true)
-        {
-            mcbot::Vector<double> target_location = entity.get_location();
-            std::cout << target_location.to_string() << std::endl;
-            bot.move_to(target_location.get_x(), target_location.get_z(), 4);
-            Sleep(1000);
-        }
+        //while (true)
+        //{
+        //    mcbot::Vector<double> target_location = entity.get_location();
+        //    std::cout << target_location.to_string() << std::endl;
+        //    bot.move_to(target_location.get_x(), target_location.get_z(), 4);
+        //    Sleep(1000);
+        //}
         //bot.attack_entity(target);
 
 

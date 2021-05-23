@@ -81,6 +81,11 @@ namespace mcbot
 		INTERACT_AT = 2
 	};
 
+	enum class WeatherEntityType {
+		THUNDERBOLT = 1
+	};
+
+
 	enum class EntityType {
 		UNKNOWN = -1,
 		PLAYER = 0, // Player is not actually ID 0, it is just sent in a different packet

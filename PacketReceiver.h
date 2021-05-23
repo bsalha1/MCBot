@@ -36,7 +36,7 @@ namespace mcbot
 	{
 	private:
 		MCBot* bot;
-		bool encryption_enabled;
+		mcbot::EntityPlayer* player;
 		bool compression_enabled;
 
 	public:
@@ -97,6 +97,7 @@ namespace mcbot
 		void recv_named_sound_effect(uint8_t* packet, size_t length, size_t& offset);
 		void recv_world_particles(uint8_t* packet, size_t length, size_t& offset);
 		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
+		void recv_spawn_entity_weather(uint8_t* packet, size_t length, size_t& offset);
 		void recv_set_slot(uint8_t* packet, size_t length, size_t& offset);
 		void recv_window_items(uint8_t* packet, size_t length, size_t& offset);
 		void recv_transaction(uint8_t* packet, size_t length, size_t& offset);

@@ -429,7 +429,6 @@ mcbot::NBTList mcbot::PacketDecoder::read_nbt_list(uint8_t* packet, size_t& offs
     mcbot::NBTList nbt_list = mcbot::NBTList(list_type);
 
     int32_t list_length = read_int(packet, offset);
-    std::cout << "<" << StringUtils::to_string(list_type) << ">" "[" << list_length << "]";
     for (int i = 0; i < list_length; i++)
     {
         nbt_list.add_element(read_nbt_tag(list_type, packet, offset, false));

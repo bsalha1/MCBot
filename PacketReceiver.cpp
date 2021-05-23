@@ -18,12 +18,12 @@ static std::string get_random_hex_bytes(std::size_t num_bytes)
     return out;
 }
 
-mcbot::PacketReceiver::PacketReceiver(MCBot* bot)
+mcbot::PacketReceiver::PacketReceiver(MCBot* bot) : player(&(bot->get_player()))
 {
     this->bot = bot;
 }
 
-mcbot::PacketReceiver::PacketReceiver()
+mcbot::PacketReceiver::PacketReceiver() : player(NULL)
 {
     this->bot = NULL;
 }
@@ -260,6 +260,9 @@ void mcbot::PacketReceiver::handle_recv_packet(int packet_id, uint8_t* packet, i
         case 0x2B:
             this->recv_game_state_change(packet, length, offset);
             break;
+        case 0x2C:
+            this->recv_spawn_entity_weather(packet, length, offset);
+            break;
         case 0x2F:
             this->recv_set_slot(packet, length, offset);
             break;
@@ -433,6 +436,8 @@ void mcbot::PacketReceiver::recv_join_server(uint8_t* packet, size_t length, siz
         "\n\tMax Players: " + std::to_string((int)max_players) +
         "\n\tLevel Type: " + level_type +
         "\n\tReduced Debug Info: " + std::to_string(reduced_debug_info));
+
+
 }
 
 void mcbot::PacketReceiver::recv_chat_message(uint8_t* packet, size_t length, size_t& offset)
@@ -743,8 +748,14 @@ void mcbot::PacketReceiver::recv_entity_destroy(uint8_t* packet, size_t length, 
 
     for (int id : entity_ids)
     {
-        this->bot->get_entity(id).die();
+        mcbot::Entity& entity = this->bot->get_entity(id);
+        entity.die();
         this->bot->remove_entity(id);
+
+        if (entity.get_entity_type() == mcbot::EntityType::PLAYER)
+        {
+            this->bot->unregister_player(static_cast<EntityPlayer&>(entity));
+        }
     }
 }
 
@@ -958,6 +969,7 @@ void mcbot::PacketReceiver::recv_multi_block_change(uint8_t* packet, size_t leng
     int chunk_z = PacketDecoder::read_int(packet, offset);
     int record_count = PacketDecoder::read_var_int(packet, offset);
 
+    mcbot::Chunk& chunk = this->bot->get_chunk(chunk_x, chunk_z);
     for (int i = 0; i < record_count; i++)
     {
         uint8_t horizontal_position = PacketDecoder::read_byte(packet, offset);
@@ -967,7 +979,7 @@ void mcbot::PacketReceiver::recv_multi_block_change(uint8_t* packet, size_t leng
         int x = horizontal_position >> 4 + chunk_x << 4;
         int z = horizontal_position & 0x0F + chunk_z << 4;
 
-        this->bot->get_chunk(chunk_x, chunk_z).update_block(x, y, z, block_id);
+        chunk.update_block(x, y, z, block_id);
     }
 
     bot->log_debug(
@@ -1108,6 +1120,20 @@ void mcbot::PacketReceiver::recv_game_state_change(uint8_t* packet, size_t lengt
     bot->log_debug(
         "Reason: " + std::to_string((int)reason) +
         "\n\tValue: " + std::to_string(value));
+}
+
+void mcbot::PacketReceiver::recv_spawn_entity_weather(uint8_t* packet, size_t length, size_t& offset)
+{
+    bot->log_debug("<<< Handling PacketPlayOutSpawnEntityWeather...");
+
+    int entity_id = PacketDecoder::read_var_int(packet, offset);
+    mcbot::WeatherEntityType type = (mcbot::WeatherEntityType) PacketDecoder::read_byte(packet, offset);
+    mcbot::Vector<int> position = PacketDecoder::read_vector<int>(packet, offset);
+    mcbot::Vector<double> position1 = mcbot::Vector<double>(position.get_x() / 32.0, position.get_y() / 32.0, position.get_z() / 32.0);
+
+    bot->log_debug(
+        "Entity ID: " + std::to_string(entity_id) +
+        "\n\tPosition: " + position1.to_string());
 }
 
 void mcbot::PacketReceiver::recv_set_slot(uint8_t* packet, size_t length, size_t& offset)
