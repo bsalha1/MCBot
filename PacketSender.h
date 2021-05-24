@@ -41,6 +41,7 @@ namespace mcbot
 		void send_block_place(mcbot::Vector<int> location, BlockFace face, Slot held_item, mcbot::Vector<uint8_t> cursor_position);
 		void send_held_item_slot(short slot);
 		void send_arm_animation();
+		void send_entity_action(EntityAction action, int action_parameter = 0);
 		void send_entity_action(int player_id, EntityAction action, int param);
 		void send_set_creative_slot(short slot, Slot item);
 		void send_enchant_item(uint8_t window_id, uint8_t enchantment);

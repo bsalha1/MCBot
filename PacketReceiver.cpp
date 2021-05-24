@@ -1205,7 +1205,7 @@ void mcbot::PacketReceiver::recv_tile_entity_data(uint8_t* packet, size_t length
 
     mcbot::Position location = PacketDecoder::read_position(packet, offset);
     mcbot::TileEntityAction action = (mcbot::TileEntityAction) PacketDecoder::read_byte(packet, offset);
-    mcbot::NBTTagCompound nbt = PacketDecoder::read_nbt_tag_compound(packet, offset);
+    mcbot::NBTTagCompound nbt = PacketDecoder::read_nbt_tag_compound(packet, offset, true);
 
     bot->log_debug(
         "Location: " + location.to_string() +

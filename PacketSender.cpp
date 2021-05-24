@@ -461,6 +461,28 @@ void mcbot::PacketSender::send_arm_animation()
     delete[] packet;
 }
 
+void mcbot::PacketSender::send_entity_action(mcbot::EntityAction action, int action_parameter)
+{
+    this->bot->log_debug(">>> Sending PacketPlayInEntityAction...");
+
+    int packet_id = 0x0B;
+    uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size({ packet_id, (int)action, action_parameter, this->bot->get_player().get_id() })]{ 0 };
+    size_t offset = 0;
+
+    PacketEncoder::write_var_int(packet_id, packet, offset);
+    PacketEncoder::write_var_int(this->bot->get_player().get_id(), packet, offset);
+    PacketEncoder::write_var_int((int)action, packet, offset);
+    PacketEncoder::write_var_int(action_parameter, packet, offset);
+
+    if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+    {
+        this->bot->log_error("Failed to send packet");
+        print_winsock_error();
+    }
+
+    delete[] packet;
+}
+
 
 void mcbot::PacketSender::send_entity_action(int player_id, EntityAction action, int param)
 {

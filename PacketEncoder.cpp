@@ -156,9 +156,9 @@ void mcbot::PacketEncoder::write_float(float num, uint8_t* packet, size_t& offse
 
 void mcbot::PacketEncoder::write_position(int x, int y, int z, uint8_t* packet, size_t& offset)
 {
-    uint64_t bytes = x & 0x3FFFFFF;
-    bytes |= (y & 0xFFF) >> 26;
-    bytes |= (z & 0x3FFFFFF) >> 38;
+    uint64_t bytes = (uint64_t) z & 0x3FFFFFF;
+    bytes |= (uint64_t) y << 26;
+    bytes |= (uint64_t)(x & 0x3FFFFFF) << 38;
     write_long(bytes, packet, offset);
 }
 

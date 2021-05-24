@@ -76,7 +76,6 @@ int main(int argc, char* argv[])
 
         std::cout << "Sending settings" << std::endl;
         bot.get_packet_sender().send_settings();
-        bot.get_packet_sender().send_held_item_slot(0);
         bot.get_packet_sender().send_custom_payload("vanilla");
 
         // Echo back player location (enables further sending of locations)
@@ -94,6 +93,7 @@ int main(int argc, char* argv[])
         bot.get_packet_sender().send_position(clean_position, true);
         Sleep(1000 / 20);
         bot.get_packet_sender().send_position(clean_position, true);
+        bot.get_packet_sender().send_held_item_slot(1);
 
         int target_id = 0;
         for (Entity entity : bot.get_entities())
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
         //mcbot::Vector<double> target_location = target.get_location();
         bot.move_to_ground(0.10);
 
-        Entity& entity = bot.get_entity(target_id);
+        //Entity& entity = bot.get_entity(target_id);
         //while (true)
         //{
         //    mcbot::Vector<double> target_location = entity.get_location();
@@ -118,6 +118,12 @@ int main(int argc, char* argv[])
         //    Sleep(1000);
         //}
         //bot.attack_entity(target);
+
+        mcbot::Vector<double> location = bot.get_player().get_location();
+        mcbot::Vector<int> location1 = mcbot::Vector<int>(location.get_x(), location.get_y(), location.get_z());
+        location1.set_y(location1.get_y() - 1);
+        bot.get_packet_sender().send_arm_animation();
+        bot.get_packet_sender().send_block_dig(DigStatus::STARTED, location1, BlockFace::Y_POS);
 
 
         //std::ofstream script_file("script.txt");
