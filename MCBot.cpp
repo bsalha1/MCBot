@@ -36,8 +36,6 @@ namespace mcbot
 
             this->logger.LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
 
-            EntityPlayer player;
-
             switch (action)
             {
             case PlayerInfoAction::ADD_PLAYER:
@@ -50,10 +48,12 @@ namespace mcbot
                 bool has_display_name = PacketDecoder::ReadBoolean(packet, offset);
                 std::string display_name = has_display_name ? PacketDecoder::ReadString(packet, offset) : name;
 
-                player = EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
+                EntityPlayer player = EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
 
+                // If this player is the bot player
                 if (name == this->session.GetUsername())
                 {
+                    // TODO: just copy the player variable over
                     this->player.SetName(name);
                     this->player.SetUUID(uuid);
                     this->player.SetProperties(properties);
@@ -62,7 +62,7 @@ namespace mcbot
                     this->player.SetDisplayName(display_name);
                 }
 
-                this->RegisterPlayer(uuid, player);
+                this->player_registry.RegisterValue(uuid, player);
 
                 this->logger.LogDebug("\t\tName: " + name + '\n'
                     + "\t\tGamemode: " + StringUtils::to_string(gamemode) + '\n'
@@ -74,7 +74,7 @@ namespace mcbot
             {
                 try
                 {
-                    player = this->uuid_to_player.at(uuid);
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
                 }
                 catch (...)
                 {
@@ -90,7 +90,7 @@ namespace mcbot
             {
                 try
                 {
-                    player = this->uuid_to_player.at(uuid);
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
                 }
                 catch (...)
                 {
@@ -107,7 +107,7 @@ namespace mcbot
             {
                 try
                 {
-                    player = this->uuid_to_player.at(uuid);
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
                 }
                 catch (...)
                 {
@@ -127,7 +127,7 @@ namespace mcbot
 
             case PlayerInfoAction::REMOVE_PLAYER:
             {
-                this->uuid_to_player.erase(uuid);
+                this->player_registry.RemoveValue(uuid);
                 break;
             }
             default:
@@ -139,8 +139,6 @@ namespace mcbot
     MCBot::MCBot()
     {
         this->connected = false;
-        this->ready = false;
-        this->uuid_to_player = std::map<UUID, EntityPlayer>();
         this->world_border = WorldBorder();
         this->packet_receiver = new PacketReceiver(this);
         this->packet_sender = new PacketSender(this);
@@ -313,71 +311,36 @@ namespace mcbot
         this->packet_sender->SendUseEntity(entity.GetID(), UseEntityType::ATTACK);
     }
 
-    void MCBot::RegisterEntity(Entity entity)
+    Registry<int, Entity>& MCBot::GetEntityRegistry()
     {
-        this->entities.insert(std::pair<int, Entity>(entity.GetID(), entity));
+        return this->entity_registry;
     }
 
-    void MCBot::RemoveEntity(int id)
+    Registry<UUID, EntityPlayer>& MCBot::GetPlayerRegistry()
     {
-        this->entities.erase(id);
+        return this->player_registry;
     }
 
-    bool MCBot::IsEntityRegistered(int id)
+    Registry<std::pair<int, int>, Chunk>& MCBot::GetChunkRegistry()
     {
-        return this->entities.find(id) != this->entities.end();
-    }
-
-    void MCBot::RegisterPlayer(UUID uuid, EntityPlayer player)
-    {
-        this->uuid_to_player.insert(std::pair<UUID, EntityPlayer>(uuid, player));
-    }
-
-    void MCBot::RemovePlayer(EntityPlayer player)
-    {
-        this->RemovePlayer(player.GetUUID());
-    }
-
-    void MCBot::RemovePlayer(UUID uuid)
-    {
-        this->uuid_to_player.erase(uuid);
-    }
-
-    EntityPlayer& MCBot::GetPlayer(UUID uuid)
-    {
-        return this->uuid_to_player[uuid];
-    }
-
-    Entity& MCBot::GetEntity(int id)
-    {
-        return this->entities[id];
-    }
-
-    bool MCBot::IsPlayerRegistered(UUID uuid)
-    {
-        return this->uuid_to_player.find(uuid) != this->uuid_to_player.end();
-    }
-
-    void MCBot::LoadChunk(Chunk chunk)
-    {
-        this->chunks.insert(std::pair<std::pair<int, int>, Chunk>(std::pair<int, int>(chunk.GetX(), chunk.GetZ()), chunk));
+        return this->chunk_registry;
     }
 
     Chunk& MCBot::GetChunk(int x, int z)
     {
-        return this->chunks[std::pair<int, int>(x, z)];
+        return this->chunk_registry.GetValue(std::pair<int, int>(x, z));
     }
 
     Chunk& MCBot::GetChunk(Vector<int> location)
     {
-        return this->chunks[std::pair<int, int>(location.GetX() >> 4, location.GetZ() >> 4)];
+        return this->chunk_registry.GetValue(std::pair<int, int>(location.GetX() >> 4, location.GetZ() >> 4));
     }
 
     Chunk& MCBot::GetChunk(Vector<double> location)
     {
         int x = ((int)floor(location.GetX())) >> 4;
         int z = ((int)floor(location.GetZ())) >> 4;
-        return this->chunks[std::pair<int, int>(x, z)];
+        return this->chunk_registry.GetValue(std::pair<int, int>(x, z));
     }
 
     std::list<Chunk> MCBot::GetChunks(int x, int z, unsigned int radius)
@@ -387,7 +350,7 @@ namespace mcbot
         for (int i = -((int)radius); i <= radius; i++)
             for (int j = -((int)radius); j <= radius; j++)
             {
-                chunks.push_back(this->chunks[std::pair<int, int>(x + i, z + j)]);
+                chunks.push_back(this->chunk_registry.GetValue(std::pair<int, int>(x + i, z + j)));
             }
 
         return chunks;
@@ -490,36 +453,9 @@ namespace mcbot
         return this->session;
     }
 
-    std::list<Entity> MCBot::GetEntities()
-    {
-        typedef std::map<int, Entity> map_type;
-        std::list<Entity> value_list;
-        for (map_type::const_iterator it = this->entities.begin(); it != this->entities.end(); ++it)
-        {
-            value_list.push_back(it->second);
-        }
-        return value_list;
-    }
-
-    std::list<EntityPlayer> MCBot::GetPlayers()
-    {
-        typedef std::map<UUID, EntityPlayer> map_type;
-        std::list<EntityPlayer> value_list;
-        for (map_type::const_iterator it = this->uuid_to_player.begin(); it != this->uuid_to_player.end(); ++it)
-        {
-            value_list.push_back(it->second);
-        }
-        return value_list;
-    }
-
     bool MCBot::IsConnected()
     {
         return this->connected;
-    }
-
-    bool MCBot::is_ready()
-    {
-        return this->ready;
     }
 
     State MCBot::GetState()

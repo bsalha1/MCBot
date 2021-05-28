@@ -3,6 +3,8 @@
 #include "Socket.h"
 #include "Buffer.h"
 #include "Logger.h"
+#include "Vector.h"
+#include "Registry.h"
 
 #include "MojangSession.h"
 
@@ -25,7 +27,6 @@
 #include "Particle.h"
 #include "WorldBorder.h"
 #include "Position.h"
-#include "Vector.h"
 
 #define TPS 20 // Ticks per second
 
@@ -48,7 +49,6 @@ namespace mcbot
 		// Connection Info
 		Socket sock;
 		bool connected;
-		bool ready;
 		State state;
 		PacketReceiver* packet_receiver;
 		PacketSender* packet_sender;
@@ -56,14 +56,15 @@ namespace mcbot
 
 		// Runtime Minecraft Info
 		EntityPlayer player;
-		std::map<UUID, EntityPlayer> uuid_to_player;
-		std::map<int, Entity> entities;
-		std::map<std::pair<int, int>, Chunk> chunks;
 		WorldBorder world_border;
+		Registry<int, Entity> entity_registry;
+		Registry<UUID, EntityPlayer> player_registry;
+		Registry<std::pair<int, int>, Chunk> chunk_registry;
 		
 	public:
 		MCBot();
 		~MCBot();
+
 
 		int ConnectToServer(char* hostname, char* port);
 
@@ -79,24 +80,15 @@ namespace mcbot
 		void AttackEntity(Entity entity);
 
 
-		// Entity Management //
-		void RegisterEntity(Entity entity);
-		void RemoveEntity(int id);
-		bool IsEntityRegistered(int id);
-		Entity& GetEntity(int id);
+		// Registries //
+		Registry<int, Entity>& GetEntityRegistry();
+		Registry<UUID, EntityPlayer>& GetPlayerRegistry();
+		Registry<std::pair<int, int>, Chunk>& GetChunkRegistry();
 
-
-		// Player Management //
-		void RegisterPlayer(UUID uuid, EntityPlayer player);
-		void RemovePlayer(EntityPlayer player);
-		void RemovePlayer(UUID uuid);
-		bool IsPlayerRegistered(UUID uuid);
-		EntityPlayer& GetPlayer(UUID uuid);
 		void UpdatePlayerInfo(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
 
 
 		// Chunk Management //
-		void LoadChunk(Chunk chunk);
 		Chunk& GetChunk(int x, int z);
 		Chunk& GetChunk(Vector<int> location);
 		Chunk& GetChunk(Vector<double> location);
@@ -108,12 +100,10 @@ namespace mcbot
 		void SetConnected(bool connected);
 		void SetSession(MojangSession session);
 
+
 		// Variable Access //
 		MojangSession GetSession();
-		std::list<Entity> GetEntities();
-		std::list<EntityPlayer> GetPlayers();
 		bool IsConnected();
-		bool is_ready();
 		State GetState();
 		Socket& GetSocket();
 		PacketSender& GetPacketSender();

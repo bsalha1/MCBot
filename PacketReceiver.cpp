@@ -594,16 +594,17 @@ namespace mcbot
             "\n\tUUID: " + uuid.ToString() +
             "\n\tLocation: " + position.ToString());
 
-        if (!this->bot->IsPlayerRegistered(uuid))
+        auto& player_registry = this->bot->GetPlayerRegistry();
+        if (!player_registry.IsValueRegistered(uuid))
         {
             EntityPlayer player = EntityPlayer(entity_id, uuid);
             player.UpdateLocation(position);
             player.UpdateRotation(yaw, pitch);
-            this->bot->RegisterPlayer(uuid, player);
+            player_registry.RegisterValue(uuid, player);
         }
         else
         {
-            EntityPlayer& player = this->bot->GetPlayer(uuid);
+            EntityPlayer& player = player_registry.GetValue(uuid);
             player.SetID(entity_id);
             player.UpdateLocation(position);
             player.UpdateRotation(yaw, pitch);
@@ -644,15 +645,16 @@ namespace mcbot
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation:" + position.ToString());
 
-        if (this->bot->IsEntityRegistered(entity_id))
+        auto& entity_registry = this->bot->GetEntityRegistry();
+        if (entity_registry.IsValueRegistered(entity_id))
         {
-            this->bot->GetEntity(entity_id).UpdateLocation(position1);
+            entity_registry.GetValue(entity_id).UpdateLocation(position1);
         }
         else
         {
             Entity entity = Entity(type, entity_id);
             entity.UpdateLocation(position1);
-            this->bot->RegisterEntity(entity);
+            entity_registry.RegisterValue(entity_id, entity);
         }
     }
 
@@ -675,15 +677,16 @@ namespace mcbot
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation:" + position.ToString());
 
-        if (this->bot->IsEntityRegistered(entity_id))
+        auto& entity_registry = this->bot->GetEntityRegistry();
+        if (entity_registry.IsValueRegistered(entity_id))
         {
-            this->bot->GetEntity(entity_id).UpdateLocation(position1);
+            entity_registry.GetValue(entity_id).UpdateLocation(position1);
         }
         else
         {
             EntityLiving entity = EntityLiving(type, entity_id);
             entity.UpdateLocation(position1);
-            this->bot->RegisterEntity(entity);
+            entity_registry.RegisterValue(entity_id, entity);
         }
     }
 
@@ -702,7 +705,7 @@ namespace mcbot
             "\n\tTitle: " + title +
             "\n\tDirection: " + std::to_string((int)direction));
 
-        this->bot->RegisterEntity(Entity(EntityType::PAINTING, entity_id));
+        this->bot->GetEntityRegistry().RegisterValue(entity_id, Entity(EntityType::PAINTING, entity_id));
     }
 
     void PacketReceiver::RecvSpawnEntityExperienceOrb(uint8_t* packet, size_t length, size_t& offset)
@@ -718,7 +721,7 @@ namespace mcbot
             "\n\tPosition: " + motion.ToString() +
             "\n\tCount: " + std::to_string(count));
 
-        this->bot->RegisterEntity(Entity(EntityType::EXPERIENCE_ORB, entity_id));
+        this->bot->GetEntityRegistry().RegisterValue(entity_id, Entity(EntityType::EXPERIENCE_ORB, entity_id));
     }
 
     void PacketReceiver::RecvEntityVelocity(uint8_t* packet, size_t length, size_t& offset)
@@ -748,15 +751,16 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(
             "Entity Count: " + std::to_string(count));
 
+        auto& entity_registry = this->bot->GetEntityRegistry();
         for (int id : entity_ids)
         {
-            Entity& entity = this->bot->GetEntity(id);
+            Entity& entity = entity_registry.GetValue(id);
             entity.Die();
-            this->bot->RemoveEntity(id);
+            entity_registry.RemoveValue(id);
 
             if (entity.GetEntityType() == EntityType::PLAYER)
             {
-                this->bot->RemovePlayer(static_cast<EntityPlayer&>(entity));
+                this->bot->GetPlayerRegistry().RemoveValue(static_cast<EntityPlayer&>(entity).GetUUID());
             }
         }
     }
@@ -770,7 +774,7 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id));
 
-        this->bot->RegisterEntity(Entity(entity_id));
+        this->bot->GetEntityRegistry().RegisterValue(entity_id, Entity(entity_id));
     }
 
     void PacketReceiver::RecvRelEntityMove(uint8_t* packet, size_t length, size_t& offset)
@@ -789,7 +793,7 @@ namespace mcbot
             "\n\tChange in Motion: " + dr.ToString() +
             "\n\tOn Ground: " + std::to_string(on_ground));
 
-        this->bot->GetEntity(entity_id).UpdateMotion(dr);
+        this->bot->GetEntityRegistry().GetValue(entity_id).UpdateMotion(dr);
     }
 
     void PacketReceiver::RecvEntityLook(uint8_t* packet, size_t length, size_t& offset)
@@ -807,7 +811,7 @@ namespace mcbot
             "\n\tPitch: " + std::to_string((int)pitch) +
             "\n\tOn Ground: " + std::to_string(on_ground));
 
-        this->bot->GetEntity(entity_id).UpdateRotation(yaw, pitch);
+        this->bot->GetEntityRegistry().GetValue(entity_id).UpdateRotation(yaw, pitch);
     }
 
     void PacketReceiver::RecvRelEntityMoveLook(uint8_t* packet, size_t length, size_t& offset)
@@ -828,8 +832,9 @@ namespace mcbot
             "\n\tPitch: " + std::to_string(pitch) +
             "\n\tOn Ground: " + std::to_string(on_ground));
 
-        this->bot->GetEntity(entity_id).UpdateMotion(dr);
-        this->bot->GetEntity(entity_id).UpdateRotation(yaw, pitch);
+        auto& entity = this->bot->GetEntityRegistry().GetValue(entity_id);
+        entity.UpdateMotion(dr);
+        entity.UpdateRotation(yaw, pitch);
     }
 
     void PacketReceiver::RecvEntityTeleport(uint8_t* packet, size_t length, size_t& offset)
@@ -851,8 +856,9 @@ namespace mcbot
             "\n\tPitch: " + std::to_string(pitch) +
             "\n\tOn Ground: " + std::to_string(on_ground));
 
-        this->bot->GetEntity(entity_id).UpdateLocation(position1);
-        this->bot->GetEntity(entity_id).UpdateRotation(yaw, pitch);
+        auto& entity = this->bot->GetEntityRegistry().GetValue(entity_id);
+        entity.UpdateLocation(position1);
+        entity.UpdateRotation(yaw, pitch);
     }
 
     void PacketReceiver::RecvEntityHeadLook(uint8_t* packet, size_t length, size_t& offset)
@@ -867,7 +873,7 @@ namespace mcbot
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tAngle: " + std::to_string(yaw));
 
-        this->bot->GetEntity(entity_id).UpdateYaw(yaw);
+        this->bot->GetEntityRegistry().GetValue(entity_id).UpdateYaw(yaw);
     }
 
     void PacketReceiver::RecvEntityStatus(uint8_t* packet, size_t length, size_t& offset)
@@ -960,7 +966,7 @@ namespace mcbot
             "X: " + std::to_string(chunk_x) +
             "\n\tZ: " + std::to_string(chunk_z));
 
-        this->bot->LoadChunk(chunk);
+        this->bot->GetChunkRegistry().RegisterValue(std::pair<int, int>(chunk.GetX(), chunk.GetZ()), chunk);
     }
 
     void PacketReceiver::RecvMultiBlockChange(uint8_t* packet, size_t length, size_t& offset)
@@ -971,7 +977,7 @@ namespace mcbot
         int chunk_z = PacketDecoder::ReadInt(packet, offset);
         int record_count = PacketDecoder::ReadVarInt(packet, offset);
 
-        Chunk& chunk = this->bot->GetChunk(chunk_x, chunk_z);
+        Chunk& chunk = this->bot->GetChunkRegistry().GetValue(std::pair<int, int>(chunk_x, chunk_z));
         for (int i = 0; i < record_count; i++)
         {
             uint8_t horizontal_position = PacketDecoder::ReadByte(packet, offset);
@@ -1048,7 +1054,7 @@ namespace mcbot
         for (Chunk chunk : chunks)
         {
             PacketDecoder::ReadChunkBulk(chunk, sky_light_sent, packet, offset);
-            this->bot->LoadChunk(chunk);
+            this->bot->GetChunkRegistry().RegisterValue(std::pair<int, int>(chunk.GetX(), chunk.GetZ()), chunk);
         }
     }
 

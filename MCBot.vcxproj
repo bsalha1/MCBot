@@ -186,7 +186,6 @@
     <ClCompile Include="Statistic.cpp" />
     <ClCompile Include="StringUtils.cpp" />
     <ClCompile Include="UUID.cpp" />
-    <ClCompile Include="Vector.cpp" />
     <ClCompile Include="VillagerData.cpp" />
     <ClCompile Include="WorldBorder.cpp" />
   </ItemGroup>
@@ -220,6 +219,7 @@
     <ClInclude Include="NBTTagCompound.h" />
     <ClInclude Include="EntityPlayer.h" />
     <ClInclude Include="PlayerProperty.h" />
+    <ClInclude Include="Registry.h" />
     <ClInclude Include="ScriptRuntime.h" />
     <ClInclude Include="Serializable.h" />
     <ClInclude Include="Vector.h" />

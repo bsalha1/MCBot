@@ -128,9 +128,6 @@
     <ClCompile Include="EntityPlayer.cpp">
       <Filter>Source Files\minecraft\entity</Filter>
     </ClCompile>
-    <ClCompile Include="Vector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Chunk.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
@@ -291,6 +288,9 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Registry.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

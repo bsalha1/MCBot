@@ -98,11 +98,11 @@ int main(int argc, char* argv[])
         bot.GetPacketSender().SendArmAnimation();
 
         int target_id = 0;
-        for (Entity entity : bot.GetEntities())
+        for (Entity entity : bot.GetEntityRegistry().GetValues())
         {
             if (entity.GetEntityType() == EntityType::MUSHROOM_COW)
             {
-                std::cout << "Found mushroom cow: " << entity.GetID()<< std::endl;
+                std::cout << "Found mushroom cow: " << entity.GetID() << std::endl;
                 target_id = entity.GetID();
                 break;
             }
