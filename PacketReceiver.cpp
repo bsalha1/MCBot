@@ -65,7 +65,7 @@ namespace mcbot
     void PacketReceiver::RecvPacket()
     {
         int length = this->ReadNextVarInt();
-        this->bot->LogDebug("Length: " + std::to_string(length));
+        this->bot->GetLogger().LogDebug("Length: " + std::to_string(length));
 
         uint8_t* packet;
         int decompressed_length = 0;
@@ -73,7 +73,7 @@ namespace mcbot
         {
             decompressed_length = this->ReadNextVarInt();
             length -= PacketEncoder::GetVarIntNumBytes(decompressed_length);
-            this->bot->LogDebug("Decompressed length: " + std::to_string(decompressed_length));
+            this->bot->GetLogger().LogDebug("Decompressed length: " + std::to_string(decompressed_length));
         }
 
         int packet_size;
@@ -90,7 +90,7 @@ namespace mcbot
 
         size_t offset = 0;
         int packet_id = PacketDecoder::ReadVarInt(packet, offset);
-        this->bot->LogDebug("ID: " + std::to_string(packet_id));
+        this->bot->GetLogger().LogDebug("ID: " + std::to_string(packet_id));
 
         HandleRecvPacket(packet_id, packet, packet_size, offset);
 
@@ -102,11 +102,11 @@ namespace mcbot
         int bytes_read = this->bot->GetSocket().recv_packet(packet, length, decompressed_length);
         if (bytes_read < 0)
         {
-            this->bot->LogError("Failed to receive packet");
+            this->bot->GetLogger().LogError("Failed to receive packet");
             packet = NULL;
             return bytes_read;
         }
-        this->bot->LogDebug("Received Packet: " + std::to_string(bytes_read) + "bytes");
+        this->bot->GetLogger().LogDebug("Received Packet: " + std::to_string(bytes_read) + "bytes");
 
         return bytes_read;
     }
@@ -138,7 +138,7 @@ namespace mcbot
                 this->RecvSetCompression(packet, length, offset);
                 break;
             default:
-                this->bot->LogError("Unhandled " + StringUtils::to_string(this->bot->GetState()) + " packet id: " + std::to_string(packet_id));
+                this->bot->GetLogger().LogError("Unhandled " + StringUtils::to_string(this->bot->GetState()) + " packet id: " + std::to_string(packet_id));
             }
         }
         else if (this->bot->GetState() == State::PLAY)
@@ -320,39 +320,39 @@ namespace mcbot
                 this->RecvPlayerListHeaderFooter(packet, length, offset);
                 break;
             default:
-                this->bot->LogError("Unhandled " + StringUtils::to_string(this->bot->GetState()) + " packet id: " + std::to_string(packet_id));
+                this->bot->GetLogger().LogError("Unhandled " + StringUtils::to_string(this->bot->GetState()) + " packet id: " + std::to_string(packet_id));
             }
         }
         else
         {
-            this->bot->LogError("Unknown state: " + StringUtils::to_string(this->bot->GetState()));
+            this->bot->GetLogger().LogError("Unknown state: " + StringUtils::to_string(this->bot->GetState()));
         }
     }
 
     void PacketReceiver::RecvLoginDisconnect(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketLoginOutDisconnect...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketLoginOutDisconnect...");
 
         std::cout << packet << std::endl;
 
         this->bot->SetConnected(false);
-        this->bot->LogInfo("Disconnected");
+        this->bot->GetLogger().LogInfo("Disconnected");
     }
 
     void PacketReceiver::RecvSetCompression(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketLoginOutSetCompression...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketLoginOutSetCompression...");
         int max_uncompressed_length = PacketDecoder::ReadVarInt(packet, offset);
 
-        this->bot->LogDebug("\tMax Uncompressed Length: " + std::to_string(max_uncompressed_length));
+        this->bot->GetLogger().LogDebug("\tMax Uncompressed Length: " + std::to_string(max_uncompressed_length));
         this->compression_enabled = true;
         this->bot->GetSocket().initialize_compression(max_uncompressed_length);
-        this->bot->LogDebug("<<< COMPRESSION ENABLED <<<");
+        this->bot->GetLogger().LogDebug("<<< COMPRESSION ENABLED <<<");
     }
 
     void PacketReceiver::RecvEncryptionRequest(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketLoginOutEncryptionRequest...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketLoginOutEncryptionRequest...");
 
         // Server ID //
         std::string server_id = PacketDecoder::ReadString(packet, offset);
@@ -371,10 +371,10 @@ namespace mcbot
 
         // Save Session //
         // - So Yggdrasil authentication doesn't kick us!
-        this->bot->LogDebug("Saving session...");
+        this->bot->GetLogger().LogDebug("Saving session...");
         if (this->bot->GetPacketSender().SendSession(server_id, shared_secret, public_key, public_key_length) < 0)
         {
-            this->bot->LogError("Invalid session!");
+            this->bot->GetLogger().LogError("Invalid session!");
         }
         else
         {
@@ -384,34 +384,34 @@ namespace mcbot
 
     void PacketReceiver::RecvLoginSuccess(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayLoginOutSuccess...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayLoginOutSuccess...");
 
         std::string uuid_string = PacketDecoder::ReadString(packet, offset);
         std::string username = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "UUID: " + uuid_string + '\n' +
             "\tUsername: " + username);
 
-        this->bot->LogInfo("Successfully logged in!");
+        this->bot->GetLogger().LogInfo("Successfully logged in!");
 
         this->bot->SetState(State::PLAY);
     }
 
     void PacketReceiver::RecvPlayDisconnect(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutKickDisconnect...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutKickDisconnect...");
 
         std::string reason = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogInfo("Disconnected: " + reason);
+        this->bot->GetLogger().LogInfo("Disconnected: " + reason);
 
         this->bot->SetConnected(false);
     }
 
     void PacketReceiver::RecvKeepAlive(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutKeepAlive...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutKeepAlive...");
 
         int id = PacketDecoder::ReadVarInt(packet, offset);
 
@@ -420,7 +420,7 @@ namespace mcbot
 
     void PacketReceiver::RecvJoinServer(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutJoinServer...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutJoinServer...");
 
         int entity_id = PacketDecoder::ReadInt(packet, offset);
         Gamemode gamemode = (Gamemode) PacketDecoder::ReadByte(packet, offset);
@@ -430,7 +430,7 @@ namespace mcbot
         std::string level_type = PacketDecoder::ReadString(packet, offset);
         bool reduced_debug_info = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tGamemode: " + StringUtils::to_string(gamemode) +
             "\n\tDimension: " + StringUtils::to_string(dimension) +
@@ -444,12 +444,12 @@ namespace mcbot
 
     void PacketReceiver::RecvChatMessage(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutChat...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutChat...");
 
         std::string chat_data = PacketDecoder::ReadString(packet, offset);
         ChatPosition position = (ChatPosition) PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Chat Data: " + chat_data +
             "\n\tPosition: " + StringUtils::to_string(position));
 
@@ -470,30 +470,30 @@ namespace mcbot
         }
         boost::erase_all(chat_message, "\"");
 
-        this->bot->LogChat(chat_message);
+        this->bot->GetLogger().LogChat(chat_message);
     }
 
     void PacketReceiver::RecvUpdateTime(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutUpdateTime...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutUpdateTime...");
 
         int64_t world_age = (int64_t)PacketDecoder::ReadLong(packet, offset);
         int64_t time_of_day = (int64_t)PacketDecoder::ReadLong(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "World Age: " + std::to_string(world_age) +
             "\n\tTime of Day: " + std::to_string(time_of_day));
     }
 
     void PacketReceiver::RecvEntityEquipment(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityEquipment...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityEquipment...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         short slot = PacketDecoder::ReadShort(packet, offset);
         Slot item = PacketDecoder::ReadSlot(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tSlot: " + std::to_string(slot) +
             "\n\tItem: " + item.ToString());
@@ -501,22 +501,22 @@ namespace mcbot
 
     void PacketReceiver::RecvSpawnPosition(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnPosition...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnPosition...");
 
         Position location = PacketDecoder::ReadPosition(packet, offset);
 
-        this->bot->LogDebug("Location: " + location.ToString());
+        this->bot->GetLogger().LogDebug("Location: " + location.ToString());
     }
 
     void PacketReceiver::RecvUpdateHealth(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutUpdateHealth...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutUpdateHealth...");
 
         float health = PacketDecoder::ReadFloat(packet, offset);
         int food = PacketDecoder::ReadVarInt(packet, offset);
         float food_saturation = PacketDecoder::ReadFloat(packet, offset);
 
-        this->bot->LogDebug("Health: " + std::to_string(health) +
+        this->bot->GetLogger().LogDebug("Health: " + std::to_string(health) +
             "\n\tFood: " + std::to_string(food) +
             "\n\tSaturation: " + std::to_string(food_saturation));
     }
@@ -524,14 +524,14 @@ namespace mcbot
 
     void PacketReceiver::RecvPosition(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutPosition...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutPosition...");
 
         Vector<double> position = PacketDecoder::ReadVector<double>(packet, offset);
         float yaw = PacketDecoder::ReadFloat(packet, offset);
         float pitch = PacketDecoder::ReadFloat(packet, offset);
         uint8_t flags = PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug("Position: " + position.ToString() +
+        this->bot->GetLogger().LogDebug("Position: " + position.ToString() +
             "\n\tYaw: " + std::to_string(yaw) +
             "\n\tPitch: " + std::to_string(pitch) +
             "\n\tFlags: " + std::to_string((int)flags));
@@ -542,40 +542,40 @@ namespace mcbot
 
     void PacketReceiver::RecvHeldItemSlot(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutHeldItemSlot...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutHeldItemSlot...");
 
         uint8_t held_item_slot = PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug("Held Item Slot: " + std::to_string((int)held_item_slot));
+        this->bot->GetLogger().LogDebug("Held Item Slot: " + std::to_string((int)held_item_slot));
     }
 
     void PacketReceiver::RecvBed(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutBed...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutBed...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Position position = PacketDecoder::ReadPosition(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation: " + position.ToString());
     }
 
     void PacketReceiver::RecvAnimation(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutAnimation...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutAnimation...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Position position = PacketDecoder::ReadPosition(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation: " + position.ToString());
     }
 
     void PacketReceiver::RecvNamedEntitySpawn(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutNamedEntitySpawn...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutNamedEntitySpawn...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         UUID uuid = PacketDecoder::ReadUUID(packet, offset);
@@ -589,7 +589,7 @@ namespace mcbot
         short current_item = PacketDecoder::ReadShort(packet, offset);
         EntityMetaData meta_data = PacketDecoder::ReadMetaData(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tUUID: " + uuid.ToString() +
             "\n\tLocation: " + position.ToString());
@@ -612,19 +612,19 @@ namespace mcbot
 
     void PacketReceiver::RecvCollect(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutCollect...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutCollect...");
 
         int collected_id = PacketDecoder::ReadVarInt(packet, offset);
         int collector_id = PacketDecoder::ReadVarInt(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Collected ID: " + std::to_string(collected_id) +
             "\n\tCollector ID: " + std::to_string(collector_id));
     }
 
     void PacketReceiver::RecvSpawnEntity(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnEntity...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnEntity...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         EntityType type = (EntityType)PacketDecoder::ReadByte(packet, offset);
@@ -640,7 +640,7 @@ namespace mcbot
             Vector<short> motion = PacketDecoder::ReadVector<short>(packet, offset);
         }
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation:" + position.ToString());
 
@@ -658,7 +658,7 @@ namespace mcbot
 
     void PacketReceiver::RecvSpawnEntityLiving(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnEntityLiving...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnEntityLiving...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         EntityType type = (EntityType)PacketDecoder::ReadByte(packet, offset);
@@ -671,7 +671,7 @@ namespace mcbot
         Vector<short> motion = PacketDecoder::ReadVector<short>(packet, offset);
         EntityMetaData meta_data = PacketDecoder::ReadMetaData(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation:" + position.ToString());
 
@@ -689,14 +689,14 @@ namespace mcbot
 
     void PacketReceiver::RecvSpawnEntityPainting(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnEntityPainting...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnEntityPainting...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         std::string title = PacketDecoder::ReadString(packet, offset);
         Position location = PacketDecoder::ReadPosition(packet, offset);
         uint8_t direction = PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation: " + location.ToString() +
             "\n\tTitle: " + title +
@@ -707,13 +707,13 @@ namespace mcbot
 
     void PacketReceiver::RecvSpawnEntityExperienceOrb(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnEntityExperienceOrb...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnEntityExperienceOrb...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Vector<int> motion = PacketDecoder::ReadVector<int>(packet, offset);
         short count = PacketDecoder::ReadShort(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tPosition: " + motion.ToString() +
             "\n\tCount: " + std::to_string(count));
@@ -723,19 +723,19 @@ namespace mcbot
 
     void PacketReceiver::RecvEntityVelocity(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityVelocity...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityVelocity...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Vector<short> motion = PacketDecoder::ReadVector<short>(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tVelocity: " + motion.ToString());
     }
 
     void PacketReceiver::RecvEntityDestroy(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityDestroy...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityDestroy...");
 
         int count = PacketDecoder::ReadVarInt(packet, offset);
 
@@ -745,7 +745,7 @@ namespace mcbot
             entity_ids.push_back(PacketDecoder::ReadVarInt(packet, offset));
         }
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity Count: " + std::to_string(count));
 
         for (int id : entity_ids)
@@ -763,11 +763,11 @@ namespace mcbot
 
     void PacketReceiver::RecvEntity(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntity...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntity...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id));
 
         this->bot->RegisterEntity(Entity(entity_id));
@@ -775,7 +775,7 @@ namespace mcbot
 
     void PacketReceiver::RecvRelEntityMove(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutRelEntityMove...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutRelEntityMove...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Vector<int8_t> dmot = PacketDecoder::ReadVector<int8_t>(packet, offset);
@@ -784,7 +784,7 @@ namespace mcbot
         Vector<double> dr = Vector<double>(
             dmot.GetX() / 32.0, dmot.GetY() / 32.0, dmot.GetZ() / 32.0);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tChange in Motion: " + dr.ToString() +
             "\n\tOn Ground: " + std::to_string(on_ground));
@@ -794,14 +794,14 @@ namespace mcbot
 
     void PacketReceiver::RecvEntityLook(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityLook...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityLook...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         uint8_t yaw = PacketDecoder::ReadByte(packet, offset);
         uint8_t pitch = PacketDecoder::ReadByte(packet, offset);
         bool on_ground = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tYaw: " + std::to_string((int)yaw) +
             "\n\tPitch: " + std::to_string((int)pitch) +
@@ -812,7 +812,7 @@ namespace mcbot
 
     void PacketReceiver::RecvRelEntityMoveLook(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutRelEntityMoveLook...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutRelEntityMoveLook...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Vector<int8_t> dmot = PacketDecoder::ReadVector<int8_t>(packet, offset);
@@ -821,7 +821,7 @@ namespace mcbot
         uint8_t pitch = PacketDecoder::ReadByte(packet, offset) * 2 * 3.14159 / 256;
         bool on_ground = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tChange in Motion: " + dr.ToString() +
             "\n\tYaw: " + std::to_string(yaw) +
@@ -834,7 +834,7 @@ namespace mcbot
 
     void PacketReceiver::RecvEntityTeleport(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityTeleport...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityTeleport...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Vector<int> position = PacketDecoder::ReadVector<int>(packet, offset);
@@ -844,7 +844,7 @@ namespace mcbot
         double pitch = PacketDecoder::ReadByte(packet, offset) * 2 * 3.14159 / 256;
         bool on_ground = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tChange in Motion: " + position.ToString() +
             "\n\tYaw: " + std::to_string(yaw) +
@@ -858,12 +858,12 @@ namespace mcbot
     void PacketReceiver::RecvEntityHeadLook(uint8_t* packet, size_t length, size_t& offset)
     {
         // TODO: find actual name of packet
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityHeadLook...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityHeadLook...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         double yaw = PacketDecoder::ReadByte(packet, offset) * 2 * 3.14159 / 256;
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tAngle: " + std::to_string(yaw));
 
@@ -872,31 +872,31 @@ namespace mcbot
 
     void PacketReceiver::RecvEntityStatus(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityStatus...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityStatus...");
 
         int entity_id = PacketDecoder::ReadInt(packet, offset);
         EntityStatus status = (EntityStatus) PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tStatus: " + StringUtils::to_string(status));
     }
 
     void PacketReceiver::RecvEntityMetadata(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityMetadata...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityMetadata...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         EntityMetaData meta_data = PacketDecoder::ReadMetaData(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tMeta Data: size " + std::to_string(meta_data.GetValues().size()));
     }
 
     void PacketReceiver::RecvEntityEffect(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutEntityEffect...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityEffect...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         uint8_t effect_id = PacketDecoder::ReadByte(packet, offset);
@@ -904,7 +904,7 @@ namespace mcbot
         int duration = PacketDecoder::ReadVarInt(packet, offset);
         bool hide_particles = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tEffect ID: " + std::to_string((int)effect_id) +
             "\n\tAmplifier: " + std::to_string((int)amplifier) +
@@ -914,13 +914,13 @@ namespace mcbot
 
     void PacketReceiver::RecvExperience(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutExperience...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutExperience...");
 
         float experience_bar = PacketDecoder::ReadFloat(packet, offset);
         int level = PacketDecoder::ReadVarInt(packet, offset);
         int total_experience = PacketDecoder::ReadVarInt(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Experience Bar: " + std::to_string(experience_bar) +
             "\n\tLevel: " + std::to_string(level) +
             "\n\tTotal Experience: " + std::to_string(total_experience));
@@ -928,7 +928,7 @@ namespace mcbot
 
     void PacketReceiver::RecvEntityAttributes(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutUpdateAttributes...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutUpdateAttributes...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         int num_attributes = PacketDecoder::ReadInt(packet, offset);
@@ -939,7 +939,7 @@ namespace mcbot
             attributes.push_back(PacketDecoder::ReadAttribute(packet, offset));
         }
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tAttributes: " + std::to_string(attributes.size()));
 
@@ -947,7 +947,7 @@ namespace mcbot
 
     void PacketReceiver::RecvMapChunk(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutMapChunk...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutMapChunk...");
 
         int chunk_x = PacketDecoder::ReadInt(packet, offset);
         int chunk_z = PacketDecoder::ReadInt(packet, offset);
@@ -956,7 +956,7 @@ namespace mcbot
         int data_size = PacketDecoder::ReadVarInt(packet, offset);
         Chunk chunk = PacketDecoder::ReadChunk(chunk_x, chunk_z, ground_up_continuous, true, primary_bitmask, packet, offset);
     
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "X: " + std::to_string(chunk_x) +
             "\n\tZ: " + std::to_string(chunk_z));
 
@@ -965,7 +965,7 @@ namespace mcbot
 
     void PacketReceiver::RecvMultiBlockChange(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutMultiBlockChange...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutMultiBlockChange...");
 
         int chunk_x = PacketDecoder::ReadInt(packet, offset);
         int chunk_z = PacketDecoder::ReadInt(packet, offset);
@@ -984,19 +984,19 @@ namespace mcbot
             chunk.UpdateBlock(x, y, z, block_id);
         }
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "X: " + std::to_string(chunk_x) +
             "\n\tZ: " + std::to_string(chunk_z));
     }
 
     void PacketReceiver::RecvBlockChange(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutBlockChange...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutBlockChange...");
 
         Position location = PacketDecoder::ReadPosition(packet, offset);
         int block_id = PacketDecoder::ReadVarInt(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Location: " + location.ToString() +
             "\n\tBlock ID: " + std::to_string(block_id));
 
@@ -1006,13 +1006,13 @@ namespace mcbot
 
     void PacketReceiver::RecvBlockBreakAnimation(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutBlockBreakAnimation...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutBlockBreakAnimation...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         Position location = PacketDecoder::ReadPosition(packet, offset);
         uint8_t destroy_stage = PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tLocation: " + location.ToString() +
             "\n\tDestroy Stage: " + std::to_string((int)destroy_stage));
@@ -1030,7 +1030,7 @@ namespace mcbot
 
     void PacketReceiver::RecvMapChunkBulk(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutMapChunkBulk...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutMapChunkBulk...");
 
         bool sky_light_sent = PacketDecoder::ReadBoolean(packet, offset);
         int chunk_column_count = PacketDecoder::ReadVarInt(packet, offset);
@@ -1042,7 +1042,7 @@ namespace mcbot
             int z = PacketDecoder::ReadInt(packet, offset);
             uint16_t primary_bit_mask = PacketDecoder::ReadShort(packet, offset);
             chunks.push_back(Chunk(x, z, primary_bit_mask));
-            this->bot->LogDebug("Loading Chunk (" + std::to_string(x) + "," + std::to_string(z) + ")");
+            this->bot->GetLogger().LogDebug("Loading Chunk (" + std::to_string(x) + "," + std::to_string(z) + ")");
         }
 
         for (Chunk chunk : chunks)
@@ -1054,35 +1054,35 @@ namespace mcbot
 
     void PacketReceiver::RecvWorldEvent(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutWorldEvent...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutWorldEvent...");
 
         int effect_id = PacketDecoder::ReadInt(packet, offset);
         Position location = PacketDecoder::ReadPosition(packet, offset);
         int data = PacketDecoder::ReadInt(packet, offset);
         bool disable_relative_volume = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Effect ID: " + std::to_string(effect_id) +
             "\n\tPosition: " + location.ToString());
     }
 
     void PacketReceiver::RecvNamedSoundEffect(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutNamedSoundEffect...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutNamedSoundEffect...");
 
         std::string sound_name = PacketDecoder::ReadString(packet, offset);
         Vector<int> position = PacketDecoder::ReadVector<int>(packet, offset);
         float volume = PacketDecoder::ReadFloat(packet, offset);
         uint8_t pitch = PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Sound Name: " + sound_name +
             "\n\tPosition: " + position.ToString());
     }
 
     void PacketReceiver::RecvWorldParticles(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutWorldParticles...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutWorldParticles...");
 
         ParticleType particle_id = (ParticleType) PacketDecoder::ReadInt(packet, length);
         bool long_distance = PacketDecoder::ReadBoolean(packet, length);
@@ -1103,7 +1103,7 @@ namespace mcbot
 
         Buffer<int> data = PacketDecoder::ReadVarIntArray(data_length, packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Particle ID: " + StringUtils::to_string(particle_id) +
             "\n\tLong Distance: " + std::to_string(long_distance) +
             "\n\tPosition: " + position.ToString() +
@@ -1114,39 +1114,39 @@ namespace mcbot
 
     void PacketReceiver::RecvGameStateChange(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutGameStateChange...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutGameStateChange...");
 
         uint8_t reason = PacketDecoder::ReadByte(packet, offset);
         float value = PacketDecoder::ReadFloat(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Reason: " + std::to_string((int)reason) +
             "\n\tValue: " + std::to_string(value));
     }
 
     void PacketReceiver::RecvSpawnEntityWeather(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSpawnEntityWeather...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSpawnEntityWeather...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet, offset);
         WeatherEntityType type = (WeatherEntityType) PacketDecoder::ReadByte(packet, offset);
         Vector<int> position = PacketDecoder::ReadVector<int>(packet, offset);
         Vector<double> position1 = Vector<double>(position.GetX() / 32.0, position.GetY() / 32.0, position.GetZ() / 32.0);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
             "\n\tPosition: " + position1.ToString());
     }
 
     void PacketReceiver::RecvSetSlot(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutSetSlot...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutSetSlot...");
 
         uint8_t window_id = PacketDecoder::ReadByte(packet, offset);
         uint16_t slot_number = PacketDecoder::ReadShort(packet, offset);
         Slot slot = PacketDecoder::ReadSlot(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Window ID: " + std::to_string(window_id) +
             "\n\tSlot Number: " + std::to_string(slot_number) +
             "\n\tSlot: " + slot.ToString()
@@ -1155,7 +1155,7 @@ namespace mcbot
 
     void PacketReceiver::RecvWindowItems(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutWindowItems...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutWindowItems...");
 
         uint8_t window_id = PacketDecoder::ReadByte(packet, offset);
         int16_t count = PacketDecoder::ReadShort(packet, offset);
@@ -1175,7 +1175,7 @@ namespace mcbot
             std::list<Slot> slots = PacketDecoder::ReadSlotArray(count, packet, offset);
         }
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Window ID: " + std::to_string(window_id) +
             "\n\tCount: " + std::to_string(count)
         );
@@ -1183,13 +1183,13 @@ namespace mcbot
 
     void PacketReceiver::RecvTransaction(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutTransaction...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutTransaction...");
 
         uint8_t window_id = PacketDecoder::ReadByte(packet, offset);
         int16_t action_number = PacketDecoder::ReadShort(packet, offset);
         bool accepted = PacketDecoder::ReadBoolean(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Window ID: " + std::to_string(window_id) +
             "\n\tAction Number: " + std::to_string(action_number) +
             "\n\tAccept: " + std::to_string(accepted)
@@ -1198,7 +1198,7 @@ namespace mcbot
 
     void PacketReceiver::RecvUpdateSign(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutUpdateSign...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutUpdateSign...");
 
         Position location = PacketDecoder::ReadPosition(packet, offset);
         std::string line1 = PacketDecoder::ReadString(packet, offset);
@@ -1206,7 +1206,7 @@ namespace mcbot
         std::string line3 = PacketDecoder::ReadString(packet, offset);
         std::string line4 = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Location: " + location.ToString() +
             "\n\tLine 1: " + line1 +
             "\n\tLine 2: " + line2 +
@@ -1217,13 +1217,13 @@ namespace mcbot
 
     void PacketReceiver::RecvTileEntityData(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutTileEntityData...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutTileEntityData...");
 
         Position location = PacketDecoder::ReadPosition(packet, offset);
         TileEntityAction action = (TileEntityAction) PacketDecoder::ReadByte(packet, offset);
         NBTTagCompound nbt = PacketDecoder::ReadNBTTagCompound(packet, offset, true);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Location: " + location.ToString() +
             "\n\tAction: " + StringUtils::to_string(action) +
             "\n\tNBT: " + nbt.ToString()
@@ -1232,21 +1232,21 @@ namespace mcbot
 
     void PacketReceiver::RecvStatistics(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutStatistics...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutStatistics...");
         int count = PacketDecoder::ReadVarInt(packet, offset);
         std::list<Statistic> statistics = PacketDecoder::ReadStatisticArray(count, packet, offset);
 
-        this->bot->LogDebug("Statistics (" + std::to_string(count) + "): ");
+        this->bot->GetLogger().LogDebug("Statistics (" + std::to_string(count) + "): ");
 
         for (auto statistic : statistics)
         {
-            this->bot->LogDebug("\t" + statistic.ToString());
+            this->bot->GetLogger().LogDebug("\t" + statistic.ToString());
         }
     }
 
     void PacketReceiver::RecvPlayerInfo(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutPlayerInfo...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutPlayerInfo...");
 
         PlayerInfoAction action = (PlayerInfoAction) PacketDecoder::ReadVarInt(packet, offset);
         int players_length = PacketDecoder::ReadVarInt(packet, offset);
@@ -1255,12 +1255,12 @@ namespace mcbot
 
     void PacketReceiver::RecvAbilities(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutAbilities...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutAbilities...");
         uint8_t flags = PacketDecoder::ReadByte(packet, offset);
         float flying_speed = PacketDecoder::ReadFloat(packet, offset);
         float fov_modifier = PacketDecoder::ReadFloat(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Flags: " + std::to_string((int)flags) +
             "\n\tFlying Speed: " + std::to_string(flying_speed) +
             "\n\tFOV Modifier: " + std::to_string(fov_modifier));
@@ -1268,11 +1268,11 @@ namespace mcbot
 
     void PacketReceiver::RecvScoreboardObjective(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutScoreboardObjective...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutScoreboardObjective...");
         std::string objective_name = PacketDecoder::ReadString(packet, offset);
         ScoreboardMode mode = (ScoreboardMode) PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Objective Name: " + objective_name +
             "\n\tMode: " + StringUtils::to_string(mode));
 
@@ -1281,7 +1281,7 @@ namespace mcbot
         {
             std::string objective_value = PacketDecoder::ReadString(packet, offset);
             std::string objective_type = PacketDecoder::ReadString(packet, offset);
-            this->bot->LogDebug(
+            this->bot->GetLogger().LogDebug(
                 "Objective value: " + objective_value +
                 "\n\tObjective type: " + objective_type);
         }
@@ -1289,12 +1289,12 @@ namespace mcbot
 
     void PacketReceiver::RecvUpdateScoreboardScore(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutScoreboardScore...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutScoreboardScore...");
         std::string score_name = PacketDecoder::ReadString(packet, offset);
         ScoreAction action = (ScoreAction) PacketDecoder::ReadByte(packet, offset);
         std::string objective_name = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Score Name: " + score_name +
             "\n\tAction: " + StringUtils::to_string(action) +
             "\n\tObjective Name: " + objective_name);
@@ -1302,30 +1302,30 @@ namespace mcbot
         if (action != ScoreAction::REMOVE)
         {
             int value = PacketDecoder::ReadVarInt(packet, offset);
-            this->bot->LogDebug("\n\tValue: " + std::to_string(value));
+            this->bot->GetLogger().LogDebug("\n\tValue: " + std::to_string(value));
         }
 
     }
 
     void PacketReceiver::RecvDisplayScoreboard(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutScoreboardDisplayObjective...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutScoreboardDisplayObjective...");
 
         ScoreboardPosition position = (ScoreboardPosition) PacketDecoder::ReadByte(packet, offset);
         std::string score_name = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Position: " + StringUtils::to_string(position) +
             "\n\tScore Name: " + score_name);
     }
 
     void PacketReceiver::RecvScoreboardTeam(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutScoreboardTeam...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutScoreboardTeam...");
         std::string team_name = PacketDecoder::ReadString(packet, offset);
         ScoreboardMode mode = (ScoreboardMode) PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Team Name: " + team_name +
             "\n\tMode: " + StringUtils::to_string(mode));
 
@@ -1338,12 +1338,12 @@ namespace mcbot
             std::string team_suffix = PacketDecoder::ReadString(packet, offset);
 
             uint8_t friendly = PacketDecoder::ReadByte(packet, offset);
-            this->bot->LogDebug("Friendly: " + std::to_string((int)friendly));
+            this->bot->GetLogger().LogDebug("Friendly: " + std::to_string((int)friendly));
             FriendlyFire friendly_fire = (FriendlyFire) friendly;
             std::string nametag_visibility = PacketDecoder::ReadString(packet, offset);
             uint8_t color = PacketDecoder::ReadByte(packet, offset);
 
-            this->bot->LogDebug(
+            this->bot->GetLogger().LogDebug(
                 "Team Display Name: " + team_display_name +
                 "\n\tTeam Prefix: " + team_prefix +
                 "\n\tTeam Suffix: " + team_suffix +
@@ -1360,11 +1360,11 @@ namespace mcbot
             int player_count = PacketDecoder::ReadVarInt(packet, offset);
             std::list<std::string> players = PacketDecoder::ReadStringArray(player_count, packet, offset);
 
-            this->bot->LogDebug("Players (" + std::to_string(player_count) + "): ");
+            this->bot->GetLogger().LogDebug("Players (" + std::to_string(player_count) + "): ");
 
             for (auto player : players)
             {
-                this->bot->LogDebug("\t\t" + player);
+                this->bot->GetLogger().LogDebug("\t\t" + player);
             }
         }
 
@@ -1372,28 +1372,28 @@ namespace mcbot
 
     void PacketReceiver::RecvPluginMessage(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutCustomPayload...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutCustomPayload...");
 
         std::string plugin_channel = PacketDecoder::ReadString(packet, offset);
         Buffer<uint8_t> data = PacketDecoder::ReadByteArray(length - offset, packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Plugin Channel: " + plugin_channel +
             "\n\tData: " + data.to_string());
     }
 
     void PacketReceiver::RecvServerDifficulty(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutServerDifficulty...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutServerDifficulty...");
 
         Difficulty difficulty = (Difficulty) PacketDecoder::ReadByte(packet, offset);
 
-        this->bot->LogDebug("Difficulty: " + StringUtils::to_string(difficulty));
+        this->bot->GetLogger().LogDebug("Difficulty: " + StringUtils::to_string(difficulty));
     }
 
     void PacketReceiver::RecvWorldBorder(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutWorldBorder...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutWorldBorder...");
 
         WorldBorderAction action = (WorldBorderAction) PacketDecoder::ReadVarInt(packet, offset);
 
@@ -1468,7 +1468,7 @@ namespace mcbot
 
     void PacketReceiver::RecvTitle(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutTitle...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutTitle...");
 
         TitleAction action = (TitleAction) PacketDecoder::ReadVarInt(packet, offset);
 
@@ -1494,17 +1494,17 @@ namespace mcbot
 
         }
 
-        this->bot->LogDebug("Action: " + StringUtils::to_string(action));
+        this->bot->GetLogger().LogDebug("Action: " + StringUtils::to_string(action));
     }
 
     void PacketReceiver::RecvPlayerListHeaderFooter(uint8_t* packet, size_t length, size_t& offset)
     {
-        this->bot->LogDebug("<<< Handling PacketPlayOutPlayerListHeaderFooter...");
+        this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutPlayerListHeaderFooter...");
 
         std::string header = PacketDecoder::ReadString(packet, offset);
         std::string footer = PacketDecoder::ReadString(packet, offset);
 
-        this->bot->LogDebug(
+        this->bot->GetLogger().LogDebug(
             "Header: " + header +
             "\n\tFooter: " + footer);
     }

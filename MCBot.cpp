@@ -34,7 +34,7 @@ namespace mcbot
         {
             UUID uuid = PacketDecoder::ReadUUID(packet, offset);
 
-            LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
+            this->logger.LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
 
             EntityPlayer player;
 
@@ -64,7 +64,7 @@ namespace mcbot
 
                 this->RegisterPlayer(uuid, player);
 
-                LogDebug("\t\tName: " + name + '\n'
+                this->logger.LogDebug("\t\tName: " + name + '\n'
                     + "\t\tGamemode: " + StringUtils::to_string(gamemode) + '\n'
                     + "\t\tPing: " + std::to_string(ping));
                 break;
@@ -78,7 +78,7 @@ namespace mcbot
                 }
                 catch (...)
                 {
-                    LogError("Failed to find player of UUID " + uuid.ToString());
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
                     return;
                 }
                 Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet, offset);
@@ -94,7 +94,7 @@ namespace mcbot
                 }
                 catch (...)
                 {
-                    LogError("Failed to find player of UUID " + uuid.ToString());
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
                     return;
                 }
                 int ping = PacketDecoder::ReadVarInt(packet, offset);
@@ -111,7 +111,7 @@ namespace mcbot
                 }
                 catch (...)
                 {
-                    LogError("Failed to find player of UUID " + uuid.ToString());
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
                     return;
                 }
 
@@ -138,13 +138,13 @@ namespace mcbot
 
     MCBot::MCBot()
     {
-        this->debug = false;
         this->connected = false;
         this->ready = false;
         this->uuid_to_player = std::map<UUID, EntityPlayer>();
         this->world_border = WorldBorder();
         this->packet_receiver = new PacketReceiver(this);
         this->packet_sender = new PacketSender(this);
+        this->logger = Logger();
 
         // Start WinSock DLL //
         WSADATA wsaData;
@@ -175,7 +175,7 @@ namespace mcbot
         hints.ai_protocol = IPPROTO_TCP;
         if (getaddrinfo(hostname, port, &hints, &result) < 0 || result == NULL)
         {
-            this->LogError("Failed to resolve " + hostname_s);
+            this->logger.LogError("Failed to resolve " + hostname_s);
             print_winsock_error();
             WSACleanup();
             return -1;
@@ -184,11 +184,11 @@ namespace mcbot
         char* address_string = inet_ntoa(((struct sockaddr_in*) result->ai_addr)->sin_addr);
         std::string address_string_s = address_string;
 
-        this->LogInfo("Resolved " + hostname_s + " to " + address_string_s);
+        this->logger.LogInfo("Resolved " + hostname_s + " to " + address_string_s);
 
         // Connect //
         this->sock = Socket(socket(result->ai_family, result->ai_socktype, result->ai_protocol));
-        this->LogInfo("Connecting to " + address_string_s + ":" + port);
+        this->logger.LogInfo("Connecting to " + address_string_s + ":" + port);
         if (this->sock.connect_socket(result) < 0)
         {
             print_winsock_error();
@@ -197,7 +197,7 @@ namespace mcbot
         }
 
         this->connected = true;
-        this->LogInfo("Connected to " + address_string_s + ":" + port);
+        this->logger.LogInfo("Connected to " + address_string_s + ":" + port);
 
         return 0;
     }
@@ -470,40 +470,6 @@ namespace mcbot
         this->packet_sender->SendPositionLook(dest, yaw, 0, true);
     }
 
-    void MCBot::LogDebug(std::string message)
-    {
-        if (!this->debug)
-        {
-            return;
-        }
-
-        std::cout << "\33[2K\r" << "[DEBUG] " << message << std::endl;
-        std::cout << "> ";
-    }
-
-    void MCBot::LogError(std::string message)
-    {
-        std::cout << "\33[2K\r" << "[ERROR] " << message << std::endl;
-        std::cout << "> ";
-    }
-
-    void MCBot::LogInfo(std::string message)
-    {
-        std::cout << "\33[2K\r" << "[INFO] " << message << std::endl;
-        std::cout << "> ";
-    }
-
-    void MCBot::LogChat(std::string message)
-    {
-        std::cout << "\33[2K\r" << "[CHAT] " << message << std::endl;
-        std::cout << "> ";
-    }
-
-    void MCBot::SetDebug(bool debug)
-    {
-        this->debug = debug;
-    }
-
     void MCBot::SetState(State state)
     {
         this->state = state;
@@ -574,6 +540,11 @@ namespace mcbot
     PacketReceiver& MCBot::GetPacketReceiver()
     {
         return *this->packet_receiver;
+    }
+
+    Logger& MCBot::GetLogger()
+    {
+        return this->logger;
     }
 
     EntityPlayer& MCBot::GetPlayer()

@@ -2,6 +2,7 @@
 
 #include "Socket.h"
 #include "Buffer.h"
+#include "Logger.h"
 
 #include "MojangSession.h"
 
@@ -37,11 +38,12 @@ namespace mcbot
 	{
 	private:
 
-		// Configuration
-		bool debug;
+		Logger logger;
+
 
 		// User info
 		MojangSession session;
+
 
 		// Connection Info
 		Socket sock;
@@ -50,6 +52,7 @@ namespace mcbot
 		State state;
 		PacketReceiver* packet_receiver;
 		PacketSender* packet_sender;
+
 
 		// Runtime Minecraft Info
 		EntityPlayer player;
@@ -100,15 +103,7 @@ namespace mcbot
 		std::list<Chunk> GetChunks(int x, int z, unsigned int radius);
 
 
-		// Logging //
-		void LogDebug(std::string message);
-		void LogError(std::string message);
-		void LogInfo(std::string message);
-		void LogChat(std::string message);
-
-
-		// Configuration //
-		void SetDebug(bool debug);
+		// Setters //
 		void SetState(State state);
 		void SetConnected(bool connected);
 		void SetSession(MojangSession session);
@@ -123,6 +118,7 @@ namespace mcbot
 		Socket& GetSocket();
 		PacketSender& GetPacketSender();
 		PacketReceiver& GetPacketReceiver();
+		Logger& GetLogger();
 		EntityPlayer& GetPlayer();
 	};
 }

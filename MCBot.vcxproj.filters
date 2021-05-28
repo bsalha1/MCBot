@@ -170,6 +170,9 @@
     <ClCompile Include="Serializable.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MCBot.h">
@@ -285,6 +288,9 @@
     </ClInclude>
     <ClInclude Include="Serializable.h">
       <Filter>Header Files\minecraft</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -116,7 +116,7 @@ namespace mcbot
 
     void PacketSender::SendHandshake(char* hostname, unsigned short port)
     {
-        this->bot->LogDebug(">>> Sending PacketHandshakingIn...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketHandshakingIn...");
         this->bot->SetState(State::HANDSHAKE);
 
         uint8_t packet[1028];
@@ -130,14 +130,14 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
     }
 
     void PacketSender::SendLoginStart()
     {
-        this->bot->LogDebug(">>> Sending PacketLoginInStart...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketLoginInStart...");
         this->bot->SetState(State::LOGIN);
 
         uint8_t packet[1028];
@@ -148,14 +148,14 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
     }
 
     void PacketSender::SendEncryptionResponse(uint8_t* public_key, int public_key_length, uint8_t* verify_token, int verify_token_length, std::string shared_secret)
     {
-        this->bot->LogDebug(">>> Sending PacketLoginInEncryptionBegin...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketLoginInEncryptionBegin...");
         // Convert DER to PEM //
         char pem_format[] =
             "-----BEGIN PUBLIC KEY-----"
@@ -193,24 +193,24 @@ namespace mcbot
 
         delete[] pem_formatted;
 
-        this->bot->LogDebug("Public Key Info: ");
+        this->bot->GetLogger().LogDebug("Public Key Info: ");
         BIO* keybio = BIO_new(BIO_s_mem());
         RSA_print(keybio, rsa_public_key, 0);
         char buffer[2048] = { 0 };
         std::string res = "";
         while (BIO_read(keybio, buffer, 2048) > 0)
         {
-            this->bot->LogDebug(buffer);
+            this->bot->GetLogger().LogDebug(buffer);
         }
         BIO_free(keybio);
 
         unsigned char encrypted_shared_secret[256] = { 0 };
         int encrypted_shared_secret_len = RSA_public_encrypt(shared_secret.length(), (unsigned char*)shared_secret.c_str(), encrypted_shared_secret, rsa_public_key, RSA_PKCS1_PADDING);
-        this->bot->LogDebug("Encrypted shared secret with public key");
+        this->bot->GetLogger().LogDebug("Encrypted shared secret with public key");
 
         unsigned char encrypted_verify_token[256] = { 0 };
         int encrypted_verify_token_len = RSA_public_encrypt(verify_token_length, verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
-        this->bot->LogDebug("Encrypted verify token with public key");
+        this->bot->GetLogger().LogDebug("Encrypted verify token with public key");
 
         uint8_t packet[1028];
         size_t offset = 0;
@@ -225,19 +225,19 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
         else
         {
             this->bot->GetSocket().initialize_encryption((unsigned char*)shared_secret.c_str(), (unsigned char*)shared_secret.c_str());
-            this->bot->LogDebug("Sent encryption response - ENCRYPTION ENABLED");
+            this->bot->GetLogger().LogDebug("Sent encryption response - ENCRYPTION ENABLED");
         }
     }
 
     void PacketSender::SendKeepAlive(int id)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInKeepAlive...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInKeepAlive...");
 
         int packet_id = 0x00;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, id })];
@@ -248,7 +248,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -257,7 +257,7 @@ namespace mcbot
 
     void PacketSender::SendChatMessage(std::string message)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInChat...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInChat...");
 
         int packet_id = 0x01;
         uint8_t* packet = new uint8_t[message.length() + PacketEncoder::GetVarIntNumBytes({ packet_id, (int)message.length() }) + 1]{ 0 };
@@ -268,12 +268,12 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
         else
         {
-            this->bot->LogDebug("Message: " + message);
+            this->bot->GetLogger().LogDebug("Message: " + message);
         }
 
         delete[] packet;
@@ -281,7 +281,7 @@ namespace mcbot
 
     void PacketSender::SendUseEntity(int entity_id, UseEntityType action)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInUseEntity...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInUseEntity...");
 
         int packet_id = 0x02;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, entity_id, (int)action })]{ 0 };
@@ -293,7 +293,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -302,7 +302,7 @@ namespace mcbot
 
     void PacketSender::SendPosition(Vector<double> position, bool on_ground)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInPosition...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInPosition...");
 
 
         int packet_id = 0x04;
@@ -317,7 +317,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -329,7 +329,7 @@ namespace mcbot
 
     void PacketSender::SendLook(float yaw, float pitch, bool on_ground)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInLook...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInLook...");
 
         int packet_id = 0x05;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 2 * sizeof(float) + 1]{ 0 };
@@ -342,7 +342,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -354,7 +354,7 @@ namespace mcbot
 
     void PacketSender::SendPositionLook(Vector<double> position, float yaw, float pitch, bool on_ground)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInPositionLook...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInPositionLook...");
 
         int packet_id = 0x06;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 3 * sizeof(double) + 2 * sizeof(float) + 1]{ 0 };
@@ -370,7 +370,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -383,7 +383,7 @@ namespace mcbot
 
     void PacketSender::SendBlockDig(DigStatus status, Vector<int> location, BlockFace face)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInBlockDig...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInBlockDig...");
 
         int packet_id = 0x07;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 10]{ 0 };
@@ -396,7 +396,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -427,7 +427,7 @@ namespace mcbot
 
     void PacketSender::SendHeldItemSlot(short slot)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInHeldItemSlot...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInHeldItemSlot...");
 
         int packet_id = 0x09;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(short)]{ 0 };
@@ -438,7 +438,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -447,7 +447,7 @@ namespace mcbot
 
     void PacketSender::SendArmAnimation()
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInArmAnimation...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInArmAnimation...");
 
         int packet_id = 0x0A;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id)]{ 0 };
@@ -457,7 +457,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -466,7 +466,7 @@ namespace mcbot
 
     void PacketSender::SendEntityAction(EntityAction action, int action_parameter)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInEntityAction...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEntityAction...");
 
         int packet_id = 0x0B;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, (int)action, action_parameter, this->bot->GetPlayer().GetID() })]{ 0 };
@@ -479,7 +479,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -489,7 +489,7 @@ namespace mcbot
 
     void PacketSender::SendEntityAction(int player_id, EntityAction action, int param)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInEntityAction...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEntityAction...");
 
         int packet_id = 0x0B;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, player_id, (int)action, param })]{ 0 };
@@ -502,7 +502,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -531,7 +531,7 @@ namespace mcbot
 
     void PacketSender::SendEnchantItem(uint8_t window_id, uint8_t enchantment)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInEnchantItem..");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEnchantItem..");
 
         int packet_id = 0x11;
         uint8_t* packet = new uint8_t[1024]{ 0 };
@@ -543,7 +543,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -552,7 +552,7 @@ namespace mcbot
 
     void PacketSender::SendUpdateSign(Vector<int> location, std::string line1, std::string line2, std::string line3, std::string line4)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInUpdateSign...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInUpdateSign...");
 
         int packet_id = 0x12;
         uint8_t* packet = new uint8_t[1024]{ 0 };
@@ -567,7 +567,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -576,7 +576,7 @@ namespace mcbot
 
     void PacketSender::SendAbilities(uint8_t flags, float flying_speed, float walking_speed)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInAbilities...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInAbilities...");
 
         int packet_id = 0x13;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(uint8_t) + 2 * sizeof(float)]{ 0 };
@@ -589,7 +589,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -598,7 +598,7 @@ namespace mcbot
 
     void PacketSender::SendTabComplete(std::string text, bool has_position, Vector<int> block_position)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInTabComplete...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInTabComplete...");
 
         int packet_id = 0x14;
         uint8_t* packet = new uint8_t[1024]{ 0 };
@@ -615,7 +615,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -624,7 +624,7 @@ namespace mcbot
 
     void PacketSender::SendSettings()
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInSettings...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInSettings...");
 
         int packet_id = 0x15;
         uint8_t* packet = new uint8_t[1024]{ 0 };
@@ -639,7 +639,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -648,7 +648,7 @@ namespace mcbot
 
     void PacketSender::SendClientCommand(ClientStatus status)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInClientCommand...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInClientCommand...");
 
         int packet_id = 0x16;
         uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetVarIntNumBytes((int)status)]{ 0 };
@@ -659,7 +659,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
@@ -668,7 +668,7 @@ namespace mcbot
 
     void PacketSender::SendCustomPayload(std::string message)
     {
-        this->bot->LogDebug(">>> Sending PacketPlayInCustomPayload...");
+        this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInCustomPayload...");
 
         int packet_id = 0x17;
         uint8_t* packet = new uint8_t[1024]{ 0 };
@@ -679,7 +679,7 @@ namespace mcbot
 
         if (this->bot->GetSocket().send_pack(packet, offset) <= 0)
         {
-            this->bot->LogError("Failed to send packet");
+            this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
