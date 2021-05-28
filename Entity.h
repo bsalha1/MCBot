@@ -13,7 +13,7 @@ namespace mcbot
 		bool dead;
 
 	protected:
-		mcbot::Vector<double> location;
+		Vector<double> location;
 		float yaw;
 		float pitch;
 
@@ -23,20 +23,20 @@ namespace mcbot
 		Entity();
 
 
-		mcbot::Vector<double>& get_location();
-		void update_location(mcbot::Vector<double> location);
-		void update_location(mcbot::Vector<int> location);
-		void update_motion(mcbot::Vector<double> motion);
-		void update_rotation(float yaw, float pitch);
-		void update_yaw(float yaw);
+		Vector<double>& GetLocation();
+		void UpdateLocation(Vector<double> location);
+		void UpdateLocation(Vector<int> location);
+		void UpdateMotion(Vector<double> motion);
+		void UpdateRotation(float yaw, float pitch);
+		void UpdateYaw(float yaw);
 
-		void die();
+		void Die();
 
-		void set_id(int id);
+		void SetID(int id);
 
-		int get_id();
-		EntityType get_entity_type();
-		bool is_dead();
+		int GetID();
+		EntityType GetEntityType();
+		bool IsDead();
 	};
 }
 

@@ -13,18 +13,18 @@ namespace mcbot
 	class ScriptRuntime
 	{
 	private:
-		mcbot::MCBot& bot;
+		MCBot& bot;
 
 		std::map<std::string, std::function<void(std::list<std::string>)>> methods;
 
 	public:
-		ScriptRuntime(mcbot::MCBot& bot);
+		ScriptRuntime(MCBot& bot);
 
-		void call_method(std::string method_name, std::list<std::string> args);
+		void CallMethod(std::string method_name, std::list<std::string> args);
 
-		void move_rel(std::list<std::string> args);
+		void MoveRel(std::list<std::string> args);
 
-		void move_rel_look(std::list<std::string> args);
+		void MoveRelLook(std::list<std::string> args);
 	};
 }
 

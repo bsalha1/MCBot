@@ -16,7 +16,7 @@ namespace mcbot
 
 		UUID();
 
-		std::string to_string();
+		std::string ToString();
 
 		//friend std::ostream& operator<<(std::ostream& os, UUID uuid);
 

@@ -9,25 +9,38 @@ namespace mcbot
 	class PacketEncoder
 	{
 	public:
-		static void write_var_int(int value, uint8_t* packet, size_t& offset);
-		static int get_var_int_size(int value);
-		static int get_var_int_size(std::initializer_list<int> values);
-		static void write_byte_array(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset);
-		static void write_int_array(uint32_t* ints, int ints_length, uint8_t* packet, size_t& offset);
-		static void write_long_array(uint64_t* longs, int longs_length, uint8_t* packet, size_t& offset);
-		static void write_string(char* string, uint8_t* packet, size_t& offset);
-		static void write_string(std::string string, uint8_t* packet, size_t& offset);
-		static void write_nbt_string(std::string string, uint8_t* packet, size_t& offset);
-		static void write_boolean(bool value, uint8_t* packet, size_t& offset);
-		static void write_byte(uint8_t num, uint8_t* packet, size_t& offset);
-		static void write_short(uint16_t num, uint8_t* packet, size_t& offset);
-		static void write_int(uint32_t num, uint8_t* packet, size_t& offset);
-		static void write_long(uint64_t num, uint8_t* packet, size_t& offset);
-		static void write_double(double num, uint8_t* packet, size_t& offset);
-		static void write_float(float num, uint8_t* packet, size_t& offset);
-		static void write_position(int x, int y, int z, uint8_t* packet, size_t& offset);
-		static void write_slot(mcbot::Slot slot, uint8_t* packet, size_t& offset);
-		static void write_nbt(mcbot::NBTTagCompound nbt, uint8_t* packet, size_t& offset);
+
+		// VarInt //
+		static void WriteVarInt(int value, uint8_t* packet, size_t& offset);
+		static int GetVarIntNumBytes(int value);
+		static int GetVarIntNumBytes(std::initializer_list<int> values);
+
+
+		// Arrays //
+		static void WriteByteArray(uint8_t* bytes, int bytes_length, uint8_t* packet, size_t& offset);
+		static void WriteIntArray(uint32_t* ints, int ints_length, uint8_t* packet, size_t& offset);
+		static void WriteLongArray(uint64_t* longs, int longs_length, uint8_t* packet, size_t& offset);
+
+
+		// Strings //
+		static void WriteString(char* string, uint8_t* packet, size_t& offset);
+		static void WriteString(std::string string, uint8_t* packet, size_t& offset);
+		static void WriteNBTString(std::string string, uint8_t* packet, size_t& offset);
+
+
+		// Basic Types //
+		static void WriteBoolean(bool value, uint8_t* packet, size_t& offset);
+		static void WriteByte(uint8_t num, uint8_t* packet, size_t& offset);
+		static void WriteShort(uint16_t num, uint8_t* packet, size_t& offset);
+		static void WriteInt(uint32_t num, uint8_t* packet, size_t& offset);
+		static void WriteLong(uint64_t num, uint8_t* packet, size_t& offset);
+		static void WriteDouble(double num, uint8_t* packet, size_t& offset);
+		static void WriteFloat(float num, uint8_t* packet, size_t& offset);
+
+
+		// Classes //
+		static void WritePosition(int x, int y, int z, uint8_t* packet, size_t& offset);
+		static void WriteSerializable(Serializable const& serializable, uint8_t* packet, size_t& offset);
 	};
 }
 

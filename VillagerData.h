@@ -33,8 +33,8 @@ namespace mcbot
 	class VillagerData
 	{
 	private:
-		mcbot::VillagerType villager_type;
-		mcbot::VillagerProfession villager_profession;
+		VillagerType villager_type;
+		VillagerProfession villager_profession;
 		int level;
 
 	public:

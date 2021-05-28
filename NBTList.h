@@ -16,10 +16,10 @@ namespace mcbot
 		NBTList(NBTType type);
 		NBTList();
 
-		void add_element(NBTTag tag);
+		void AddElement(NBTTag tag);
 
-		NBTType get_type();
-		std::list<NBTTag> get_elements();
+		NBTType GetType();
+		std::list<NBTTag> GetElements();
 	};
 }
 

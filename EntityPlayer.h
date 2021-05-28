@@ -2,12 +2,13 @@
 
 #include <iostream>
 #include <list>
+#include <array>
 
 #include "EntityLiving.h"
 #include "Enums.h"
 #include "PlayerProperty.h"
 #include "UUID.h"
-#include "Enums.h"
+#include "Slot.h"
 #include "Vector.h"
 
 namespace mcbot
@@ -15,10 +16,11 @@ namespace mcbot
 	class EntityPlayer : public EntityLiving 
 	{
 	private:
-		mcbot::UUID uuid;
+		UUID uuid;
 		std::string name;
 		std::list<PlayerProperty> properties;
-		mcbot::Gamemode gamemode;
+		Gamemode gamemode;
+		std::array<Slot, 45> inventory;
 		int ping; // in milliseconds
 		std::string display_name;
 
@@ -32,37 +34,25 @@ namespace mcbot
 
 		EntityPlayer();
 
-		void set_gamemode(Gamemode gamemode);
+		void SetGamemode(Gamemode gamemode);
+		void SetPing(int ping);
+		void SetDisplayName(std::string display_name);
+		void SetName(std::string name);
+		void SetUUID(UUID uuid);
+		void SetProperties(std::list<PlayerProperty> properties);
+		void SetInventory(std::array<Slot, 45> inventory);
 
-		void set_ping(int ping);
-
-		void set_display_name(std::string display_name);
-
-		void set_name(std::string name);
-
-		void set_uuid(UUID uuid);
-
-		void set_properties(std::list<PlayerProperty> properties);
-
-		UUID get_uuid();
-
-		std::string get_name();
-
-		std::list<mcbot::PlayerProperty> get_properties();
-
-		mcbot::Gamemode get_gamemode();
-
-		mcbot::Vector<double> get_location();
-
-		int get_ping();
-
-		float get_pitch();
-
-		float get_yaw();
-
-		bool has_display_name();
-
-		std::string get_display_name();
+		std::array<Slot, 45> GetInventory();
+		UUID GetUUID();
+		std::string GetName();
+		std::list<PlayerProperty> GetProperties();
+		Gamemode GetGamemode();
+		Vector<double> GetLocation();
+		int GetPing();
+		float GetPitch();
+		float GetYaw();
+		bool HasDisplayName();
+		std::string GetDisplayName();
 
 		friend bool operator==(const EntityPlayer& lhs, const EntityPlayer& rhs);
 		friend bool operator!=(const EntityPlayer& lhs, const EntityPlayer& rhs);

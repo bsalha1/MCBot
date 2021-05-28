@@ -1,33 +1,38 @@
 #include <string>
 #include "Position.h"
-mcbot::Position::Position(int32_t x, int32_t y, int32_t z)
-{
-	this->x = x;
-	this->y = y;
-	this->z = z;
-}
 
-int32_t mcbot::Position::get_x()
+namespace mcbot
 {
-	return this->x;
-}
 
-int16_t mcbot::Position::get_y()
-{
-	return this->y;
-}
+	Position::Position(int32_t x, int32_t y, int32_t z)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
 
-int32_t mcbot::Position::get_z()
-{
-	return this->z;
-}
+	int32_t Position::GetX()
+	{
+		return this->x;
+	}
 
-mcbot::Vector<int> mcbot::Position::to_vector()
-{
-	return mcbot::Vector<int>(this->x, this->y, this->z);
-}
+	int16_t Position::GetY()
+	{
+		return this->y;
+	}
 
-std::string mcbot::Position::to_string()
-{
-	return "(" + std::to_string(this->x) + "," + std::to_string(this->y) + "," + std::to_string(this->z) + ")";
+	int32_t Position::GetZ()
+	{
+		return this->z;
+	}
+
+	Vector<int> Position::ToVector()
+	{
+		return Vector<int>(this->x, this->y, this->z);
+	}
+
+	std::string Position::ToString()
+	{
+		return "(" + std::to_string(this->x) + "," + std::to_string(this->y) + "," + std::to_string(this->z) + ")";
+	}
 }

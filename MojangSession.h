@@ -15,9 +15,9 @@ namespace mcbot
 		MojangSession(std::string access_token, std::string username, std::string uuid);
 		MojangSession();
 
-		std::string get_access_token();
-		std::string get_username();
-		std::string get_uuid();
+		std::string GetAccessToken();
+		std::string GetUsername();
+		std::string GetUUID();
 	};
 }
 

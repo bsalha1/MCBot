@@ -21,22 +21,22 @@ namespace mcbot
 		Vector(T x, T y);
 		Vector();
 
-		void scale(T factor);
-		void floor();
+		void Scale(T factor);
+		void Floor();
 
-		T magnitude();
+		T Magnitude();
 
-		T distance(Vector<T> destination);
+		T Distance(Vector<T> destination);
 
-		T get_x();
-		T get_y();
-		T get_z();
+		T GetX();
+		T GetY();
+		T GetZ();
 
-		void set_x(T x);
-		void set_y(T y);
-		void set_z(T z);
+		void SetX(T x);
+		void SetY(T y);
+		void SetZ(T z);
 
-		std::string to_string();
+		std::string ToString();
 
 		friend Vector operator+<T>(const Vector& vec1, const Vector& vec2);
 		friend Vector operator-<T>(const Vector& vec1, const Vector& vec2);
@@ -64,7 +64,7 @@ namespace mcbot
 	}
 
 	template<typename T>
-	inline void Vector<T>::scale(T factor)
+	inline void Vector<T>::Scale(T factor)
 	{
 		this->x *= factor;
 		this->y *= factor;
@@ -72,7 +72,7 @@ namespace mcbot
 	}
 
 	template<typename T>
-	inline void Vector<T>::floor()
+	inline void Vector<T>::Floor()
 	{
 		if (!std::is_same<T, double>() && !std::is_same<T, float>())
 		{
@@ -85,14 +85,14 @@ namespace mcbot
 	}
 
 	template<typename T>
-	inline T Vector<T>::magnitude()
+	inline T Vector<T>::Magnitude()
 	{
 		return sqrt(x * x + y * y + z * z);
 	}
 
 
 	template<typename T>
-	inline T Vector<T>::distance(Vector<T> destination)
+	inline T Vector<T>::Distance(Vector<T> destination)
 	{
 		T dx = this->x - destination.x;
 		T dy = this->y - destination.y;
@@ -101,37 +101,37 @@ namespace mcbot
 	}
 
 	template<typename T>
-	inline T Vector<T>::get_x()
+	inline T Vector<T>::GetX()
 	{
 		return this->x;
 	}
 
 	template<typename T>
-	inline T Vector<T>::get_y()
+	inline T Vector<T>::GetY()
 	{
 		return this->y;
 	}
 
 	template<typename T>
-	inline T Vector<T>::get_z()
+	inline T Vector<T>::GetZ()
 	{
 		return this->z;
 	}
 
 	template<typename T>
-	inline void Vector<T>::set_x(T x)
+	inline void Vector<T>::SetX(T x)
 	{
 		this->x = x;
 	}
 
 	template<typename T>
-	inline void Vector<T>::set_y(T y)
+	inline void Vector<T>::SetY(T y)
 	{
 		this->y = y;
 	}
 
 	template<typename T>
-	inline void Vector<T>::set_z(T z)
+	inline void Vector<T>::SetZ(T z)
 	{
 		this->z = z;
 	}
@@ -157,7 +157,7 @@ namespace mcbot
 	}
 	
 	template<typename T>
-	inline std::string Vector<T>::to_string()
+	inline std::string Vector<T>::ToString()
 	{
 		return "(" + std::to_string(this->x) + "," + std::to_string(this->y) + "," + std::to_string(this->z) + ")";
 	}

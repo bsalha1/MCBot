@@ -8,19 +8,24 @@ namespace mcbot
 	class Slot : Serializable
 	{
 	private:
-		short item_id;
-		uint8_t item_count;
+		short id;
+		uint8_t count;
 		short data;
-		mcbot::NBTTagCompound nbt;
+		NBTTagCompound nbt;
 
 	public:
 		Slot();
 
-		Slot(short item_id, int item_count, short data, mcbot::NBTTagCompound nbt);
+		Slot(short id, int count, short data, NBTTagCompound nbt);
 
-		void serialize(uint8_t* packet, size_t& offset) override;
+		void Serialize(uint8_t* packet, size_t& offset) const override;
 
-		std::string to_string();
+		short GetID();
+		uint8_t GetCount();
+		short GetData();
+		NBTTagCompound GetNBT();
+
+		std::string ToString();
 	};
 }
 

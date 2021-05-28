@@ -13,10 +13,10 @@ namespace mcbot
 	public:
 		Statistic(std::string name, int value);
 
-		std::string get_name();
-		int get_value();
+		std::string GetName();
+		int GetValue();
 		
-		std::string to_string();
+		std::string ToString();
 	};
 }
 

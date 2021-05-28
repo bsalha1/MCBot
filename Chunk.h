@@ -22,21 +22,24 @@ namespace mcbot
 		Chunk();
 		Chunk(int x, int z, uint16_t primary_bit_mask);
 
-		int get_block_id(int x, int y, int z);
-		int get_block_id(mcbot::Vector<int> location);
-		int get_block_id(mcbot::Vector<double> location);
+		int GetBlockID(int x, int y, int z);
+		int GetBlockID(Vector<int> location);
+		int GetBlockID(Vector<double> location);
 
-		void update_block(int x, int y, int z, int block_id);
-		void update_block(mcbot::Vector<int> location, int block_id);
+		void UpdateBlock(int x, int y, int z, int block_id);
+		void UpdateBlock(Vector<int> location, int block_id);
 
-		void add_section(int i, ChunkSection section);
+		void AddSection(int i, ChunkSection section);
 
-		void set_biome_index(std::array<uint8_t, 256> biome_index);
+		std::list<Vector<int>> GetBlockCoordinates(int block_id);
 
-		int get_num_sections();
-		uint16_t get_primary_bit_mask();
-		int get_x();
-		int get_z();
+		void SetBiomeIndex(std::array<uint8_t, 256> biome_index);
+
+		// Local Variable Access //
+		int GetNumSections();
+		uint16_t GetPrimaryBitMask();
+		int GetX();
+		int GetZ();
 	};
 }
 

@@ -6,7 +6,8 @@ namespace mcbot
 {
 	class Serializable
 	{
-		virtual void serialize(uint8_t* packet, size_t& offset) = 0;
+	public:
+		virtual void Serialize(uint8_t* packet, size_t& offset) const = 0;
 	};
 }
 

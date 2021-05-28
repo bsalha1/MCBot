@@ -26,6 +26,8 @@
 #include "Position.h"
 #include "Vector.h"
 
+#define TPS 20 // Ticks per second
+
 namespace mcbot
 {
 	class PacketReceiver;
@@ -60,57 +62,68 @@ namespace mcbot
 		MCBot();
 		~MCBot();
 
-		int connect_server(char* hostname, char* port);
+		int ConnectToServer(char* hostname, char* port);
 
-		// High-level interaction methods
-		void move(mcbot::Vector<double> diff);
-		void move(double dx, double dz);
-		void move_to(mcbot::Vector<double> destination, double speed, bool ignore_ground);
-		void move_to(double x, double z, int ticks_per_move);
-		void move_to_ground(double speed);
-		bool on_ground();
-		mcbot::Vector<double> get_ground_location(mcbot::Vector<double> location);
-		void attack_entity(Entity entity);
 
-		// Entity Management
-		void register_entity(Entity entity);
-		void remove_entity(int id);
-		bool is_entity_registered(int id);
-		void register_player(UUID uuid, EntityPlayer player);
-		void unregister_player(EntityPlayer player);
-		void unregister_player(UUID uuid);
-		EntityPlayer& get_player(UUID uuid);
-		Entity& get_entity(int id);
-		bool is_player_registered(UUID uuid);
-		void update_player_info(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
+		// High-Level Interaction Methods //
+		void Move(Vector<double> diff);
+		void Move(double dx, double dz);
+		void MoveTo(Vector<double> destination, double speed, bool ignore_ground);
+		void MoveTo(double x, double z, int ticks_per_move);
+		void MoveToGround(double speed);
+		bool OnGround();
+		Vector<double> GetGroundLocation(Vector<double> location);
+		void AttackEntity(Entity entity);
 
-		// Chunk Management
-		void load_chunk(Chunk chunk);
-		Chunk& get_chunk(int x, int z);
-		Chunk& get_chunk(mcbot::Vector<int> location);
-		Chunk& get_chunk(mcbot::Vector<double> location);
 
-		// Logging
-		void log_debug(std::string message);
-		void log_error(std::string message);
-		void log_info(std::string message);
-		void log_chat(std::string message);
+		// Entity Management //
+		void RegisterEntity(Entity entity);
+		void RemoveEntity(int id);
+		bool IsEntityRegistered(int id);
+		Entity& GetEntity(int id);
 
-		void set_debug(bool debug);
-		void set_state(State state);
-		void set_connected(bool connected);
-		void set_session(MojangSession session);
-		MojangSession get_session();
 
-		std::list<Entity> get_entities();
-		std::list<EntityPlayer> get_players();
-		bool is_connected();
+		// Player Management //
+		void RegisterPlayer(UUID uuid, EntityPlayer player);
+		void RemovePlayer(EntityPlayer player);
+		void RemovePlayer(UUID uuid);
+		bool IsPlayerRegistered(UUID uuid);
+		EntityPlayer& GetPlayer(UUID uuid);
+		void UpdatePlayerInfo(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
+
+
+		// Chunk Management //
+		void LoadChunk(Chunk chunk);
+		Chunk& GetChunk(int x, int z);
+		Chunk& GetChunk(Vector<int> location);
+		Chunk& GetChunk(Vector<double> location);
+		std::list<Chunk> GetChunks(int x, int z, unsigned int radius);
+
+
+		// Logging //
+		void LogDebug(std::string message);
+		void LogError(std::string message);
+		void LogInfo(std::string message);
+		void LogChat(std::string message);
+
+
+		// Configuration //
+		void SetDebug(bool debug);
+		void SetState(State state);
+		void SetConnected(bool connected);
+		void SetSession(MojangSession session);
+
+		// Variable Access //
+		MojangSession GetSession();
+		std::list<Entity> GetEntities();
+		std::list<EntityPlayer> GetPlayers();
+		bool IsConnected();
 		bool is_ready();
-		State get_state();
-		Socket& get_socket();
-		PacketSender& get_packet_sender();
-		PacketReceiver& get_packet_receiver();
-		EntityPlayer& get_player();
+		State GetState();
+		Socket& GetSocket();
+		PacketSender& GetPacketSender();
+		PacketReceiver& GetPacketReceiver();
+		EntityPlayer& GetPlayer();
 	};
 }
 

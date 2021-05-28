@@ -12,7 +12,7 @@ namespace mcbot
 	public:
 		BlockUtils();
 
-		static bool is_weak(int id);
+		static bool IsWeak(int id);
 	};
 }
 

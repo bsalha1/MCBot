@@ -1,24 +1,27 @@
 #include <string>
-
 #include "Statistic.h"
 
-mcbot::Statistic::Statistic(std::string name, int value)
+namespace mcbot
 {
-	this->name = name;
-	this->value = value;
-}
 
-std::string mcbot::Statistic::get_name()
-{
-	return this->name;
-}
+	Statistic::Statistic(std::string name, int value)
+	{
+		this->name = name;
+		this->value = value;
+	}
 
-int mcbot::Statistic::get_value()
-{
-	return this->value;
-}
+	std::string Statistic::GetName()
+	{
+		return this->name;
+	}
 
-std::string mcbot::Statistic::to_string()
-{
-	return "{" + this->name + "," + std::to_string(this->value) + "}";
+	int Statistic::GetValue()
+	{
+		return this->value;
+	}
+
+	std::string Statistic::ToString()
+	{
+		return "{" + this->name + "," + std::to_string(this->value) + "}";
+	}
 }

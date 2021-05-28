@@ -1,8 +1,12 @@
 #include "Attribute.h"
 
-mcbot::Attribute::Attribute(std::string key, double value, std::list<mcbot::AttributeModifier> modifiers)
+namespace mcbot
 {
-	this->key = key;
-	this->value = value;
-	this->modifiers = modifiers;
+
+	Attribute::Attribute(std::string key, double value, std::list<AttributeModifier> modifiers)
+	{
+		this->key = key;
+		this->value = value;
+		this->modifiers = modifiers;
+	}
 }

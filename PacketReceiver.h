@@ -36,84 +36,89 @@ namespace mcbot
 	{
 	private:
 		MCBot* bot;
-		mcbot::EntityPlayer* player;
+		EntityPlayer* player;
 		bool compression_enabled;
 
 	public:
+
+		// Constructors //
 		PacketReceiver(MCBot* bot);
 		PacketReceiver();
 
-		// Server incoming requests
-		void recv_packet();
-		int read_next_var_int();
-		int read_next_packet(int length, uint8_t* packet, int decompressed_length = 0);
-		void handle_recv_packet(int packet_id, uint8_t* packet, int bytes_read, size_t& offset);
 
-		// LOGIN
-		void recv_encryption_request(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_set_compression(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_login_success(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_login_disconnect(uint8_t* packet, size_t size_read, size_t& offset);
+		// Server incoming requests //
+		void RecvPacket();
+		int ReadNextVarInt();
+		int ReadNextPacket(int length, uint8_t* packet, int decompressed_length = 0);
+		void HandleRecvPacket(int packet_id, uint8_t* packet, int bytes_read, size_t& offset);
 
-		// PLAY
-		void recv_play_disconnect(uint8_t* packet, size_t length, size_t& offset);
-		void recv_keep_alive(uint8_t* packet, size_t length, size_t& offset);
-		void recv_join_server(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_chat_message(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_update_time(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_equipment(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_position(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_update_health(uint8_t* packet, size_t length, size_t& offset);
-		void recv_position(uint8_t* packet, size_t length, size_t& offset);
-		void recv_held_item_slot(uint8_t* packet, size_t length, size_t& offset);
-		void recv_bed(uint8_t* packet, size_t length, size_t& offset);
-		void recv_animation(uint8_t* packet, size_t length, size_t& offset);
-		void recv_named_entity_spawn(uint8_t* packet, size_t length, size_t& offset);
-		void recv_collect(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_entity(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_entity_living(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_entity_painting(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_entity_experience_orb(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_velocity(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_destroy(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity(uint8_t* packet, size_t length, size_t& offset);
-		void recv_rel_entity_move(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_look(uint8_t* packet, size_t length, size_t& offset);
-		void recv_rel_entity_move_look(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_teleport(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_head_look(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_status(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_metadata(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_effect(uint8_t* packet, size_t length, size_t& offset);
-		void recv_experience(uint8_t* packet, size_t length, size_t& offset);
-		void recv_entity_attributes(uint8_t* packet, size_t length, size_t& offset);
-		void recv_map_chunk(uint8_t* packet, size_t length, size_t& offset);
-		void recv_multi_block_change(uint8_t* packet, size_t length, size_t& offset);
-		void recv_block_change(uint8_t* packet, size_t length, size_t& offset);
-		void recv_block_break_animation(uint8_t* packet, size_t length, size_t& offset);
-		void recv_plugin_message(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_map_chunk_bulk(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_world_event(uint8_t* packet, size_t length, size_t& offset);
-		void recv_named_sound_effect(uint8_t* packet, size_t length, size_t& offset);
-		void recv_world_particles(uint8_t* packet, size_t length, size_t& offset);
-		void recv_game_state_change(uint8_t* packet, size_t length, size_t& offset);
-		void recv_spawn_entity_weather(uint8_t* packet, size_t length, size_t& offset);
-		void recv_set_slot(uint8_t* packet, size_t length, size_t& offset);
-		void recv_window_items(uint8_t* packet, size_t length, size_t& offset);
-		void recv_transaction(uint8_t* packet, size_t length, size_t& offset);
-		void recv_update_sign(uint8_t* packet, size_t length, size_t& offset);
-		void recv_tile_entity_data(uint8_t* packet, size_t length, size_t& offset);
-		void recv_statistics(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_player_info(uint8_t* packet, size_t length, size_t& offset);
-		void recv_abilities(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_scoreboard_team(uint8_t* packet, size_t length, size_t& offset);
-		void recv_scoreboard_objective(uint8_t* packet, size_t length, size_t& offset);
-		void recv_update_scoreboard_score(uint8_t* packet, size_t length, size_t& offset);
-		void recv_display_scoreboard(uint8_t* packet, size_t length, size_t& offset);
-		void recv_server_difficulty(uint8_t* packet, size_t size_read, size_t& offset);
-		void recv_world_border(uint8_t* packet, size_t length, size_t& offset);
-		void recv_title(uint8_t* packet, size_t length, size_t& offset);
-		void recv_player_list_header_footer(uint8_t* packet, size_t size_read, size_t& offset);
+
+		// Status: LOGIN //
+		void RecvEncryptionRequest(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvSetCompression(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvLoginSuccess(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvLoginDisconnect(uint8_t* packet, size_t size_read, size_t& offset);
+
+
+		// Status: PLAY //
+		void RecvPlayDisconnect(uint8_t* packet, size_t length, size_t& offset);
+		void RecvKeepAlive(uint8_t* packet, size_t length, size_t& offset);
+		void RecvJoinServer(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvChatMessage(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvUpdateTime(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityEquipment(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnPosition(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvUpdateHealth(uint8_t* packet, size_t length, size_t& offset);
+		void RecvPosition(uint8_t* packet, size_t length, size_t& offset);
+		void RecvHeldItemSlot(uint8_t* packet, size_t length, size_t& offset);
+		void RecvBed(uint8_t* packet, size_t length, size_t& offset);
+		void RecvAnimation(uint8_t* packet, size_t length, size_t& offset);
+		void RecvNamedEntitySpawn(uint8_t* packet, size_t length, size_t& offset);
+		void RecvCollect(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnEntity(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnEntityLiving(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnEntityPainting(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnEntityExperienceOrb(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityVelocity(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityDestroy(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntity(uint8_t* packet, size_t length, size_t& offset);
+		void RecvRelEntityMove(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityLook(uint8_t* packet, size_t length, size_t& offset);
+		void RecvRelEntityMoveLook(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityTeleport(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityHeadLook(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityStatus(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityMetadata(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityEffect(uint8_t* packet, size_t length, size_t& offset);
+		void RecvExperience(uint8_t* packet, size_t length, size_t& offset);
+		void RecvEntityAttributes(uint8_t* packet, size_t length, size_t& offset);
+		void RecvMapChunk(uint8_t* packet, size_t length, size_t& offset);
+		void RecvMultiBlockChange(uint8_t* packet, size_t length, size_t& offset);
+		void RecvBlockChange(uint8_t* packet, size_t length, size_t& offset);
+		void RecvBlockBreakAnimation(uint8_t* packet, size_t length, size_t& offset);
+		void RecvPluginMessage(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvMapChunkBulk(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvWorldEvent(uint8_t* packet, size_t length, size_t& offset);
+		void RecvNamedSoundEffect(uint8_t* packet, size_t length, size_t& offset);
+		void RecvWorldParticles(uint8_t* packet, size_t length, size_t& offset);
+		void RecvGameStateChange(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSpawnEntityWeather(uint8_t* packet, size_t length, size_t& offset);
+		void RecvSetSlot(uint8_t* packet, size_t length, size_t& offset);
+		void RecvWindowItems(uint8_t* packet, size_t length, size_t& offset);
+		void RecvTransaction(uint8_t* packet, size_t length, size_t& offset);
+		void RecvUpdateSign(uint8_t* packet, size_t length, size_t& offset);
+		void RecvTileEntityData(uint8_t* packet, size_t length, size_t& offset);
+		void RecvStatistics(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvPlayerInfo(uint8_t* packet, size_t length, size_t& offset);
+		void RecvAbilities(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvScoreboardTeam(uint8_t* packet, size_t length, size_t& offset);
+		void RecvScoreboardObjective(uint8_t* packet, size_t length, size_t& offset);
+		void RecvUpdateScoreboardScore(uint8_t* packet, size_t length, size_t& offset);
+		void RecvDisplayScoreboard(uint8_t* packet, size_t length, size_t& offset);
+		void RecvServerDifficulty(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvWorldBorder(uint8_t* packet, size_t length, size_t& offset);
+		void RecvTitle(uint8_t* packet, size_t length, size_t& offset);
+		void RecvPlayerListHeaderFooter(uint8_t* packet, size_t size_read, size_t& offset);
 	};
 }
 

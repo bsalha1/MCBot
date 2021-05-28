@@ -13,9 +13,9 @@ namespace mcbot
 		Block(int id);
 		Block();
 
-		bool is_weak();
+		bool IsWeak();
 
-		int get_id();
+		int GetID();
 	};
 }
 

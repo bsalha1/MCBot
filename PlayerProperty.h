@@ -14,10 +14,10 @@ namespace mcbot
 	public:
 		PlayerProperty(std::string name, std::string value, bool _signed, std::string signature);
 
-		std::string get_name();
-		std::string get_value();
-		bool is_signed();
-		std::string get_signature();
+		std::string GetName();
+		std::string GetValue();
+		bool IsSigned();
+		std::string GetSignature();
 	};
 }
 

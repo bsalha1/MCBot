@@ -24,102 +24,103 @@ namespace mcbot
 {
 	class PacketDecoder
 	{
-
 	public:
 
-		// Read Standard Values
-		static uint64_t read_long(uint8_t* packet, size_t& offset);
-		static int64_t read_var_long(uint8_t* packet, size_t& offset);
-		static uint32_t read_int(uint8_t* packet, size_t& offset);
-		static int32_t read_var_int(uint8_t* packet, size_t& offset);
-		static uint16_t read_short(uint8_t* packet, size_t& offset);
-		static uint16_t read_short_le(uint8_t* packet, size_t& offset);
-		static uint8_t read_byte(uint8_t* bytes, size_t& offset);
-		static uint8_t peek_byte(uint8_t* packet, size_t offset);
-		static float read_float(uint8_t* packet, size_t& offset);
-		static double read_double(uint8_t* packet, size_t& offset);
-		static bool read_boolean(uint8_t* packet, size_t& offset);
-		static std::string read_string(uint8_t* packet, size_t& offset);
-		static std::string read_string(int length, uint8_t* packet, size_t& offset);
+		// Basic Types //
+		static uint64_t ReadLong(uint8_t* packet, size_t& offset);
+		static int64_t ReadVarLong(uint8_t* packet, size_t& offset);
+		static uint32_t ReadInt(uint8_t* packet, size_t& offset);
+		static int32_t ReadVarInt(uint8_t* packet, size_t& offset);
+		static uint16_t ReadShort(uint8_t* packet, size_t& offset);
+		static uint16_t ReadShortLittleEndian(uint8_t* packet, size_t& offset);
+		static uint8_t ReadByte(uint8_t* bytes, size_t& offset);
+		static uint8_t PeekByte(uint8_t* packet, size_t offset);
+		static float ReadFloat(uint8_t* packet, size_t& offset);
+		static double ReadDouble(uint8_t* packet, size_t& offset);
+		static bool ReadBoolean(uint8_t* packet, size_t& offset);
+		static std::string ReadString(uint8_t* packet, size_t& offset);
+		static std::string ReadString(int length, uint8_t* packet, size_t& offset);
 
-		// Read Class Values
-		static mcbot::UUID read_uuid(uint8_t* packet, size_t& offset);
-		static mcbot::Slot read_slot(uint8_t* packet, size_t& offset);
-		static mcbot::Color read_color(uint8_t* packet, size_t& offset);
-		static mcbot::Particle read_particle(uint8_t* packet, size_t& offset);
-		static mcbot::Position read_position(uint8_t* packet, size_t& offset);
-		template<typename T>
-		static mcbot::Vector<T> read_vector(uint8_t* packet, size_t& offset);
-		static mcbot::VillagerData read_villager_data(uint8_t* packet, size_t& offset);
-		static mcbot::AttributeModifier read_attribute_modifier(uint8_t* packet, size_t& offset);
-		static mcbot::Attribute read_attribute(uint8_t* packet, size_t& offset);
-		static mcbot::EntityMetaData read_meta_data(uint8_t* packet, size_t& offset);
-		static mcbot::Chunk read_chunk(int x, int z, bool ground_up_continuous, bool sky_light_sent, uint16_t primary_bitmask, uint8_t* packet, size_t& offset);
-		static mcbot::Chunk read_chunk_bulk(Chunk& chunk, bool sky_light_sent, uint8_t* packet, size_t& offset);
 
-		// Read NBT
-		static mcbot::NBTTagCompound read_nbt(uint8_t* packet, size_t& offset);
-		static std::string read_nbt_string(uint8_t* packet, size_t& offset);
-		static mcbot::NBTTag read_next_nbt_tag(uint8_t* packet, size_t& offset);
-		static mcbot::NBTTag read_nbt_tag(mcbot::NBTType type, uint8_t* packet, size_t& offset, bool has_name = true);
-		static mcbot::NBTTag read_nbt_tag(mcbot::NBTType type, std::string name, uint8_t* packet, size_t& offset);
-		static mcbot::NBTTagCompound read_nbt_tag_compound(uint8_t* packet, size_t& offset, bool parent = false);
-		static mcbot::NBTList read_nbt_list(uint8_t* packet, size_t& offset);
+		// Classes //
+		static UUID ReadUUID(uint8_t* packet, size_t& offset);
+		static Slot ReadSlot(uint8_t* packet, size_t& offset);
+		static Color ReadColor(uint8_t* packet, size_t& offset);
+		static Particle ReadParticle(uint8_t* packet, size_t& offset);
+		static Position ReadPosition(uint8_t* packet, size_t& offset);
+		template<typename T> static Vector<T> ReadVector(uint8_t* packet, size_t& offset);
+		static VillagerData ReadVillagerData(uint8_t* packet, size_t& offset);
+		static AttributeModifier ReadAttributeModifier(uint8_t* packet, size_t& offset);
+		static Attribute ReadAttribute(uint8_t* packet, size_t& offset);
+		static EntityMetaData ReadMetaData(uint8_t* packet, size_t& offset);
+		static Chunk ReadChunk(int x, int z, bool ground_up_continuous, bool sky_light_sent, uint16_t primary_bitmask, uint8_t* packet, size_t& offset);
+		static Chunk ReadChunkBulk(Chunk& chunk, bool sky_light_sent, uint8_t* packet, size_t& offset);
 
-		// Read Array Values
-		static void read_byte_array(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<uint8_t> read_byte_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<uint16_t> read_short_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<uint16_t> read_short_le_array(int length, uint8_t* packet, size_t& offset); // little-endian
-		static mcbot::Buffer<int> read_int_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<int> read_var_int_array(int length, uint8_t* packet, size_t& offset);
-		static mcbot::Buffer<long> read_long_array(int length, uint8_t* packet, size_t& offset);
-		static std::list<std::string> read_string_array(int length, uint8_t* packet, size_t& offset);
-		static std::list<mcbot::Statistic> read_statistic_array(int length, uint8_t* packet, size_t& offset);
-		static std::list <mcbot::PlayerProperty> read_property_array(int length, uint8_t* packet, size_t& offset);
-		static std::list <mcbot::Slot> read_slot_array(int length, uint8_t* packet, size_t& offset);
+
+		// NBT //
+		static NBTTagCompound ReadNBT(uint8_t* packet, size_t& offset);
+		static std::string ReadNBTString(uint8_t* packet, size_t& offset);
+		static NBTTag ReadNextNBTTag(uint8_t* packet, size_t& offset);
+		static NBTTag ReadNBTTag(NBTType type, uint8_t* packet, size_t& offset, bool has_name = true);
+		static NBTTag ReadNBTTag(NBTType type, std::string name, uint8_t* packet, size_t& offset);
+		static NBTTagCompound ReadNBTTagCompound(uint8_t* packet, size_t& offset, bool parent = false);
+		static NBTList ReadNBTList(uint8_t* packet, size_t& offset);
+
+
+		// Arrays //
+		static void ReadByteArray(uint8_t* bytes, int length, uint8_t* packet, size_t& offset);
+		static Buffer<uint8_t> ReadByteArray(int length, uint8_t* packet, size_t& offset);
+		static Buffer<uint16_t> ReadShortArray(int length, uint8_t* packet, size_t& offset);
+		static Buffer<uint16_t> ReadShortLittleEndianArray(int length, uint8_t* packet, size_t& offset); // little-endian
+		static Buffer<int> ReadIntArray(int length, uint8_t* packet, size_t& offset);
+		static Buffer<int> ReadVarIntArray(int length, uint8_t* packet, size_t& offset);
+		static Buffer<long> ReadLongArray(int length, uint8_t* packet, size_t& offset);
+		static std::list<std::string> ReadStringArray(int length, uint8_t* packet, size_t& offset);
+		static std::list<Statistic> ReadStatisticArray(int length, uint8_t* packet, size_t& offset);
+		static std::list<PlayerProperty> ReadPropertyArray(int length, uint8_t* packet, size_t& offset);
+		static std::list<Slot> ReadSlotArray(int length, uint8_t* packet, size_t& offset);
 	};
 
 	template<typename T>
-	inline mcbot::Vector<T> mcbot::PacketDecoder::read_vector(uint8_t* packet, size_t& offset)
+	inline Vector<T> PacketDecoder::ReadVector(uint8_t* packet, size_t& offset)
 	{
 		T x, y, z;
 		if (std::is_same<T, float>())
 		{
-			x = read_float(packet, offset);
-			y = read_float(packet, offset);
-			z = read_float(packet, offset);
+			x = ReadFloat(packet, offset);
+			y = ReadFloat(packet, offset);
+			z = ReadFloat(packet, offset);
 		}
 		else if (std::is_same<T, double>())
 		{
-			x = read_double(packet, offset);
-			y = read_double(packet, offset);
-			z = read_double(packet, offset);
+			x = ReadDouble(packet, offset);
+			y = ReadDouble(packet, offset);
+			z = ReadDouble(packet, offset);
 		}
 		else if (std::is_same<T, uint8_t>() || std::is_same<T, int8_t>())
 		{
-			x = read_byte(packet, offset);
-			y = read_byte(packet, offset);
-			z = read_byte(packet, offset);
+			x = ReadByte(packet, offset);
+			y = ReadByte(packet, offset);
+			z = ReadByte(packet, offset);
 		}
 		else if (std::is_same<T, short>())
 		{
-			x = read_short(packet, offset);
-			y = read_short(packet, offset);
-			z = read_short(packet, offset);
+			x = ReadShort(packet, offset);
+			y = ReadShort(packet, offset);
+			z = ReadShort(packet, offset);
 		}
 		else if (std::is_same<T, int>())
 		{
-			x = read_int(packet, offset);
-			y = read_int(packet, offset);
-			z = read_int(packet, offset);
+			x = ReadInt(packet, offset);
+			y = ReadInt(packet, offset);
+			z = ReadInt(packet, offset);
 		}
 		else
 		{
 			std::cerr << "Unsupported vector type: " << typeid(T).name() << std::endl;
-			return mcbot::Vector<T>();
+			return Vector<T>();
 		}
-		return mcbot::Vector<T>(x, y, z);
+		return Vector<T>(x, y, z);
 	}
 }
 

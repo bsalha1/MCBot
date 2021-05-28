@@ -32,20 +32,20 @@ int main(int argc, char* argv[])
     char* port = (argc >= 5) ? argv[4] : (char*)"25565";
 
     MCBot bot = MCBot();
-    bot.set_debug(false);
+    bot.SetDebug(false);
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID
     // - To obtain an access token
     std::cout << "Logging in to Mojang authservers..." << std::endl;
-    if (bot.get_packet_sender().login_mojang(email, password) < 0)
+    if (bot.GetPacketSender().LoginMojang(email, password) < 0)
     {
         std::cerr << "Failed to log in to Mojang authservers!" << std::endl;
         return -1;
     }
 
     std::cout << "Verifying access token..." << std::endl;
-    if (bot.get_packet_sender().verify_access_token() < 0)
+    if (bot.GetPacketSender().VerifyAccessToken() < 0)
     {
         std::cerr << "Invalid access token!" << std::endl;
         return -1;
@@ -53,61 +53,62 @@ int main(int argc, char* argv[])
 
     // Connect to server
     // - So we can send it packets
-    if (bot.connect_server(hostname, port) < 0)
+    if (bot.ConnectToServer(hostname, port) < 0)
     {
         std::cout << "Failed to join server" << std::endl;
         return -1;
     }
 
-    bot.get_packet_sender().send_handshake(hostname, atoi(port));
-    bot.get_packet_sender().send_login_start();
+    bot.GetPacketSender().SendHandshake(hostname, atoi(port));
+    bot.GetPacketSender().SendLoginStart();
 
+    // Receive packets
     std::thread recv_thread([&bot]() {
-        while (bot.is_connected())
+        while (bot.IsConnected())
         {
             Sleep(1);
-            bot.get_packet_receiver().recv_packet();
+            bot.GetPacketReceiver().RecvPacket();
         }
     });
 
+
+    // Do specific tasks
     std::thread tick_thread([&bot]() {
 
         Sleep(4000);
-
-        std::cout << "Sending settings" << std::endl;
-        bot.get_packet_sender().send_settings();
-        bot.get_packet_sender().send_custom_payload("vanilla");
+        bot.GetPacketSender().SendSettings();
+        bot.GetPacketSender().SendCustomPayload("vanilla");
 
         // Echo back player location (enables further sending of locations)
-        bot.get_packet_sender().send_position(bot.get_player().get_location(), true);
+        bot.GetPacketSender().SendPosition(bot.GetPlayer().GetLocation(), true);
 
-        Sleep(1000 / 20);
-        bot.get_packet_sender().send_position(bot.get_player().get_location(), true);
+        Sleep(1000 / TPS);
+        bot.GetPacketSender().SendPosition(bot.GetPlayer().GetLocation(), true);
 
         // Move to better center of a block to make math easier
-        mcbot::Vector<double> clean_position = bot.get_player().get_location();
-        clean_position.floor();
+        mcbot::Vector<double> clean_position = bot.GetPlayer().GetLocation();
+        clean_position.Floor();
         clean_position = clean_position + mcbot::Vector<double>(0.5, 0, 0.5);
 
-        Sleep(1000 / 20);
-        bot.get_packet_sender().send_position(clean_position, true);
-        Sleep(1000 / 20);
-        bot.get_packet_sender().send_position(clean_position, true);
-        bot.get_packet_sender().send_held_item_slot(1);
+        Sleep(1000 / TPS);
+        bot.GetPacketSender().SendPosition(clean_position, true);
+        Sleep(1000 / TPS);
+        bot.GetPacketSender().SendPosition(clean_position, true);
+
+        bot.GetPacketSender().SendArmAnimation();
 
         int target_id = 0;
-        for (Entity entity : bot.get_entities())
+        for (Entity entity : bot.GetEntities())
         {
-            if (entity.get_entity_type() == EntityType::MUSHROOM_COW)
+            if (entity.GetEntityType() == EntityType::MUSHROOM_COW)
             {
-                std::cout << "Found player: " << entity.get_id()<< std::endl;
-                target_id = entity.get_id();
+                std::cout << "Found mushroom cow: " << entity.GetID()<< std::endl;
+                target_id = entity.GetID();
                 break;
             }
         }
 
         //mcbot::Vector<double> target_location = target.get_location();
-        bot.move_to_ground(0.10);
 
         //Entity& entity = bot.get_entity(target_id);
         //while (true)
@@ -119,11 +120,54 @@ int main(int argc, char* argv[])
         //}
         //bot.attack_entity(target);
 
-        mcbot::Vector<double> location = bot.get_player().get_location();
-        mcbot::Vector<int> location1 = mcbot::Vector<int>(location.get_x(), location.get_y(), location.get_z());
-        location1.set_y(location1.get_y() - 1);
-        bot.get_packet_sender().send_arm_animation();
-        bot.get_packet_sender().send_block_dig(DigStatus::STARTED, location1, BlockFace::Y_POS);
+        mcbot::Vector<double> loc = bot.GetPlayer().GetLocation();
+        mcbot::Vector<int> loc1 = mcbot::Vector<int>(loc.GetX(), loc.GetY(), loc.GetZ());
+
+        auto items = bot.GetPlayer().GetInventory();
+        mcbot::Slot best_axe;
+        for (auto item : items)
+        {
+            // Diamond Axe
+            if (item.GetID() == 279)
+            {
+                best_axe = item;
+            }
+
+            // Iron Axe
+            if (item.GetID() == 258 && best_axe.GetID() != 279)
+            {
+                best_axe = item;
+            }
+
+            // Stone Axe
+            if (item.GetID() == 275 && best_axe.GetID() != 279 && best_axe.GetID() != 258)
+            {
+                best_axe = item;
+            }
+
+            // Wood Axe
+            if (item.GetID() == 271 && best_axe.GetID() != 279 && best_axe.GetID() != 258 && best_axe.GetID() != 275)
+            {
+                best_axe = item;
+            }
+        }
+
+        // No axe found
+        if (best_axe.GetID() == -1)
+        {
+            std::cout << "No axe found" << std::endl;
+        }
+
+        
+        auto coords_list = std::list<mcbot::Vector<int>>();
+        auto chunks = bot.GetChunks(loc1.GetX() >> 4, loc1.GetZ() >> 4, 1);
+        for (auto ch : chunks)
+        {
+            auto coords = ch.GetBlockCoordinates(17);
+            coords_list.insert(coords_list.end(), coords.begin(), coords.end());
+        }
+
+        //mcbot::Vector<int> closest_tree
 
 
         //std::ofstream script_file("script.txt");
@@ -196,13 +240,13 @@ int main(int argc, char* argv[])
     {
         std::string input;
         std::getline(std::cin, input);
-        if (!bot.is_connected())
+        if (!bot.IsConnected())
         {
             break;
         }
-        bot.get_packet_sender().send_chat_message(input);
+        bot.GetPacketSender().SendChatMessage(input);
 
-    } while (bot.is_connected());
+    } while (bot.IsConnected());
 
 
     return 0;

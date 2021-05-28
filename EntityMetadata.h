@@ -11,9 +11,9 @@ namespace mcbot
 		std::list<boost::any> values;
 
 	public:
-		void add_value(boost::any value);
+		void AddValue(boost::any value);
 
-		std::list<boost::any> get_values();
+		std::list<boost::any> GetValues();
 	};
 }
 

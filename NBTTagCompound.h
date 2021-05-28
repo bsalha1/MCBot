@@ -19,11 +19,11 @@ namespace mcbot
 	public:
 		NBTTagCompound();
 
-		void add_tag(mcbot::NBTTag tag);
+		void AddTag(NBTTag tag);
 
-		void serialize(uint8_t* packet, size_t& offset) override;
+		void Serialize(uint8_t* packet, size_t& offset) const override;
 
-		std::string to_string();
+		std::string ToString();
 
 	};
 }

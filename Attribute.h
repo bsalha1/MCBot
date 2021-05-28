@@ -12,10 +12,10 @@ namespace mcbot
 	private:
 		std::string key;
 		double value;
-		std::list<mcbot::AttributeModifier> modifiers;
+		std::list<AttributeModifier> modifiers;
 		
 	public:
-		Attribute(std::string key, double value, std::list<mcbot::AttributeModifier> modifiers);
+		Attribute(std::string key, double value, std::list<AttributeModifier> modifiers);
 	};
 }
 

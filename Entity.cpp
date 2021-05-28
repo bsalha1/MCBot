@@ -1,81 +1,85 @@
 #include "Entity.h"
 
-mcbot::Entity::Entity(EntityType entity_type, int id)
+namespace mcbot
 {
-	this->entity_type = entity_type;
-	this->id = id;
-	this->dead = false;
-}
 
-mcbot::Entity::Entity(int id)
-{
-	this->entity_type = EntityType::UNKNOWN;
-	this->id = id;
-	this->dead = false;
-}
+	Entity::Entity(EntityType entity_type, int id)
+	{
+		this->entity_type = entity_type;
+		this->id = id;
+		this->dead = false;
+	}
 
-mcbot::Entity::Entity()
-{
-	this->entity_type = EntityType::UNKNOWN;
-	this->id = -1;
-	this->dead = false;
-}
+	Entity::Entity(int id)
+	{
+		this->entity_type = EntityType::UNKNOWN;
+		this->id = id;
+		this->dead = false;
+	}
 
-void mcbot::Entity::update_location(mcbot::Vector<double> location)
-{
-	this->location = location;
-}
+	Entity::Entity()
+	{
+		this->entity_type = EntityType::UNKNOWN;
+		this->id = -1;
+		this->dead = false;
+	}
 
-void mcbot::Entity::update_location(mcbot::Vector<int> location)
-{
-	this->location.set_x(location.get_x());
-	this->location.set_y(location.get_y());
-	this->location.set_z(location.get_z());
-}
+	void Entity::UpdateLocation(Vector<double> location)
+	{
+		this->location = location;
+	}
 
-void mcbot::Entity::update_motion(mcbot::Vector<double> motion)
-{
-	this->location = this->location + motion;
-}
+	void Entity::UpdateLocation(Vector<int> location)
+	{
+		this->location.SetX(location.GetX());
+		this->location.SetY(location.GetY());
+		this->location.SetZ(location.GetZ());
+	}
 
-void mcbot::Entity::update_rotation(float yaw, float pitch)
-{
-	this->yaw = yaw;
-	this->pitch = pitch;
-}
+	void Entity::UpdateMotion(Vector<double> motion)
+	{
+		this->location = this->location + motion;
+	}
 
-void mcbot::Entity::update_yaw(float yaw)
-{
-	this->yaw = yaw;
-}
+	void Entity::UpdateRotation(float yaw, float pitch)
+	{
+		this->yaw = yaw;
+		this->pitch = pitch;
+	}
 
-void mcbot::Entity::die()
-{
-	this->dead = true;
-}
+	void Entity::UpdateYaw(float yaw)
+	{
+		this->yaw = yaw;
+	}
 
-mcbot::Vector<double>& mcbot::Entity::get_location()
-{
-	return this->location;
-}
+	void Entity::Die()
+	{
+		this->dead = true;
+	}
 
-void mcbot::Entity::set_id(int id)
-{
-	this->id = id;
-}
+	Vector<double>& Entity::GetLocation()
+	{
+		return this->location;
+	}
 
-int mcbot::Entity::get_id()
-{
-	return id;
-}
+	void Entity::SetID(int id)
+	{
+		this->id = id;
+	}
 
-mcbot::EntityType mcbot::Entity::get_entity_type()
-{
-	return this->entity_type;
-}
+	int Entity::GetID()
+	{
+		return id;
+	}
 
-bool mcbot::Entity::is_dead()
-{
-	return this->dead;
+	EntityType Entity::GetEntityType()
+	{
+		return this->entity_type;
+	}
+
+	bool Entity::IsDead()
+	{
+		return this->dead;
+	}
 }
 

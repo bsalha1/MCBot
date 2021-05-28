@@ -16,23 +16,23 @@ namespace mcbot
 	public:
 		WorldBorder();
 
-		void set_radius(double radius);
+		void SetRadius(double radius);
 
-		void set_old_radius(double old_radius);
+		void SetOldRadius(double old_radius);
 
-		void set_new_radius(double new_radius);
+		void SetNewRadius(double new_radius);
 
-		void set_speed(long speed);
+		void SetSpeed(long speed);
 
-		void set_x(double x);
+		void SetX(double x);
 
-		void set_z(double y);
+		void SetZ(double y);
 
-		void set_portal_teleport_boundary(int portal_teleport_boundary);
+		void SetPortalTeleportBoundary(int portal_teleport_boundary);
 
-		void set_warning_time(int warning_time);
+		void SetWarningTime(int warning_time);
 
-		void set_warning_blocks(int warning_blocks);
+		void SetWarningBlocks(int warning_blocks);
 	};
 }
 

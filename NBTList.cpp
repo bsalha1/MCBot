@@ -1,26 +1,30 @@
 #include "NBTList.h"
 
-mcbot::NBTList::NBTList(NBTType type)
+namespace mcbot
 {
-    this->type = type;
-}
 
-mcbot::NBTList::NBTList()
-{
-    this->type = NBTType::UNKNOWN;
-}
+    NBTList::NBTList(NBTType type)
+    {
+        this->type = type;
+    }
 
-void mcbot::NBTList::add_element(NBTTag tag)
-{
-    this->elements.push_back(tag);
-}
+    NBTList::NBTList()
+    {
+        this->type = NBTType::UNKNOWN;
+    }
 
-mcbot::NBTType mcbot::NBTList::get_type()
-{
-    return this->type;
-}
+    void NBTList::AddElement(NBTTag tag)
+    {
+        this->elements.push_back(tag);
+    }
 
-std::list<mcbot::NBTTag> mcbot::NBTList::get_elements()
-{
-    return this->elements;
+    NBTType NBTList::GetType()
+    {
+        return this->type;
+    }
+
+    std::list<NBTTag> NBTList::GetElements()
+    {
+        return this->elements;
+    }
 }

@@ -3,105 +3,109 @@
 #include "PacketEncoder.h"
 #include "Buffer.h"
 
-mcbot::NBTTag::NBTTag(NBTType type, std::string name, boost::any value)
+namespace mcbot
 {
-	this->type = type;
-	this->name = name;
-	this->value = value;
-}
 
-mcbot::NBTTag::NBTTag(NBTType type, std::string name)
-{
-	this->type = type;
-	this->name = name;
-}
-
-mcbot::NBTTag::NBTTag()
-{
-	this->type = NBTType::UNKNOWN;
-	this->name = "NONE";
-}
-
-void mcbot::NBTTag::serialize(uint8_t* packet, size_t& offset)
-{
-	PacketEncoder::write_byte((uint8_t)this->type, packet, offset);
-	PacketEncoder::write_nbt_string(this->name, packet, offset);
-
-	switch (this->type)
+	NBTTag::NBTTag(NBTType type, std::string name, boost::any value)
 	{
-	case NBTType::TAG_BYTE:
-		PacketEncoder::write_byte(boost::any_cast<int8_t>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_SHORT:
-		PacketEncoder::write_short(boost::any_cast<int16_t>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_INT:
-		PacketEncoder::write_int(boost::any_cast<int32_t>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_LONG:
-		PacketEncoder::write_long(boost::any_cast<int64_t>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_FLOAT:
-		PacketEncoder::write_float(boost::any_cast<float>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_DOUBLE:
-		PacketEncoder::write_double(boost::any_cast<double>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_STRING:
-		PacketEncoder::write_string(boost::any_cast<std::string>(this->value), packet, offset);
-		break;
-	case NBTType::TAG_BYTE_ARRAY:
-	{
-		mcbot::Buffer<int8_t> arr = boost::any_cast<mcbot::Buffer<int8_t>>(this->value);
-		PacketEncoder::write_int((uint32_t)arr.get_current_size(), packet, offset);
-		PacketEncoder::write_byte_array((uint8_t*)arr.get_array(), arr.get_current_size(), packet, offset);
-		break;
+		this->type = type;
+		this->name = name;
+		this->value = value;
 	}
-	case NBTType::TAG_INT_ARRAY:
+
+	NBTTag::NBTTag(NBTType type, std::string name)
 	{
-		mcbot::Buffer<int32_t> arr = boost::any_cast<mcbot::Buffer<int32_t>>(this->value);
-		PacketEncoder::write_int((uint32_t)arr.get_current_size(), packet, offset);
-		PacketEncoder::write_int_array((uint32_t*)arr.get_array(), arr.get_current_size(), packet, offset);
-		break;
+		this->type = type;
+		this->name = name;
 	}
-	case NBTType::TAG_LONG_ARRAY:
+
+	NBTTag::NBTTag()
 	{
-		mcbot::Buffer<int64_t> arr = boost::any_cast<mcbot::Buffer<int64_t>>(this->value);
-		PacketEncoder::write_int((uint32_t)arr.get_current_size(), packet, offset);
-		PacketEncoder::write_long_array((uint64_t*)arr.get_array(), arr.get_current_size(), packet, offset);
-		break;
+		this->type = NBTType::UNKNOWN;
+		this->name = "NONE";
 	}
-	case NBTType::TAG_LIST:
+
+	void NBTTag::Serialize(uint8_t* packet, size_t& offset) const
 	{
-		NBTList nbt_list = boost::any_cast<NBTList>(this->value);
-		PacketEncoder::write_byte((uint8_t)nbt_list.get_type(), packet, offset);
-		PacketEncoder::write_int((uint32_t)nbt_list.get_elements().size(), packet, offset);
-		for (NBTTag tag : nbt_list.get_elements())
+		PacketEncoder::WriteByte((uint8_t)this->type, packet, offset);
+		PacketEncoder::WriteNBTString(this->name, packet, offset);
+
+		switch (this->type)
 		{
-			tag.serialize(packet, offset);
+		case NBTType::TAG_BYTE:
+			PacketEncoder::WriteByte(boost::any_cast<int8_t>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_SHORT:
+			PacketEncoder::WriteShort(boost::any_cast<int16_t>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_INT:
+			PacketEncoder::WriteInt(boost::any_cast<int32_t>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_LONG:
+			PacketEncoder::WriteLong(boost::any_cast<int64_t>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_FLOAT:
+			PacketEncoder::WriteFloat(boost::any_cast<float>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_DOUBLE:
+			PacketEncoder::WriteDouble(boost::any_cast<double>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_STRING:
+			PacketEncoder::WriteString(boost::any_cast<std::string>(this->value), packet, offset);
+			break;
+		case NBTType::TAG_BYTE_ARRAY:
+		{
+			Buffer<int8_t> arr = boost::any_cast<Buffer<int8_t>>(this->value);
+			PacketEncoder::WriteInt((uint32_t)arr.get_current_size(), packet, offset);
+			PacketEncoder::WriteByteArray((uint8_t*)arr.get_array(), arr.get_current_size(), packet, offset);
+			break;
 		}
-		break;
+		case NBTType::TAG_INT_ARRAY:
+		{
+			Buffer<int32_t> arr = boost::any_cast<Buffer<int32_t>>(this->value);
+			PacketEncoder::WriteInt((uint32_t)arr.get_current_size(), packet, offset);
+			PacketEncoder::WriteIntArray((uint32_t*)arr.get_array(), arr.get_current_size(), packet, offset);
+			break;
+		}
+		case NBTType::TAG_LONG_ARRAY:
+		{
+			Buffer<int64_t> arr = boost::any_cast<Buffer<int64_t>>(this->value);
+			PacketEncoder::WriteInt((uint32_t)arr.get_current_size(), packet, offset);
+			PacketEncoder::WriteLongArray((uint64_t*)arr.get_array(), arr.get_current_size(), packet, offset);
+			break;
+		}
+		case NBTType::TAG_LIST:
+		{
+			NBTList nbt_list = boost::any_cast<NBTList>(this->value);
+			PacketEncoder::WriteByte((uint8_t)nbt_list.GetType(), packet, offset);
+			PacketEncoder::WriteInt((uint32_t)nbt_list.GetElements().size(), packet, offset);
+			for (NBTTag tag : nbt_list.GetElements())
+			{
+				tag.Serialize(packet, offset);
+			}
+			break;
+		}
+		case NBTType::TAG_COMPOUND:
+		{
+			NBTTagCompound nbt_compound = boost::any_cast<NBTTagCompound>(this->value);
+			nbt_compound.Serialize(packet, offset);
+			break;
+		}
+		}
 	}
-	case NBTType::TAG_COMPOUND:
+
+	std::string NBTTag::GetName()
 	{
-		NBTTagCompound nbt_compound = boost::any_cast<NBTTagCompound>(this->value);
-		nbt_compound.serialize(packet, offset);
-		break;
+		return this->name;
 	}
+
+	NBTType NBTTag::GetType()
+	{
+		return this->type;
 	}
-}
 
-std::string mcbot::NBTTag::get_name()
-{
-	return this->name;
-}
-
-mcbot::NBTType mcbot::NBTTag::get_type()
-{
-	return this->type;
-}
-
-boost::any mcbot::NBTTag::get_value()
-{
-	return this->value;
+	boost::any NBTTag::GetValue()
+	{
+		return this->value;
+	}
 }

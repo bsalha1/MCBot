@@ -1,37 +1,41 @@
 #include "PlayerProperty.h"
 
-mcbot::PlayerProperty::PlayerProperty(std::string name, std::string value, bool _signed, std::string signature)
+namespace mcbot
 {
-	this->name = name;
-	this->value = value;
-	this->_signed = _signed;
 
-	if (_signed)
+	PlayerProperty::PlayerProperty(std::string name, std::string value, bool _signed, std::string signature)
 	{
-		this->signature = signature;
+		this->name = name;
+		this->value = value;
+		this->_signed = _signed;
+
+		if (_signed)
+		{
+			this->signature = signature;
+		}
+		else
+		{
+			this->signature = "";
+		}
 	}
-	else
+
+	std::string PlayerProperty::GetName()
 	{
-		this->signature = "";
+		return this->name;
 	}
-}
 
-std::string mcbot::PlayerProperty::get_name()
-{
-	return this->name;
-}
+	std::string PlayerProperty::GetValue()
+	{
+		return this->value;
+	}
 
-std::string mcbot::PlayerProperty::get_value()
-{
-	return this->value;
-}
+	bool PlayerProperty::IsSigned()
+	{
+		return this->_signed;
+	}
 
-bool mcbot::PlayerProperty::is_signed()
-{
-	return this->_signed;
-}
-
-std::string mcbot::PlayerProperty::get_signature()
-{
-	return this->signature;
+	std::string PlayerProperty::GetSignature()
+	{
+		return this->signature;
+	}
 }
