@@ -28,11 +28,11 @@ namespace mcbot
         printf("%S\n", s);
     }
 
-    void MCBot::UpdatePlayerInfo(PlayerInfoAction action, int length, uint8_t* packet, size_t& offset)
+    void MCBot::UpdatePlayerInfo(PlayerInfoAction action, int length, Packet& packet)
     {
         for (int i = 0; i < length; i++)
         {
-            UUID uuid = PacketDecoder::ReadUUID(packet, offset);
+            UUID uuid = PacketDecoder::ReadUUID(packet);
 
             this->logger.LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
 
@@ -40,13 +40,13 @@ namespace mcbot
             {
             case PlayerInfoAction::ADD_PLAYER:
             {
-                std::string name = PacketDecoder::ReadString(packet, offset);
-                int properties_length = PacketDecoder::ReadVarInt(packet, offset);
-                std::list<PlayerProperty> properties = PacketDecoder::ReadPropertyArray(properties_length, packet, offset);
-                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet, offset);
-                int ping = PacketDecoder::ReadVarInt(packet, offset);
-                bool has_display_name = PacketDecoder::ReadBoolean(packet, offset);
-                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet, offset) : name;
+                std::string name = PacketDecoder::ReadString(packet);
+                int properties_length = PacketDecoder::ReadVarInt(packet);
+                std::list<PlayerProperty> properties = PacketDecoder::ReadPropertyArray(properties_length, packet);
+                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet);
+                int ping = PacketDecoder::ReadVarInt(packet);
+                bool has_display_name = PacketDecoder::ReadBoolean(packet);
+                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : name;
 
                 EntityPlayer player = EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
 
@@ -81,7 +81,7 @@ namespace mcbot
                     this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
                     return;
                 }
-                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet, offset);
+                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet);
                 player.SetGamemode(gamemode);
                 break;
             }
@@ -97,7 +97,7 @@ namespace mcbot
                     this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
                     return;
                 }
-                int ping = PacketDecoder::ReadVarInt(packet, offset);
+                int ping = PacketDecoder::ReadVarInt(packet);
 
                 player.SetPing(ping);
                 break;
@@ -115,8 +115,8 @@ namespace mcbot
                     return;
                 }
 
-                bool has_display_name = PacketDecoder::ReadBoolean(packet, offset);
-                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet, offset) : "";
+                bool has_display_name = PacketDecoder::ReadBoolean(packet);
+                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : "";
                 if (has_display_name)
                 {
                     player.SetDisplayName(display_name);
@@ -187,7 +187,7 @@ namespace mcbot
         // Connect //
         this->sock = Socket(socket(result->ai_family, result->ai_socktype, result->ai_protocol));
         this->logger.LogInfo("Connecting to " + address_string_s + ":" + port);
-        if (this->sock.connect_socket(result) < 0)
+        if (this->sock.ConnectSocket(result) < 0)
         {
             print_winsock_error();
             WSACleanup();
@@ -262,19 +262,19 @@ namespace mcbot
             {
                 std::cerr << e.what() << std::endl;
                 this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 1, 0), false);
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(abs(dx) / dx, 0, 0), true);
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 continue;
             }
 
             if (!this->OnGround())
             {
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 this->MoveToGround(0.10);
             }
 
-            Sleep(1000 / 20 * ticks_per_move);
+            Sleep(1000 / TPS * ticks_per_move);
         }
 
 
@@ -290,19 +290,19 @@ namespace mcbot
             {
                 std::cerr << e.what() << std::endl;
                 this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 1, 0), false);
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 0, abs(dz) / dz), true);
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 continue;
             }
 
             if (!this->OnGround())
             {
-                Sleep(1000 / 20 * ticks_per_move);
+                Sleep(1000 / TPS * ticks_per_move);
                 this->MoveToGround(0.10);
             }
 
-            Sleep(1000 / 20 * ticks_per_move);
+            Sleep(1000 / TPS * ticks_per_move);
         }
     }
 

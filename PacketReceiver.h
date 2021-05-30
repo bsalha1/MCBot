@@ -1,4 +1,4 @@
-#pragma once
+#pragma oncePacket packet
 
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "PacketEncoder.h"
 #include "PacketDecoder.h"
+#include "Packet.h"
 
 #include "Chunk.h"
 #include "Block.h"
@@ -47,78 +48,91 @@ namespace mcbot
 
 
 		// Server incoming requests //
+
+		
 		void RecvPacket();
 		int ReadNextVarInt();
-		int ReadNextPacket(int length, uint8_t* packet, int decompressed_length = 0);
-		void HandleRecvPacket(int packet_id, uint8_t* packet, int bytes_read, size_t& offset);
+
+		/**
+			Sum numbers in a vector.
+
+			@param length: Size of packet
+			@param packet: Output buffer
+			@param decompressed_length: Length of the uncompressed data of packet (0 means no compressed data to decompress)
+			@return full size of packet
+		*/
+		Packet ReadNextPacket(int length, int decompressed_length = 0);
+
+
+		void HandleRecvPacket(int packet_id, Packet packet);
 
 
 		// Status: LOGIN //
-		void RecvEncryptionRequest(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvSetCompression(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvLoginSuccess(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvLoginDisconnect(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvEncryptionRequest(Packet packet);
+		void RecvSetCompression(Packet packet);
+		void RecvLoginSuccess(Packet packet);
+		void RecvLoginDisconnect(Packet packet);
 
 
 		// Status: PLAY //
-		void RecvPlayDisconnect(uint8_t* packet, size_t length, size_t& offset);
-		void RecvKeepAlive(uint8_t* packet, size_t length, size_t& offset);
-		void RecvJoinServer(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvChatMessage(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvUpdateTime(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityEquipment(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnPosition(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvUpdateHealth(uint8_t* packet, size_t length, size_t& offset);
-		void RecvPosition(uint8_t* packet, size_t length, size_t& offset);
-		void RecvHeldItemSlot(uint8_t* packet, size_t length, size_t& offset);
-		void RecvBed(uint8_t* packet, size_t length, size_t& offset);
-		void RecvAnimation(uint8_t* packet, size_t length, size_t& offset);
-		void RecvNamedEntitySpawn(uint8_t* packet, size_t length, size_t& offset);
-		void RecvCollect(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnEntity(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnEntityLiving(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnEntityPainting(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnEntityExperienceOrb(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityVelocity(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityDestroy(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntity(uint8_t* packet, size_t length, size_t& offset);
-		void RecvRelEntityMove(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityLook(uint8_t* packet, size_t length, size_t& offset);
-		void RecvRelEntityMoveLook(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityTeleport(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityHeadLook(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityStatus(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityMetadata(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityEffect(uint8_t* packet, size_t length, size_t& offset);
-		void RecvExperience(uint8_t* packet, size_t length, size_t& offset);
-		void RecvEntityAttributes(uint8_t* packet, size_t length, size_t& offset);
-		void RecvMapChunk(uint8_t* packet, size_t length, size_t& offset);
-		void RecvMultiBlockChange(uint8_t* packet, size_t length, size_t& offset);
-		void RecvBlockChange(uint8_t* packet, size_t length, size_t& offset);
-		void RecvBlockBreakAnimation(uint8_t* packet, size_t length, size_t& offset);
-		void RecvPluginMessage(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvMapChunkBulk(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvWorldEvent(uint8_t* packet, size_t length, size_t& offset);
-		void RecvNamedSoundEffect(uint8_t* packet, size_t length, size_t& offset);
-		void RecvWorldParticles(uint8_t* packet, size_t length, size_t& offset);
-		void RecvGameStateChange(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSpawnEntityWeather(uint8_t* packet, size_t length, size_t& offset);
-		void RecvSetSlot(uint8_t* packet, size_t length, size_t& offset);
-		void RecvWindowItems(uint8_t* packet, size_t length, size_t& offset);
-		void RecvTransaction(uint8_t* packet, size_t length, size_t& offset);
-		void RecvUpdateSign(uint8_t* packet, size_t length, size_t& offset);
-		void RecvTileEntityData(uint8_t* packet, size_t length, size_t& offset);
-		void RecvStatistics(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvPlayerInfo(uint8_t* packet, size_t length, size_t& offset);
-		void RecvAbilities(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvScoreboardTeam(uint8_t* packet, size_t length, size_t& offset);
-		void RecvScoreboardObjective(uint8_t* packet, size_t length, size_t& offset);
-		void RecvUpdateScoreboardScore(uint8_t* packet, size_t length, size_t& offset);
-		void RecvDisplayScoreboard(uint8_t* packet, size_t length, size_t& offset);
-		void RecvServerDifficulty(uint8_t* packet, size_t size_read, size_t& offset);
-		void RecvWorldBorder(uint8_t* packet, size_t length, size_t& offset);
-		void RecvTitle(uint8_t* packet, size_t length, size_t& offset);
-		void RecvPlayerListHeaderFooter(uint8_t* packet, size_t size_read, size_t& offset);
+		void RecvPlayDisconnect(Packet packet);
+		void RecvKeepAlive(Packet packet);
+		void RecvJoinServer(Packet packet);
+		void RecvChatMessage(Packet packet);
+		void RecvUpdateTime(Packet packet);
+		void RecvEntityEquipment(Packet packet);
+		void RecvSpawnPosition(Packet packet);
+		void RecvUpdateHealth(Packet packet);
+		void RecvPosition(Packet packet);
+		void RecvHeldItemSlot(Packet packet);
+		void RecvBed(Packet packet);
+		void RecvAnimation(Packet packet);
+		void RecvNamedEntitySpawn(Packet packet);
+		void RecvCollect(Packet packet);
+		void RecvSpawnEntity(Packet packet);
+		void RecvSpawnEntityLiving(Packet packet);
+		void RecvSpawnEntityPainting(Packet packet);
+		void RecvSpawnEntityExperienceOrb(Packet packet);
+		void RecvEntityVelocity(Packet packet);
+		void RecvEntityDestroy(Packet packet);
+		void RecvEntity(Packet packet);
+		void RecvRelEntityMove(Packet packet);
+		void RecvEntityLook(Packet packet);
+		void RecvRelEntityMoveLook(Packet packet);
+		void RecvEntityTeleport(Packet packet);
+		void RecvEntityHeadLook(Packet packet);
+		void RecvEntityStatus(Packet packet);
+		void RecvEntityMetadata(Packet packet);
+		void RecvEntityEffect(Packet packet);
+		void RecvExperience(Packet packet);
+		void RecvEntityAttributes(Packet packet);
+		void RecvMapChunk(Packet packet);
+		void RecvMultiBlockChange(Packet packet);
+		void RecvBlockChange(Packet packet);
+		void RecvBlockBreakAnimation(Packet packet);
+		void RecvPluginMessage(Packet packet);
+		void RecvMapChunkBulk(Packet packet);
+		void RecvWorldEvent(Packet packet);
+		void RecvNamedSoundEffect(Packet packet);
+		void RecvWorldParticles(Packet packet);
+		void RecvGameStateChange(Packet packet);
+		void RecvSpawnEntityWeather(Packet packet);
+		void RecvSetSlot(Packet packet);
+		void RecvWindowItems(Packet packet);
+		void RecvTransaction(Packet packet);
+		void RecvUpdateSign(Packet packet);
+		void RecvTileEntityData(Packet packet);
+		void RecvStatistics(Packet packet);
+		void RecvPlayerInfo(Packet packet);
+		void RecvAbilities(Packet packet);
+		void RecvScoreboardTeam(Packet packet);
+		void RecvScoreboardObjective(Packet packet);
+		void RecvUpdateScoreboardScore(Packet packet);
+		void RecvDisplayScoreboard(Packet packet);
+		void RecvServerDifficulty(Packet packet);
+		void RecvWorldBorder(Packet packet);
+		void RecvTitle(Packet packet);
+		void RecvPlayerListHeaderFooter(Packet packet);
 	};
 }
 

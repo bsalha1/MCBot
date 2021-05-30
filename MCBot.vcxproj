@@ -167,6 +167,7 @@
     <ClCompile Include="MojangSession.cpp" />
     <ClCompile Include="NBTList.cpp" />
     <ClCompile Include="NBTTag.cpp" />
+    <ClCompile Include="Packet.cpp" />
     <ClCompile Include="PacketDecoder.cpp" />
     <ClCompile Include="PacketEncoder.cpp" />
     <ClCompile Include="PacketReceiver.cpp" />
@@ -208,6 +209,7 @@
     <ClInclude Include="MojangSession.h" />
     <ClInclude Include="NBTList.h" />
     <ClInclude Include="NBTTag.h" />
+    <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketDecoder.h" />
     <ClInclude Include="PacketEncoder.h" />
     <ClInclude Include="PacketReceiver.h" />

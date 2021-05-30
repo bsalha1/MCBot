@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     char* port = (argc >= 5) ? argv[4] : (char*)"25565";
 
     MCBot bot = MCBot();
-    bot.GetLogger().SetDebug(false);
+    bot.GetLogger().SetDebug(true);
 
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID

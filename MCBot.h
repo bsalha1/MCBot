@@ -2,6 +2,7 @@
 
 #include "Socket.h"
 #include "Buffer.h"
+#include "Packet.h"
 #include "Logger.h"
 #include "Vector.h"
 #include "Registry.h"
@@ -85,7 +86,7 @@ namespace mcbot
 		Registry<UUID, EntityPlayer>& GetPlayerRegistry();
 		Registry<std::pair<int, int>, Chunk>& GetChunkRegistry();
 
-		void UpdatePlayerInfo(PlayerInfoAction action, int players_length, uint8_t* packet, size_t& offset);
+		void UpdatePlayerInfo(PlayerInfoAction action, int players_length, Packet& packet);
 
 
 		// Chunk Management //

@@ -73,11 +73,11 @@ namespace mcbot
     {
         if (this->encryption_enabled)
         {
-            this->cleanup_encryption();
+            this->CleanupEncryption();
         }
     }
 
-    void Socket::initialize_encryption(uint8_t* key, uint8_t* iv)
+    void Socket::InitEncryption(uint8_t* key, uint8_t* iv)
     {
         this->key = key;
         this->iv = iv;
@@ -109,7 +109,7 @@ namespace mcbot
         this->encryption_enabled = true;
     }
 
-    void Socket::cleanup_encryption()
+    void Socket::CleanupEncryption()
     {
         this->encryption_enabled = false;
         EVP_CIPHER_CTX_free(encrypt_ctx);
@@ -117,7 +117,7 @@ namespace mcbot
     }
 
     // Encrypt using AES-128 CFB8
-    int Socket::encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* encrypted_text)
+    int Socket::Encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* encrypted_text)
     {
         int len;
         int encrypted_len;
@@ -131,7 +131,7 @@ namespace mcbot
     }
 
     // Decrypt AES-128 CFB8 text
-    int Socket::decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* decrypted_text)
+    int Socket::Decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* decrypted_text)
     {
         int len;
         int decrypted_len;
@@ -144,7 +144,7 @@ namespace mcbot
         return decrypted_len;
     }
 
-    int Socket::decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+    int Socket::Decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
     {
         // Configure Stream
         z_stream stream;
@@ -172,7 +172,7 @@ namespace mcbot
         return Z_OK;
     }
 
-    int Socket::compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+    int Socket::Compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
     {
         // Configure Stream
         z_stream stream;
@@ -200,13 +200,13 @@ namespace mcbot
         return Z_OK;
     }
 
-    void Socket::initialize_compression(int max_decompressed_length)
+    void Socket::InitCompression(int max_decompressed_length)
     {
         this->max_uncompressed_length = max_decompressed_length;
         this->compression_enabled = true;
     }
 
-    int Socket::recv_packet(uint8_t* packet, int length, int decompressed_length)
+    int Socket::RecvPacket(uint8_t* packet, int length, int decompressed_length)
     {
         if (this->encryption_enabled)
         {
@@ -214,7 +214,7 @@ namespace mcbot
             uint8_t* decrypted_packet = new uint8_t[length]{ 0 };
             int bytes_read = recv(this->socket, (char*)encrypted_packet, length, 0);
 
-            int decrypted_packet_length = decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
+            int decrypted_packet_length = Decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
             delete[] encrypted_packet;
 
             if (this->compression_enabled && length > 1)
@@ -228,7 +228,7 @@ namespace mcbot
                 {
                     uint8_t* decompressed_packet = new uint8_t[decompressed_length]{ 0 };
 
-                    decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
+                    Decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
                     memcpy(packet, decompressed_packet, decompressed_length);
 
                     delete[] decrypted_packet;
@@ -250,7 +250,7 @@ namespace mcbot
         }
     }
 
-    int Socket::send_pack(uint8_t* packet, size_t length)
+    int Socket::SendPacket(uint8_t* packet, size_t length)
     {
         uint8_t* header = NULL;
         int header_length;
@@ -296,7 +296,7 @@ namespace mcbot
         {
             // Encrypt //
             uint8_t* encrypted_packet = new uint8_t[full_length]{ 0 };
-            int encrypted_length = encrypt((uint8_t*)full_packet, full_length, encrypted_packet);
+            int encrypted_length = Encrypt((uint8_t*)full_packet, full_length, encrypted_packet);
             delete[] full_packet;
 
             // Send //
@@ -312,7 +312,7 @@ namespace mcbot
         }
     }
 
-    int Socket::connect_socket(addrinfo* info)
+    int Socket::ConnectSocket(addrinfo* info)
     {
         return connect(this->socket, info->ai_addr, (int)info->ai_addrlen);
     }
