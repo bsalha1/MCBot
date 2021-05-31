@@ -119,11 +119,13 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketHandshakingIn...");
         this->bot->SetState(State::HANDSHAKE);
 
+        int packet_id = 0x00;
+        int protocol_version = 47;
         Packet packet = Packet(1028);
         packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x00, packet); // packet id
-        PacketEncoder::WriteVarInt(47, packet);   // protocol version
+        PacketEncoder::WriteVarInt(packet_id, packet); // packet id
+        PacketEncoder::WriteVarInt(protocol_version, packet);   // protocol version
         PacketEncoder::WriteString(hostname, packet); // hostname
         PacketEncoder::WriteShort(port, packet); // port
         PacketEncoder::WriteVarInt((int)State::LOGIN, packet); // next state
@@ -142,12 +144,14 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketLoginInStart...");
         this->bot->SetState(State::LOGIN);
 
-        Packet packet = Packet(1028);
+        int packet_id = 0x00;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetStringNumBytes(this->bot->GetSession().GetUsername()));
         packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x00, packet); // packet id
-        PacketEncoder::WriteString((char*)this->bot->GetSession().GetUsername().c_str(), packet); // username
+        PacketEncoder::WriteVarInt(packet_id, packet); // packet id
+        PacketEncoder::WriteString(this->bot->GetSession().GetUsername(), packet); // username
 
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
         if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
@@ -224,10 +228,11 @@ namespace mcbot
         int encrypted_verify_token_len = RSA_public_encrypt(verify_token_length, verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
         this->bot->GetLogger().LogDebug("Encrypted verify token with public key");
 
+        int packet_id = 0x01;
         Packet packet = Packet(1028);
         packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x01, packet); // packet id
+        PacketEncoder::WriteVarInt(packet_id, packet); // packet id
 
         PacketEncoder::WriteVarInt(encrypted_shared_secret_len, packet); // shared secret length
         PacketEncoder::WriteByteArray(encrypted_shared_secret, encrypted_shared_secret_len, packet); // shared secret
@@ -565,6 +570,7 @@ namespace mcbot
         PacketEncoder::WriteByte(window_id, packet);
         PacketEncoder::WriteByte(enchantment, packet);
 
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
         if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
@@ -639,6 +645,7 @@ namespace mcbot
             PacketEncoder::WritePosition(block_position.GetX(), block_position.GetY(), block_position.GetZ(), packet);
         }
 
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
         if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
@@ -653,7 +660,7 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInSettings...");
 
         int packet_id = 0x15;
-        Packet packet = Packet(1024);
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetStringNumBytes("en_us") + 3 * sizeof(uint8_t) + 1 * sizeof(bool));
         packet.data = new uint8_t[packet.length];
 
         PacketEncoder::WriteVarInt(packet_id, packet);
@@ -663,6 +670,7 @@ namespace mcbot
         PacketEncoder::WriteBoolean(true, packet); // chat colors
         PacketEncoder::WriteByte(0x7F, packet); // skin parts
 
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
         if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");

@@ -200,6 +200,40 @@ namespace mcbot
         return 0;
     }
 
+    void MCBot::LoginToServer(char* hostname, char* port)
+    {
+        this->packet_sender->SendHandshake(hostname, atoi(port));
+        this->packet_sender->SendLoginStart();
+    }
+
+    int MCBot::LoginToMojang(char* email, char* password)
+    {
+        if (this->packet_sender->LoginMojang(email, password) < 0)
+        {
+            return -1;
+        }
+
+        if (this->packet_sender->VerifyAccessToken() < 0)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    std::thread MCBot::StartPacketReceiverThread()
+    {
+        std::thread recv_thread([this]() {
+            while (this->connected)
+            {
+                Sleep(1);
+                this->packet_receiver->RecvPacket();
+            }
+        });
+
+        return recv_thread;
+    }
+
     void MCBot::MoveTo(Vector<double> destination, double speed, bool ignore_ground)
     {
         while (this->player.GetLocation().Distance(destination) >= 0)

@@ -34,42 +34,31 @@ int main(int argc, char* argv[])
     MCBot bot = MCBot();
     bot.GetLogger().SetDebug(false);
 
+
     // Log in to Mojang auth servers
     // - To resolve our email to a username and a UUID
     // - To obtain an access token
-    std::cout << "Logging in to Mojang authservers..." << std::endl;
-    if (bot.GetPacketSender().LoginMojang(email, password) < 0)
+    if (bot.LoginToMojang(email, password) < 0)
     {
-        std::cerr << "Failed to log in to Mojang authservers!" << std::endl;
+        bot.GetLogger().LogError("Failed to log in to Mojang");
         return -1;
     }
+    
 
-    std::cout << "Verifying access token..." << std::endl;
-    if (bot.GetPacketSender().VerifyAccessToken() < 0)
-    {
-        std::cerr << "Invalid access token!" << std::endl;
-        return -1;
-    }
-
-    // Connect to server
-    // - So we can send it packets
+    // Connect to TCP Server
     if (bot.ConnectToServer(hostname, port) < 0)
     {
-        std::cout << "Failed to join server" << std::endl;
+        bot.GetLogger().LogError("Failed to connect to server");
         return -1;
     }
 
-    bot.GetPacketSender().SendHandshake(hostname, atoi(port));
-    bot.GetPacketSender().SendLoginStart();
 
-    // Receive packets
-    std::thread recv_thread([&bot]() {
-        while (bot.IsConnected())
-        {
-            Sleep(1);
-            bot.GetPacketReceiver().RecvPacket();
-        }
-    });
+    // Log in to Minecraft Server
+    bot.LoginToServer(hostname, port);
+
+
+    // Receive packets until disconnected
+    std::thread recv_thread = bot.StartPacketReceiverThread();
 
 
     // Do specific tasks

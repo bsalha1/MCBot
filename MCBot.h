@@ -31,7 +31,7 @@
 
 #define TPS 20 // Ticks per second
 
-#define ASSERT_TRUE(cond, msg) if(!cond) std::cerr << "[ASSERT]: " << __FILE__ << ":" << __LINE__ << ":" << msg << std::endl;
+#define ASSERT_TRUE(cond, msg) if(!(cond)) std::cerr << "[ASSERT]: " msg << " @ " << __FILE__ << ":" << __LINE__  << std::endl;
 
 namespace mcbot
 {
@@ -67,8 +67,37 @@ namespace mcbot
 		MCBot();
 		~MCBot();
 
-
+		/*
+			Connect local socket to server
+			@param hostname: The hostname of the server to connect to
+			@param port: The port of the server to connect to
+			@return -1 if unsuccessful, 0 otherwise
+		*/
 		int ConnectToServer(char* hostname, char* port);
+
+
+		/*
+			Handshake with server and then send PacketPlayInLoginStart to server
+			@param hostname: The hostname of the server to log in to
+			@param port: The port of the server to log in to
+		*/
+		void LoginToServer(char* hostname, char* port);
+
+
+		/*
+			Log in to Mojang
+			@param email: Email of user to log in to
+			@param password: Password of user to log in to
+			@return -1 if unsuccessful, 0 otherwise
+		*/
+		int LoginToMojang(char* email, char* password);
+
+
+		/*
+			Receive packets continually until `connected = false`
+			@return thread object
+		*/
+		std::thread StartPacketReceiverThread();
 
 
 		// High-Level Interaction Methods //
