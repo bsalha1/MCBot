@@ -298,7 +298,7 @@ namespace mcbot
         }
     }
 
-    void MCBot::MoveTo(double x, double z, int ticks_per_move)
+    void MCBot::MoveTo(double x, double z, int ms_per_block)
     {
         // Clean up to make math easier
         x = floor(x) + 0.5;
@@ -325,19 +325,19 @@ namespace mcbot
             {
                 std::cerr << e.what() << std::endl;
                 this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 1, 0));
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(abs(dx) / dx, 0, 0));
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 continue;
             }
 
             if (!this->OnGround())
             {
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 this->MoveToGround(0.10);
             }
 
-            Sleep(1000 / TPS * ticks_per_move);
+            Sleep(ms_per_block);
         }
 
 
@@ -353,19 +353,19 @@ namespace mcbot
             {
                 std::cerr << e.what() << std::endl;
                 this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 1, 0));
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 0, abs(dz) / dz));
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 continue;
             }
 
             if (!this->OnGround())
             {
-                Sleep(1000 / TPS * ticks_per_move);
+                Sleep(ms_per_block);
                 this->MoveToGround(0.10);
             }
 
-            Sleep(1000 / TPS * ticks_per_move);
+            Sleep(ms_per_block);
         }
     }
 

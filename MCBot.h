@@ -112,7 +112,7 @@ namespace mcbot
 		void Move(Vector<double> diff);
 		void Move(double dx, double dz);
 		void MoveTo(Vector<double> destination, double speed);
-		void MoveTo(double x, double z, int ticks_per_move);
+		void MoveTo(double x, double z, int ms_per_block);
 		void MoveToGround(double speed);
 		bool OnGround();
 		Vector<double> GetGroundLocation(Vector<double> location);
