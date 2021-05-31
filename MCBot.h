@@ -100,10 +100,18 @@ namespace mcbot
 		std::thread StartPacketReceiverThread();
 
 
+		/*
+			Send current position every tick
+			@return thread object
+		*/
+		std::thread StartPositionThread();
+
+
+
 		// High-Level Interaction Methods //
 		void Move(Vector<double> diff);
 		void Move(double dx, double dz);
-		void MoveTo(Vector<double> destination, double speed, bool ignore_ground);
+		void MoveTo(Vector<double> destination, double speed);
 		void MoveTo(double x, double z, int ticks_per_move);
 		void MoveToGround(double speed);
 		bool OnGround();

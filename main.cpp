@@ -61,6 +61,10 @@ int main(int argc, char* argv[])
     std::thread recv_thread = bot.StartPacketReceiverThread();
 
 
+    // Send player's position every tick
+    std::thread position_thread = bot.StartPositionThread();
+
+
     // Do specific tasks
     std::thread tick_thread([&bot]() {
 
@@ -68,25 +72,15 @@ int main(int argc, char* argv[])
         bot.GetPacketSender().SendSettings();
         bot.GetPacketSender().SendCustomPayload("vanilla");
 
-        // Echo back player location (enables further sending of locations)
-        bot.GetPacketSender().SendPosition(bot.GetPlayer().GetLocation(), true);
-
-        Sleep(1000 / TPS);
-        bot.GetPacketSender().SendPosition(bot.GetPlayer().GetLocation(), true);
-
         // Move to better center of a block to make math easier
         mcbot::Vector<double> clean_position = bot.GetPlayer().GetLocation();
         clean_position.Floor();
         clean_position = clean_position + mcbot::Vector<double>(0.5, 0, 0.5);
-
-        Sleep(1000 / TPS);
-        bot.GetPacketSender().SendPosition(clean_position, true);
-        Sleep(1000 / TPS);
-        bot.GetPacketSender().SendPosition(clean_position, true);
+        bot.MoveTo(clean_position, 1.0);
 
         bot.GetPacketSender().SendArmAnimation();
 
-        int target_id = 0;
+        int target_id;
         for (Entity entity : bot.GetEntityRegistry().GetValues())
         {
             if (entity.GetEntityType() == EntityType::MUSHROOM_COW)
@@ -97,64 +91,60 @@ int main(int argc, char* argv[])
             }
         }
 
-        //mcbot::Vector<double> target_location = target.get_location();
+        Entity& target = bot.GetEntityRegistry().GetValue(target_id);
 
-        //Entity& entity = bot.get_entity(target_id);
-        //while (true)
+        while (true)
+        {
+            auto target_location = target.GetLocation();
+            bot.MoveTo(target_location.GetX(), target_location.GetZ(), 5);
+        }
+
+        //mcbot::Vector<double> loc = bot.GetPlayer().GetLocation();
+        //mcbot::Vector<int> loc1 = mcbot::Vector<int>(loc.GetX(), loc.GetY(), loc.GetZ());
+
+        //auto items = bot.GetPlayer().GetInventory();
+        //mcbot::Slot best_axe;
+        //for (auto item : items)
         //{
-        //    mcbot::Vector<double> target_location = entity.get_location();
-        //    std::cout << target_location.to_string() << std::endl;
-        //    bot.move_to(target_location.get_x(), target_location.get_z(), 4);
-        //    Sleep(1000);
+        //    // Diamond Axe
+        //    if (item.GetID() == 279)
+        //    {
+        //        best_axe = item;
+        //    }
+
+        //    // Iron Axe
+        //    if (item.GetID() == 258 && best_axe.GetID() != 279)
+        //    {
+        //        best_axe = item;
+        //    }
+
+        //    // Stone Axe
+        //    if (item.GetID() == 275 && best_axe.GetID() != 279 && best_axe.GetID() != 258)
+        //    {
+        //        best_axe = item;
+        //    }
+
+        //    // Wood Axe
+        //    if (item.GetID() == 271 && best_axe.GetID() != 279 && best_axe.GetID() != 258 && best_axe.GetID() != 275)
+        //    {
+        //        best_axe = item;
+        //    }
         //}
-        //bot.attack_entity(target);
 
-        mcbot::Vector<double> loc = bot.GetPlayer().GetLocation();
-        mcbot::Vector<int> loc1 = mcbot::Vector<int>(loc.GetX(), loc.GetY(), loc.GetZ());
+        //// No axe found
+        //if (best_axe.GetID() == -1)
+        //{
+        //    std::cout << "No axe found" << std::endl;
+        //}
 
-        auto items = bot.GetPlayer().GetInventory();
-        mcbot::Slot best_axe;
-        for (auto item : items)
-        {
-            // Diamond Axe
-            if (item.GetID() == 279)
-            {
-                best_axe = item;
-            }
-
-            // Iron Axe
-            if (item.GetID() == 258 && best_axe.GetID() != 279)
-            {
-                best_axe = item;
-            }
-
-            // Stone Axe
-            if (item.GetID() == 275 && best_axe.GetID() != 279 && best_axe.GetID() != 258)
-            {
-                best_axe = item;
-            }
-
-            // Wood Axe
-            if (item.GetID() == 271 && best_axe.GetID() != 279 && best_axe.GetID() != 258 && best_axe.GetID() != 275)
-            {
-                best_axe = item;
-            }
-        }
-
-        // No axe found
-        if (best_axe.GetID() == -1)
-        {
-            std::cout << "No axe found" << std::endl;
-        }
-
-        
-        auto coords_list = std::list<mcbot::Vector<int>>();
-        auto chunks = bot.GetChunks(loc1.GetX() >> 4, loc1.GetZ() >> 4, 1);
-        for (auto ch : chunks)
-        {
-            auto coords = ch.GetBlockCoordinates(17);
-            coords_list.insert(coords_list.end(), coords.begin(), coords.end());
-        }
+        //
+        //auto coords_list = std::list<mcbot::Vector<int>>();
+        //auto chunks = bot.GetChunks(loc1.GetX() >> 4, loc1.GetZ() >> 4, 1);
+        //for (auto ch : chunks)
+        //{
+        //    auto coords = ch.GetBlockCoordinates(17);
+        //    coords_list.insert(coords_list.end(), coords.begin(), coords.end());
+        //}
 
         //mcbot::Vector<int> closest_tree
 

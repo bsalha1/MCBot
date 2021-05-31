@@ -280,7 +280,7 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInChat...");
 
         int packet_id = 0x01;
-        Packet packet = Packet(message.length() + PacketEncoder::GetVarIntNumBytes({ packet_id, (int)message.length() }) + 1);
+        Packet packet = Packet(message.length() + PacketEncoder::GetVarIntNumBytes({ packet_id, (int)message.length() }));
         packet.data = new uint8_t[packet.length]{ 0 };
 
         PacketEncoder::WriteVarInt(packet_id, packet);

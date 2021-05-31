@@ -234,7 +234,40 @@ namespace mcbot
         return recv_thread;
     }
 
-    void MCBot::MoveTo(Vector<double> destination, double speed, bool ignore_ground)
+    std::thread MCBot::StartPositionThread()
+    {
+        std::thread position_thread([this]() {
+            while (this->connected)
+            {
+                Sleep(1000 / TPS);
+                if (this->player.GetPing() == -1)
+                {
+                    continue;
+                }
+
+                auto location = this->player.GetLocation();
+
+                // Chunk has to have been loaded
+                if (!this->chunk_registry.IsValueRegistered(std::pair<int, int>((int)location.GetX() >> 4, (int)location.GetZ() >> 4)))
+                {
+                    continue;
+                }
+
+                // Determine if player is on the ground
+                bool on_ground = true;
+                if (BlockUtils::IsWeak(this->GetChunk(location).GetBlockID(location - Vector<double>(0, 1, 0))))
+                {
+                    on_ground = false;
+                }
+
+                this->packet_sender->SendPositionLook(location, this->player.GetYaw(), this->player.GetPitch(), on_ground);
+            }
+        });
+
+        return position_thread;
+    }
+
+    void MCBot::MoveTo(Vector<double> destination, double speed)
     {
         while (this->player.GetLocation().Distance(destination) >= 0)
         {
@@ -247,7 +280,7 @@ namespace mcbot
             // If we are close enough, just move us to the location instantly
             if (this->player.GetLocation().Distance(destination) <= 1.0)
             {
-                this->packet_sender->SendPosition(destination, true);
+                this->player.UpdateLocation(destination);
                 return;
             }
 
@@ -258,12 +291,7 @@ namespace mcbot
             catch (const CollisionException & e)
             {
                 std::cerr << e.what() << std::endl;
-                this->packet_sender->SendPosition(direction + Vector<double>(0, 1, 0), true);
-            }
-
-            if (!ignore_ground && !this->OnGround())
-            {
-                this->MoveToGround(0.10);
+                this->player.UpdateLocation(direction + Vector<double>(0, 1, 0));
             }
 
             Sleep(1000 / 20);
@@ -280,9 +308,10 @@ namespace mcbot
         Vector<double> init = this->player.GetLocation();
 
         auto diff = dest - init;
-
-        double dx = abs(diff.GetX()) / diff.GetX();
-        double dz = abs(diff.GetZ()) / diff.GetZ();
+        auto diff_x = diff.GetX();
+        auto diff_z = diff.GetZ();
+        double dx = diff_x == 0 ? 0 : abs(diff_x) / diff_x;
+        double dz = diff_z == 0 ? 0 : abs(diff_z) / diff_z;
 
         for (double x = init.GetX(); x != dest.GetX(); x += dx)
         {
@@ -295,9 +324,9 @@ namespace mcbot
             catch (const CollisionException & e)
             {
                 std::cerr << e.what() << std::endl;
-                this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 1, 0), false);
+                this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 1, 0));
                 Sleep(1000 / TPS * ticks_per_move);
-                this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(abs(dx) / dx, 0, 0), true);
+                this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(abs(dx) / dx, 0, 0));
                 Sleep(1000 / TPS * ticks_per_move);
                 continue;
             }
@@ -323,9 +352,9 @@ namespace mcbot
             catch (const CollisionException & e)
             {
                 std::cerr << e.what() << std::endl;
-                this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 1, 0), false);
+                this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 1, 0));
                 Sleep(1000 / TPS * ticks_per_move);
-                this->packet_sender->SendPosition(this->player.GetLocation() + Vector<double>(0, 0, abs(dz) / dz), true);
+                this->player.UpdateLocation(this->player.GetLocation() + Vector<double>(0, 0, abs(dz) / dz));
                 Sleep(1000 / TPS * ticks_per_move);
                 continue;
             }
@@ -414,22 +443,22 @@ namespace mcbot
         {
             return;
         }
-        Vector<double> dest = this->GetGroundLocation(this->player.GetLocation()) + Vector<double>(0, 1, 0);
-        this->MoveTo(dest, speed, true);
+        auto dest = this->GetGroundLocation(this->player.GetLocation()) + Vector<double>(0, 1, 0);
+        this->MoveTo(dest, speed);
     }
 
     bool MCBot::OnGround()
     {
-        Vector<double> player_location = this->player.GetLocation();
-        Vector<double> ground_location = this->GetGroundLocation(player_location) + Vector<double>(0, 1, 0);
+        auto player_location = this->player.GetLocation();
+        auto ground_location = this->GetGroundLocation(player_location) + Vector<double>(0, 1, 0);
 
         return player_location.GetY() == ground_location.GetY();
     }
 
     void MCBot::Move(Vector<double> diff)
     {
-        Vector<double> init = this->player.GetLocation();
-        Vector<double> dest = init + diff;
+        auto init = this->player.GetLocation();
+        auto dest = init + diff;
 
         Chunk& dest_chunk = this->GetChunk(dest);
         Chunk& init_chunk = this->GetChunk(init);
@@ -442,19 +471,18 @@ namespace mcbot
             throw CollisionException(dest_block_id, dest);
         }
 
-        this->packet_sender->SendPosition(dest, true);
+        this->player.UpdateLocation(dest);
     }
 
     void MCBot::Move(double dx, double dz)
     {
-        Vector<double> dr = Vector<double>(dx, 0, dz);
-        Vector<double> init = this->player.GetLocation();
-        Vector<double> dest = init + dr;
+        auto dr = Vector<double>(dx, 0, dz);
+        auto init = this->player.GetLocation();
+        auto dest = init + dr;
 
         Chunk& dest_chunk = this->GetChunk(dest);
         Chunk& init_chunk = this->GetChunk(init);
         Block dest_block = Block(dest_chunk.GetBlockID(dest));
-
 
         // Collision detection
         if (!dest_block.IsWeak())
@@ -464,7 +492,8 @@ namespace mcbot
         }
 
         float yaw = dx > 0 ? -90 : dx < 0 ? 90 : dz > 0 ? 0 : dz < 0 ? 180 : 0;
-        this->packet_sender->SendPositionLook(dest, yaw, 0, true);
+        this->player.UpdateLocation(dest);
+        this->player.UpdateRotation(yaw, 0);
     }
 
     void MCBot::SetState(State state)
