@@ -76,38 +76,35 @@ namespace mcbot
         }
 
         Packet packet = this->ReadNextPacket(length, decompressed_length);
+        if (packet.data == NULL)
+        {
+            this->bot->GetLogger().LogError("Invalid packet received");
+            return;
+        }
+
         int packet_id = PacketDecoder::ReadVarInt(packet);
         this->bot->GetLogger().LogDebug("ID: " + std::to_string(packet_id));
 
         HandleRecvPacket(packet_id, packet);
+
+        delete[] packet.data;
     }
 
     Packet PacketReceiver::ReadNextPacket(int length, int decompressed_length)
     {
-        uint8_t* data;
-        if (decompressed_length == 0)
-        {
-            data = new uint8_t[length]{ 0 };
-        }
-        else
-        {
-            data = new uint8_t[decompressed_length]{ 0 };
-        }
+        uint8_t* data = new uint8_t[decompressed_length == 0 ? length : decompressed_length]{ 0 };
 
         int bytes_read = this->bot->GetSocket().RecvPacket(data, length, decompressed_length);
         if (bytes_read < 0)
         {
             this->bot->GetLogger().LogError("Failed to receive packet");
-            data = NULL;
-            return bytes_read;
+            delete[] data;
+            return Packet(bytes_read);
         }
         this->bot->GetLogger().LogDebug("Received Packet: " + std::to_string(bytes_read) + "bytes");
 
         Packet packet = Packet(bytes_read);
-        memcpy(packet.data, data, bytes_read);
-
-        delete[] data;
-        
+        packet.data = data;
         return packet;
     }
 

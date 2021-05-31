@@ -87,24 +87,24 @@ namespace mcbot
 
     uint64_t PacketDecoder::ReadLong(Packet& packet)
     {
-        uint8_t byte8 = packet.data[packet.offset++];
-        uint8_t byte7 = packet.data[packet.offset++];
-        uint8_t byte6 = packet.data[packet.offset++];
-        uint8_t byte5 = packet.data[packet.offset++];
-        uint8_t byte4 = packet.data[packet.offset++];
-        uint8_t byte3 = packet.data[packet.offset++];
-        uint8_t byte2 = packet.data[packet.offset++];
-        uint8_t byte1 = packet.data[packet.offset++];
+        uint64_t byte8 = packet.data[packet.offset++];
+        uint64_t byte7 = packet.data[packet.offset++];
+        uint64_t byte6 = packet.data[packet.offset++];
+        uint64_t byte5 = packet.data[packet.offset++];
+        uint64_t byte4 = packet.data[packet.offset++];
+        uint64_t byte3 = packet.data[packet.offset++];
+        uint64_t byte2 = packet.data[packet.offset++];
+        uint64_t byte1 = packet.data[packet.offset++];
 
         uint64_t result =
-            ((uint64_t)byte8) << 56 |
-            ((uint64_t)byte7) << 48 |
-            ((uint64_t)byte6) << 40 |
-            ((uint64_t)byte5) << 32 |
-            ((uint64_t)byte4) << 24 |
-            ((uint64_t)byte3) << 16 |
-            ((uint64_t)byte2) << 8 |
-            ((uint64_t)byte1) << 0;
+            byte8 << 56 |
+            byte7 << 48 |
+            byte6 << 40 |
+            byte5 << 32 |
+            byte4 << 24 |
+            byte3 << 16 |
+            byte2 << 8 |
+            byte1 << 0;
         return result;
     }
 

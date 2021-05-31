@@ -61,6 +61,9 @@ namespace mcbot
 	template<typename T>
 	inline Vector<T>::Vector()
 	{
+		this->x = 0;
+		this->y = 0;
+		this->z = 0;
 	}
 
 	template<typename T>

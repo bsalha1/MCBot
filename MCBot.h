@@ -31,6 +31,8 @@
 
 #define TPS 20 // Ticks per second
 
+#define ASSERT_TRUE(cond, msg) if(!cond) std::cerr << "[ASSERT]: " << __FILE__ << ":" << __LINE__ << ":" << msg << std::endl;
+
 namespace mcbot
 {
 	class PacketReceiver;
@@ -39,7 +41,6 @@ namespace mcbot
 	class MCBot
 	{
 	private:
-
 		Logger logger;
 
 

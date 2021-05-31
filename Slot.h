@@ -18,7 +18,7 @@ namespace mcbot
 
 		Slot(short id, int count, short data, NBTTagCompound nbt);
 
-		void Serialize(uint8_t* packet, size_t& offset) const override;
+		void Serialize(Packet& packet) const override;
 
 		short GetID();
 		uint8_t GetCount();

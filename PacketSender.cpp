@@ -68,7 +68,7 @@ namespace mcbot
 
         std::string access_token = this->bot->GetSession().GetAccessToken();
         int content_length = strlen(content_format) + access_token.length();
-        char* content = new char[content_length] {0};
+        char* content = new char[content_length]{ 0 };
         sprintf_s(content, content_length, content_format, access_token.c_str());
 
         // Send Payload //
@@ -119,20 +119,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketHandshakingIn...");
         this->bot->SetState(State::HANDSHAKE);
 
-        uint8_t packet[1028];
-        size_t offset = 0;
+        Packet packet = Packet(1028);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x00, packet, offset); // packet id
-        PacketEncoder::WriteVarInt(47, packet, offset);   // protocol version
-        PacketEncoder::WriteString(hostname, packet, offset); // hostname
-        PacketEncoder::WriteShort(port, packet, offset); // port
-        PacketEncoder::WriteVarInt((int)State::LOGIN, packet, offset); // next state
+        PacketEncoder::WriteVarInt(0x00, packet); // packet id
+        PacketEncoder::WriteVarInt(47, packet);   // protocol version
+        PacketEncoder::WriteString(hostname, packet); // hostname
+        PacketEncoder::WriteShort(port, packet); // port
+        PacketEncoder::WriteVarInt((int)State::LOGIN, packet); // next state
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
+
+        delete[] packet.data;
     }
 
     void PacketSender::SendLoginStart()
@@ -140,17 +142,19 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketLoginInStart...");
         this->bot->SetState(State::LOGIN);
 
-        uint8_t packet[1028];
-        size_t offset = 0;
+        Packet packet = Packet(1028);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x00, packet, offset); // packet id
-        PacketEncoder::WriteString((char*)this->bot->GetSession().GetUsername().c_str(), packet, offset); // username
+        PacketEncoder::WriteVarInt(0x00, packet); // packet id
+        PacketEncoder::WriteString((char*)this->bot->GetSession().GetUsername().c_str(), packet); // username
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
+
+        delete[] packet.data;
     }
 
     RSA* GetRSAPublicKey(uint8_t* public_key, int public_key_length)
@@ -204,7 +208,7 @@ namespace mcbot
         this->bot->GetLogger().LogDebug("Public Key Info: ");
         BIO* keybio = BIO_new(BIO_s_mem());
         RSA_print(keybio, rsa_public_key, 0);
-        char buffer[2048] = { 0 };
+        char buffer[2048]{ 0 };
         std::string res = "";
         while (BIO_read(keybio, buffer, 2048) > 0)
         {
@@ -220,18 +224,18 @@ namespace mcbot
         int encrypted_verify_token_len = RSA_public_encrypt(verify_token_length, verify_token, encrypted_verify_token, rsa_public_key, RSA_PKCS1_PADDING);
         this->bot->GetLogger().LogDebug("Encrypted verify token with public key");
 
-        uint8_t packet[1028];
-        size_t offset = 0;
+        Packet packet = Packet(1028);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(0x01, packet, offset); // packet id
+        PacketEncoder::WriteVarInt(0x01, packet); // packet id
 
-        PacketEncoder::WriteVarInt(encrypted_shared_secret_len, packet, offset); // shared secret length
-        PacketEncoder::WriteByteArray(encrypted_shared_secret, encrypted_shared_secret_len, packet, offset); // shared secret
+        PacketEncoder::WriteVarInt(encrypted_shared_secret_len, packet); // shared secret length
+        PacketEncoder::WriteByteArray(encrypted_shared_secret, encrypted_shared_secret_len, packet); // shared secret
 
-        PacketEncoder::WriteVarInt(encrypted_verify_token_len, packet, offset); // verify token length
-        PacketEncoder::WriteByteArray(encrypted_verify_token, encrypted_verify_token_len, packet, offset); // verify token
+        PacketEncoder::WriteVarInt(encrypted_verify_token_len, packet); // verify token length
+        PacketEncoder::WriteByteArray(encrypted_verify_token, encrypted_verify_token_len, packet); // verify token
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
@@ -241,6 +245,8 @@ namespace mcbot
             this->bot->GetSocket().InitEncryption((unsigned char*)shared_secret.c_str(), (unsigned char*)shared_secret.c_str());
             this->bot->GetLogger().LogDebug("Sent encryption response - ENCRYPTION ENABLED");
         }
+
+        delete[] packet.data;
     }
 
     void PacketSender::SendKeepAlive(int id)
@@ -248,19 +254,20 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInKeepAlive...");
 
         int packet_id = 0x00;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, id })];
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes({ packet_id, id }));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset); // packet id
-        PacketEncoder::WriteVarInt(id, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet); // packet id
+        PacketEncoder::WriteVarInt(id, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendChatMessage(std::string message)
@@ -268,13 +275,14 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInChat...");
 
         int packet_id = 0x01;
-        uint8_t* packet = new uint8_t[message.length() + PacketEncoder::GetVarIntNumBytes({ packet_id, (int)message.length() }) + 1]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(message.length() + PacketEncoder::GetVarIntNumBytes({ packet_id, (int)message.length() }) + 1);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteString(message, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteString(message, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
@@ -284,7 +292,7 @@ namespace mcbot
             this->bot->GetLogger().LogDebug("Message: " + message);
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendUseEntity(int entity_id, UseEntityType action)
@@ -292,44 +300,45 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInUseEntity...");
 
         int packet_id = 0x02;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, entity_id, (int)action })]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes({ packet_id, entity_id, (int)action }));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteVarInt(entity_id, packet, offset);
-        PacketEncoder::WriteVarInt((int)action, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteVarInt(entity_id, packet);
+        PacketEncoder::WriteVarInt((int)action, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendPosition(Vector<double> position, bool on_ground)
     {
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInPosition...");
 
-
         int packet_id = 0x04;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 3 * sizeof(double) + 1]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + 3 * sizeof(double) + sizeof(bool));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteDouble(position.GetX(), packet, offset);
-        PacketEncoder::WriteDouble(position.GetY(), packet, offset);
-        PacketEncoder::WriteDouble(position.GetZ(), packet, offset);
-        PacketEncoder::WriteBoolean(on_ground, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteDouble(position.GetX(), packet);
+        PacketEncoder::WriteDouble(position.GetY(), packet);
+        PacketEncoder::WriteDouble(position.GetZ(), packet);
+        PacketEncoder::WriteBoolean(on_ground, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
 
         // Internal updates
         this->bot->GetPlayer().UpdateLocation(position);
@@ -340,21 +349,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInLook...");
 
         int packet_id = 0x05;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 2 * sizeof(float) + 1]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + 2 * sizeof(float) + sizeof(bool));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteFloat(yaw, packet, offset);
-        PacketEncoder::WriteFloat(pitch, packet, offset);
-        PacketEncoder::WriteBoolean(on_ground, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteFloat(yaw, packet);
+        PacketEncoder::WriteFloat(pitch, packet);
+        PacketEncoder::WriteBoolean(on_ground, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
 
         // Internal updates
         this->bot->GetPlayer().UpdateRotation(yaw, pitch);
@@ -365,24 +375,25 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInPositionLook...");
 
         int packet_id = 0x06;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 3 * sizeof(double) + 2 * sizeof(float) + 1]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + 3 * sizeof(double) + 2 * sizeof(float) + 1);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteDouble(position.GetX(), packet, offset);
-        PacketEncoder::WriteDouble(position.GetY(), packet, offset);
-        PacketEncoder::WriteDouble(position.GetZ(), packet, offset);
-        PacketEncoder::WriteFloat(yaw, packet, offset);
-        PacketEncoder::WriteFloat(pitch, packet, offset);
-        PacketEncoder::WriteBoolean(on_ground, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteDouble(position.GetX(), packet);
+        PacketEncoder::WriteDouble(position.GetY(), packet);
+        PacketEncoder::WriteDouble(position.GetZ(), packet);
+        PacketEncoder::WriteFloat(yaw, packet);
+        PacketEncoder::WriteFloat(pitch, packet);
+        PacketEncoder::WriteBoolean(on_ground, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
 
         // Internal updates
         this->bot->GetPlayer().UpdateLocation(position);
@@ -394,21 +405,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInBlockDig...");
 
         int packet_id = 0x07;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + 10]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + 10);
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteByte((uint8_t)status, packet, offset);
-        PacketEncoder::WritePosition(location.GetX(), location.GetY(), location.GetZ(), packet, offset);
-        PacketEncoder::WriteByte((uint8_t)face, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteByte((uint8_t)status, packet);
+        PacketEncoder::WritePosition(location.GetX(), location.GetY(), location.GetZ(), packet);
+        PacketEncoder::WriteByte((uint8_t)face, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendBlockPlace(Vector<int> location, BlockFace face, Slot held_item, Vector<uint8_t> cursor_position)
@@ -419,12 +431,12 @@ namespace mcbot
         uint8_t* packet = new uint8_t[PacketEncoder::get_var_int_size(packet_id) + 10]{ 0 };
         size_t offset = 0;
 
-        PacketEncoder::write_var_int(packet_id, packet, offset);
-        PacketEncoder::write_position(location.get_x(), location.get_y(), location.get_z(), packet, offset);
-        PacketEncoder::write_byte((uint8_t)face, packet, offset);
+        PacketEncoder::write_var_int(packet_id, packet);
+        PacketEncoder::write_position(location.get_x(), location.get_y(), location.get_z(), packet);
+        PacketEncoder::write_byte((uint8_t)face, packet);
         PacketEncoder::write_short()
 
-        if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+        if (this->bot->get_socket().send_pack(packet) <= 0)
         {
             this->bot->log_error("Failed to send packet");
             print_winsock_error();
@@ -438,19 +450,20 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInHeldItemSlot...");
 
         int packet_id = 0x09;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(short)]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(short));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteShort(slot, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteShort(slot, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendArmAnimation()
@@ -458,18 +471,19 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInArmAnimation...");
 
         int packet_id = 0x0A;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id)]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendEntityAction(EntityAction action, int action_parameter)
@@ -477,21 +491,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEntityAction...");
 
         int packet_id = 0x0B;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, (int)action, action_parameter, this->bot->GetPlayer().GetID() })]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes({ packet_id, (int)action, action_parameter, this->bot->GetPlayer().GetID() }));
+        packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteVarInt(this->bot->GetPlayer().GetID(), packet, offset);
-        PacketEncoder::WriteVarInt((int)action, packet, offset);
-        PacketEncoder::WriteVarInt(action_parameter, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteVarInt(this->bot->GetPlayer().GetID(), packet);
+        PacketEncoder::WriteVarInt((int)action, packet);
+        PacketEncoder::WriteVarInt(action_parameter, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
 
@@ -500,21 +515,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEntityAction...");
 
         int packet_id = 0x0B;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes({ packet_id, player_id, (int)action, param })]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes({ packet_id, player_id, (int)action, param }));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteVarInt(player_id, packet, offset);
-        PacketEncoder::WriteVarInt((int)action, packet, offset);
-        PacketEncoder::WriteVarInt(param, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteVarInt(player_id, packet);
+        PacketEncoder::WriteVarInt((int)action, packet);
+        PacketEncoder::WriteVarInt(param, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendSetCreativeSlot(short slot, Slot item)
@@ -522,13 +538,13 @@ namespace mcbot
         //this->bot->log_debug(">>> Sending PacketPlayInSetCreativeSlot...");
 
         //int packet_id = 0x10;
-        //uint8_t* packet = new uint8_t[1024]{ 0 };
+        //Packet packet = Packet(1024);
         //size_t offset = 0;
 
-        //PacketEncoder::write_var_int(packet_id, packet, offset);
-        //PacketEncoder::write_short(slot, packet, offset);
+        //PacketEncoder::write_var_int(packet_id, packet);
+        //PacketEncoder::write_short(slot, packet);
 
-        //if (this->bot->get_socket().send_pack(packet, offset) <= 0)
+        //if (this->bot->get_socket().send_pack(packet) <= 0)
         //{
         //    this->bot->log_error("Failed to send packet");
         //    print_winsock_error();
@@ -542,20 +558,20 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInEnchantItem..");
 
         int packet_id = 0x11;
-        uint8_t* packet = new uint8_t[1024]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + 2 * sizeof(uint8_t));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteByte(window_id, packet, offset);
-        PacketEncoder::WriteByte(enchantment, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteByte(window_id, packet);
+        PacketEncoder::WriteByte(enchantment, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendUpdateSign(Vector<int> location, std::string line1, std::string line2, std::string line3, std::string line4)
@@ -563,23 +579,24 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInUpdateSign...");
 
         int packet_id = 0x12;
-        uint8_t* packet = new uint8_t[1024]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(long) + PacketEncoder::GetStringNumBytes({line1, line2, line3, line4}));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WritePosition(location.GetX(), location.GetY(), location.GetZ(), packet, offset);
-        PacketEncoder::WriteString(line1, packet, offset);
-        PacketEncoder::WriteString(line2, packet, offset);
-        PacketEncoder::WriteString(line3, packet, offset);
-        PacketEncoder::WriteString(line4, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WritePosition(location.GetX(), location.GetY(), location.GetZ(), packet);
+        PacketEncoder::WriteString(line1, packet);
+        PacketEncoder::WriteString(line2, packet);
+        PacketEncoder::WriteString(line3, packet);
+        PacketEncoder::WriteString(line4, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendAbilities(uint8_t flags, float flying_speed, float walking_speed)
@@ -587,21 +604,22 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInAbilities...");
 
         int packet_id = 0x13;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(uint8_t) + 2 * sizeof(float)]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + sizeof(uint8_t) + 2 * sizeof(float));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteByte(flags, packet, offset);
-        PacketEncoder::WriteFloat(flying_speed, packet, offset);
-        PacketEncoder::WriteFloat(walking_speed, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteByte(flags, packet);
+        PacketEncoder::WriteFloat(flying_speed, packet);
+        PacketEncoder::WriteFloat(walking_speed, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendTabComplete(std::string text, bool has_position, Vector<int> block_position)
@@ -609,25 +627,25 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInTabComplete...");
 
         int packet_id = 0x14;
-        uint8_t* packet = new uint8_t[1024]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetStringNumBytes(text) + sizeof(bool) + (has_position ? sizeof(long) : 0));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteString(text, packet, offset);
-        PacketEncoder::WriteBoolean(has_position, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteString(text, packet);
+        PacketEncoder::WriteBoolean(has_position, packet);
 
         if (has_position)
         {
-            PacketEncoder::WritePosition(block_position.GetX(), block_position.GetY(), block_position.GetZ(), packet, offset);
+            PacketEncoder::WritePosition(block_position.GetX(), block_position.GetY(), block_position.GetZ(), packet);
         }
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendSettings()
@@ -635,23 +653,23 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInSettings...");
 
         int packet_id = 0x15;
-        uint8_t* packet = new uint8_t[1024]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(1024);
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteString("en_us", packet, offset);
-        PacketEncoder::WriteByte(16, packet, offset); // render distance
-        PacketEncoder::WriteByte(0, packet, offset); // chat mode
-        PacketEncoder::WriteBoolean(true, packet, offset); // chat colors
-        PacketEncoder::WriteByte(0x7F, packet, offset); // skin parts
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteString("en_us", packet);
+        PacketEncoder::WriteByte(16, packet); // render distance
+        PacketEncoder::WriteByte(0, packet); // chat mode
+        PacketEncoder::WriteBoolean(true, packet); // chat colors
+        PacketEncoder::WriteByte(0x7F, packet); // skin parts
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendClientCommand(ClientStatus status)
@@ -659,19 +677,20 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInClientCommand...");
 
         int packet_id = 0x16;
-        uint8_t* packet = new uint8_t[PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetVarIntNumBytes((int)status)]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetVarIntNumBytes((int)status));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteVarInt((int)status, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteVarInt((int)status, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 
     void PacketSender::SendCustomPayload(std::string message)
@@ -679,18 +698,19 @@ namespace mcbot
         this->bot->GetLogger().LogDebug(">>> Sending PacketPlayInCustomPayload...");
 
         int packet_id = 0x17;
-        uint8_t* packet = new uint8_t[1024]{ 0 };
-        size_t offset = 0;
+        Packet packet = Packet(PacketEncoder::GetVarIntNumBytes(packet_id) + PacketEncoder::GetStringNumBytes(message));
+        packet.data = new uint8_t[packet.length];
 
-        PacketEncoder::WriteVarInt(packet_id, packet, offset);
-        PacketEncoder::WriteString(message, packet, offset);
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteString(message, packet);
 
-        if (this->bot->GetSocket().SendPacket(packet, offset) <= 0)
+        ASSERT_TRUE(packet.length == packet.offset, "Unexpected packet size");
+        if (this->bot->GetSocket().SendPacket(packet.data, packet.offset) <= 0)
         {
             this->bot->GetLogger().LogError("Failed to send packet");
             print_winsock_error();
         }
 
-        delete[] packet;
+        delete[] packet.data;
     }
 }

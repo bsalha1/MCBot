@@ -20,7 +20,7 @@ namespace mcbot
 		NBTTag(NBTType type, std::string name);
 		NBTTag();
 
-		void Serialize(uint8_t* packet, size_t& offset) const override;
+		void Serialize(Packet& packet) const override;
 
 		std::string GetName();
 		NBTType GetType();

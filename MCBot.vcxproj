@@ -181,7 +181,6 @@
     <ClCompile Include="EntityPlayer.cpp" />
     <ClCompile Include="PlayerProperty.cpp" />
     <ClCompile Include="ScriptRuntime.cpp" />
-    <ClCompile Include="Serializable.cpp" />
     <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="Statistic.cpp" />

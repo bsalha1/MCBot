@@ -13,6 +13,6 @@ namespace mcbot
 	{
 		this->length = length;
 		this->offset = 0;
-		this->data = new uint8_t[length];
+		this->data = NULL;
 	}
 }

@@ -4,7 +4,6 @@
 
 namespace mcbot
 {
-
     int ReadVarInt(uint8_t* packet)
     {
         int num_read = 0;
@@ -27,22 +26,6 @@ namespace mcbot
 
         i += num_read;
         return result;
-    }
-
-    int GetVarIntSize(int value)
-    {
-        int size = 0;
-        do
-        {
-            char temp = (char)(value & 0b01111111);
-            value >>= 7;
-            if (value != 0)
-            {
-                temp |= 0b10000000;
-            }
-            size++;
-        } while (value != 0);
-        return size;
     }
 
     Socket::Socket(SOCKET socket)
@@ -270,17 +253,17 @@ namespace mcbot
             else
             {
                 data_length = 0;
-                packet_length = GetVarIntSize(data_length) + length;
+                packet_length = PacketEncoder::GetVarIntNumBytes(data_length) + length;
             }
 
-            header_length = GetVarIntSize(packet_length) + GetVarIntSize(data_length);
+            header_length = PacketEncoder::GetVarIntNumBytes(packet_length) + PacketEncoder::GetVarIntNumBytes(data_length);
             header = new uint8_t[header_length]{ 0 };
             PacketEncoder::WriteVarInt(packet_length, header, offset);
             PacketEncoder::WriteVarInt(data_length, header, offset);
         }
         else
         {
-            header_length = GetVarIntSize(length);
+            header_length = PacketEncoder::GetVarIntNumBytes(length);
             header = new uint8_t[header_length]{ 0 };
             PacketEncoder::WriteVarInt(length, header, offset);
         }

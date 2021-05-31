@@ -22,12 +22,14 @@ namespace mcbot
 		PacketSender(MCBot* bot);
 		PacketSender();
 
-		// HTTP Mojang requests
+
+		// HTTP Mojang Requests //
 		int LoginMojang(std::string email, std::string password);
 		int VerifyAccessToken();
 		int SendSession(std::string server_id, std::string shared_secret, uint8_t* public_key, int public_key_length);
 
-		// Server outgoing requests
+
+		// TCP Server Outgoing Requests //
 		void SendHandshake(char* hostname, unsigned short port);
 		void SendLoginStart();
 		void SendEncryptionResponse(uint8_t* public_key, int public_key_length, uint8_t* verify_token, int verify_token_length, std::string shared_secret);

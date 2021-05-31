@@ -164,14 +164,11 @@
     <ClCompile Include="NBTTagCompound.cpp">
       <Filter>Source Files\minecraft</Filter>
     </ClCompile>
-    <ClCompile Include="Serializable.cpp">
-      <Filter>Source Files\minecraft</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="Packet.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -296,7 +293,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Packet.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

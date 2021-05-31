@@ -19,12 +19,12 @@ namespace mcbot
 		this->nbt = nbt;
 	}
 
-	void Slot::Serialize(uint8_t* packet, size_t& offset) const
+	void Slot::Serialize(Packet& packet) const
 	{
-		PacketEncoder::WriteShort(this->id, packet, offset);
-		PacketEncoder::WriteByte(this->count, packet, offset);
-		PacketEncoder::WriteShort(this->data, packet, offset);
-		this->nbt.Serialize(packet, offset);
+		PacketEncoder::WriteShort(this->id, packet);
+		PacketEncoder::WriteByte(this->count, packet);
+		PacketEncoder::WriteShort(this->data, packet);
+		this->nbt.Serialize(packet);
 	}
 
 	short Slot::GetID()

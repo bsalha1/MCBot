@@ -16,11 +16,11 @@ namespace mcbot
 		this->tags.push_back(tag);
 	}
 
-	void NBTTagCompound::Serialize(uint8_t* packet, size_t& offset) const
+	void NBTTagCompound::Serialize(Packet& packet) const
 	{
 		for (auto tag : this->tags)
 		{
-			tag.Serialize(packet, offset);
+			tag.Serialize(packet);
 		}
 	}
 

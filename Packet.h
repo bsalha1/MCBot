@@ -6,7 +6,6 @@ namespace mcbot
 {
 	struct Packet
 	{
-	public:
 		Packet();
 		Packet(size_t length);
 
