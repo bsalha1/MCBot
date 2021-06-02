@@ -12,6 +12,8 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
+#include "Assert.h"
+
 namespace mcbot
 {
 	class Socket
@@ -31,18 +33,17 @@ namespace mcbot
 	public:
 		Socket(SOCKET socket);
 		Socket();
-		~Socket();
 
-		// Encryption
+		// Encryption //
 		void InitEncryption(uint8_t* key, uint8_t* iv);
 		void CleanupEncryption();
-		int Encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* encrypted_text);
-		int Decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* decrypted_text);
+		int Encrypt(uint8_t* decrypted_bytes, int decrypted_len, uint8_t* encrypted_bytes);
+		int Decrypt(uint8_t* encrypted_bytes, int encrypted_len, uint8_t* decrypted_bytes);
 
-		// Compression
+		// Compression //
 		void InitCompression(int max_uncompressed_length);
-		int Decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length);
-		int Compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length);
+		int Decompress(uint8_t* compressed_bytes, int compressed_length, uint8_t* decompressed_bytes, int decompressed_length);
+		int Compress(uint8_t* compressed_bytes, int compressed_length, uint8_t* decompressed_bytes, int decompressed_length);
 
 		/*
 			Connects "this->socket" to host given the "addrinfo" struct.
@@ -53,16 +54,17 @@ namespace mcbot
 
 
 		/*
-			Reads "length" bytes of the packet stream. Decrypts then decompresses the packet (when they are enabled).
+			Reads, decrypts and then decompresses "length" bytes from the packet stream (if encryption and compression are enabled).
+			@param packet: the output packet
 			@param length: number of bytes to read from packet stream
 			@param decompressed_length: number of bytes of packet when it is decompressed (if 0 then it is not compressed so it does not need to be decompressed)
 			@return number of bytes the output packet has
 		*/
-		int RecvPacket(uint8_t* packet, int length, int decompressed_length = 0);
+		int ReadPacket(uint8_t* packet, int length, int decompressed_length = 0);
 
 
 		/*
-			Sends "packet" of "length" bytes. Compresses then encrypts the packet (compresses only if size of packet is greater than "this->max_uncompressed_length").
+			Compresses, encrypts and then sends "length" bytes of "packet" (if encryption and compression are enabled and compresses only if size of packet is greater than "this->max_uncompressed_length").
 			@param packet: packet to send
 			@param length: size of packet to send
 			@return size of packet sent

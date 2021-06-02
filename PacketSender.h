@@ -2,8 +2,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "Assert.h"
 #include "PacketEncoder.h"
-
 #include "Vector.h"
 #include "DaftHash.h"
 #include "MojangSession.h"

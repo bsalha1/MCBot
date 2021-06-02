@@ -42,7 +42,7 @@ namespace mcbot
         do {
 
             uint8_t packet[2] = { 0 };
-            size_t bytes_read = this->bot->GetSocket().RecvPacket(packet, 1);
+            size_t bytes_read = this->bot->GetSocket().ReadPacket(packet, 1);
             if (bytes_read < 0)
             {
                 std::cout << "Failed to receive packet" << std::endl;
@@ -67,9 +67,8 @@ namespace mcbot
     void PacketReceiver::ReadAndHandleNextPacket()
     {
         Packet packet = this->ReadNextPacket();
-        if (packet.data == NULL)
+        if (ASSERT_TRUE(packet.data != NULL, "Invalid packet received"))
         {
-            this->bot->GetLogger().LogError("Invalid packet received");
             return;
         }
 
@@ -98,10 +97,9 @@ namespace mcbot
 
         // Receive Packet //
         uint8_t* data = new uint8_t[decompressed_length == 0 ? length : decompressed_length]{ 0 };
-        int bytes_read = this->bot->GetSocket().RecvPacket(data, length, decompressed_length);
-        if (bytes_read < 0)
+        int bytes_read = this->bot->GetSocket().ReadPacket(data, length, decompressed_length);
+        if (ASSERT_TRUE(bytes_read >= 0, "Failed to receive packet"))
         {
-            this->bot->GetLogger().LogError("Failed to receive packet");
             delete[] data;
             return Packet(-1);
         }

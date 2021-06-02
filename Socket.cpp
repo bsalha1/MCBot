@@ -4,7 +4,18 @@
 
 namespace mcbot
 {
-    int ReadVarInt(uint8_t* packet)
+    std::string get_openssl_error_string()
+    {
+        BIO* bio = BIO_new(BIO_s_mem());
+        ERR_print_errors(bio);
+        char* buf;
+        size_t len = BIO_get_mem_data(bio, &buf);
+        std::string ret(buf, len);
+        BIO_free(bio);
+        return ret;
+    }
+
+    int read_var_int(uint8_t* packet)
     {
         int num_read = 0;
         int result = 0;
@@ -52,14 +63,6 @@ namespace mcbot
         this->max_uncompressed_length = -1;
     }
 
-    Socket::~Socket()
-    {
-        if (this->encryption_enabled)
-        {
-            this->CleanupEncryption();
-        }
-    }
-
     void Socket::InitEncryption(uint8_t* key, uint8_t* iv)
     {
         this->key = key;
@@ -94,40 +97,39 @@ namespace mcbot
 
     void Socket::CleanupEncryption()
     {
-        this->encryption_enabled = false;
-        EVP_CIPHER_CTX_free(encrypt_ctx);
-        EVP_CIPHER_CTX_free(decrypt_ctx);
+        if (this->encryption_enabled)
+        {
+            this->encryption_enabled = false;
+            EVP_CIPHER_CTX_free(encrypt_ctx);
+            EVP_CIPHER_CTX_free(decrypt_ctx);
+        }
     }
 
     // Encrypt using AES-128 CFB8
-    int Socket::Encrypt(uint8_t* decrypted_text, int decrypted_len, uint8_t* encrypted_text)
+    int Socket::Encrypt(uint8_t* decrypted_bytes, int decrypted_len, uint8_t* encrypted_bytes)
     {
         int len;
-        int encrypted_len;
-        if (EVP_EncryptUpdate(encrypt_ctx, encrypted_text, &len, decrypted_text, decrypted_len) != 1)
+        if (ASSERT_TRUE(EVP_EncryptUpdate(encrypt_ctx, encrypted_bytes, &len, decrypted_bytes, decrypted_len) == 1, "EVP_EncryptUpdate() error: " + get_openssl_error_string()))
         {
-            std::cerr << "EVP_EncryptUpdate error" << std::endl;
+            return -1;
         }
-        encrypted_len = len;
 
-        return encrypted_len;
+        return len;
     }
 
     // Decrypt AES-128 CFB8 text
-    int Socket::Decrypt(uint8_t* encrypted_text, int encrypted_len, uint8_t* decrypted_text)
+    int Socket::Decrypt(uint8_t* encrypted_bytes, int encrypted_len, uint8_t* decrypted_bytes)
     {
         int len;
-        int decrypted_len;
-        if (EVP_DecryptUpdate(decrypt_ctx, decrypted_text, &len, encrypted_text, encrypted_len) != 1)
+        if(ASSERT_TRUE(EVP_DecryptUpdate(decrypt_ctx, decrypted_bytes, &len, encrypted_bytes, encrypted_len) == 1, "EVP_DecryptUpdate() error: " + get_openssl_error_string()))
         {
-            std::cerr << "EVP_DecryptUpdate error" << std::endl;
+            return -1;
         }
-        decrypted_len = len;
 
-        return decrypted_len;
+        return len;
     }
 
-    int Socket::Decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+    int Socket::Decompress(uint8_t* compressed_bytes, int compressed_length, uint8_t* decompressed_bytes, int decompressed_length)
     {
         // Configure Stream
         z_stream stream;
@@ -135,27 +137,26 @@ namespace mcbot
         stream.zfree = Z_NULL;
         stream.opaque = Z_NULL;
         stream.avail_in = (uInt)compressed_length;
-        stream.next_in = (Bytef*)compressed;
+        stream.next_in = (Bytef*)compressed_bytes;
         stream.avail_out = (uInt)decompressed_length;
-        stream.next_out = (Bytef*)decompressed;
+        stream.next_out = (Bytef*)decompressed_bytes;
 
         // Decompress
-        int ret = inflateInit(&stream);
-        if (ret != Z_OK)
+        if (ASSERT_TRUE(inflateInit(&stream) == Z_OK, "inflateInit() Error"))
         {
-            return ret;
+            return -1;
         }
 
-        ret = inflate(&stream, Z_NO_FLUSH);
-        if (ret == Z_STREAM_ERROR)
+        if (ASSERT_TRUE(inflate(&stream, Z_NO_FLUSH) != Z_STREAM_ERROR, "inflate() error"))
         {
-            return ret;
+            return -1;
         }
+
         inflateEnd(&stream);
         return Z_OK;
     }
 
-    int Socket::Compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length)
+    int Socket::Compress(uint8_t* compressed_bytes, int compressed_length, uint8_t* decompressed_bytes, int decompressed_length)
     {
         // Configure Stream
         z_stream stream;
@@ -163,22 +164,21 @@ namespace mcbot
         stream.zfree = Z_NULL;
         stream.opaque = Z_NULL;
         stream.avail_in = (uInt)decompressed_length;
-        stream.next_in = (Bytef*)decompressed;
+        stream.next_in = (Bytef*)decompressed_bytes;
         stream.avail_out = (uInt)compressed_length;
-        stream.next_out = (Bytef*)compressed;
+        stream.next_out = (Bytef*)compressed_bytes;
 
         // Compress
-        int ret = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
-        if (ret != Z_OK)
+        if (ASSERT_TRUE(deflateInit(&stream, Z_DEFAULT_COMPRESSION) == Z_OK, "deflateInit() error"))
         {
-            return ret;
+            return -1;
         }
 
-        ret = deflate(&stream, Z_NO_FLUSH);
-        if (ret == Z_STREAM_ERROR)
+        if(ASSERT_TRUE(deflate(&stream, Z_NO_FLUSH) != Z_STREAM_ERROR, "deflate() error"))
         {
-            return ret;
+            return -1;
         }
+
         deflateEnd(&stream);
         return Z_OK;
     }
@@ -194,7 +194,7 @@ namespace mcbot
         return connect(this->socket, info->ai_addr, (int)info->ai_addrlen);
     }
 
-    int Socket::RecvPacket(uint8_t* packet, int length, int decompressed_length)
+    int Socket::ReadPacket(uint8_t* packet, int length, int decompressed_length)
     {
         if (this->encryption_enabled)
         {
@@ -202,23 +202,35 @@ namespace mcbot
             uint8_t* decrypted_packet = new uint8_t[length]{ 0 };
             int bytes_read = recv(this->socket, (char*)encrypted_packet, length, 0);
 
+            // Decrypt Packet //
             int decrypted_packet_length = Decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
             delete[] encrypted_packet;
+            if (ASSERT_TRUE(decrypted_packet_length >= 0, "Failed to decrypt packet"))
+            {
+                delete[] decrypted_packet;
+                return -1;
+            }
 
+            // Decompress Packet (if compressed) //
             if (this->compression_enabled && (length > 1) && (decompressed_length != 0))
             {
                 uint8_t* decompressed_packet = new uint8_t[decompressed_length]{ 0 };
 
-                Decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
-                memcpy(packet, decompressed_packet, decompressed_length);
+                if (ASSERT_TRUE(Decompress(decrypted_packet, length, decompressed_packet, decompressed_length) >= 0, "Failed to decompress packet"))
+                {
+                    delete[] decrypted_packet;
+                    delete[] decompressed_packet;
+                    return -1;
+                }
 
+                std::copy(decompressed_packet, decompressed_packet + decompressed_length, packet);
                 delete[] decrypted_packet;
                 delete[] decompressed_packet;
                 return decompressed_length;
             }
-            else // Packet not compressed here
+            else // Packet is not compressed
             {
-                memcpy(packet, decrypted_packet, decrypted_packet_length);
+                std::copy(decrypted_packet, decrypted_packet + decrypted_packet_length, packet);
                 delete[] decrypted_packet;
                 return decrypted_packet_length;
             }
@@ -227,7 +239,6 @@ namespace mcbot
         else
         {
             // TODO: implement compression here
-
             return recv(this->socket, (char*)packet, length, 0);
         }
     }
@@ -246,7 +257,7 @@ namespace mcbot
 
             if (length > this->max_uncompressed_length)
             {
-                // TODO
+                // TODO: handle compressed fields
                 data_length = length;
             }
             else
@@ -280,6 +291,13 @@ namespace mcbot
             uint8_t* encrypted_packet = new uint8_t[full_length]{ 0 };
             int encrypted_length = Encrypt((uint8_t*)full_packet, full_length, encrypted_packet);
             delete[] full_packet;
+            if (ASSERT_TRUE(encrypted_length >= 0, "Failed to encrypt packet"))
+            {
+                delete[] encrypted_packet;
+                return -1;
+            }
+
+            // TODO: handle compression
 
             // Send //
             int ret = send(this->socket, (char*)encrypted_packet, encrypted_length, 0);

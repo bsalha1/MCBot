@@ -31,15 +31,6 @@
 
 #define TPS 20 // Ticks per second
 
-inline bool assert_line_trace(bool cond, const char* file, int line, std::string msg)
-{
-	if (!(cond)) std::cerr << "[ASSERT]: " << msg << " @ " << file << ":" << line << std::endl;
-
-	return !(cond);
-}
-
-#define ASSERT_TRUE(cond, msg) assert_line_trace(cond, __FILE__, __LINE__, msg)
-
 namespace mcbot
 {
 	// Declared here due to circular dependency
@@ -115,6 +106,14 @@ namespace mcbot
 		*/
 		std::thread StartPositionThread();
 
+		
+		/*
+			Send packet via "this->socket" 
+			@param packet: packet to send
+			@return number of bytes sent
+		*/
+		int SendPacket(Packet packet);
+
 
 		/*
 			Initialize socket to encrypt and decrypt on sending and receiving
@@ -170,7 +169,7 @@ namespace mcbot
 		MojangSession GetSession() const;
 		bool IsConnected() const;
 		State GetState() const;
-		Socket& GetSocket();
+		Socket GetSocket();
 		PacketSender& GetPacketSender();
 		PacketReceiver& GetPacketReceiver();
 		Logger& GetLogger();

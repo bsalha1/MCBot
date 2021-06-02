@@ -28,129 +28,6 @@ namespace mcbot
         printf("%S\n", s);
     }
 
-    void MCBot::UpdatePlayerInfo(PlayerInfoAction action, int length, Packet& packet)
-    {
-        for (int i = 0; i < length; i++)
-        {
-            UUID uuid = PacketDecoder::ReadUUID(packet);
-
-            this->logger.LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
-
-            switch (action)
-            {
-            case PlayerInfoAction::ADD_PLAYER:
-            {
-                std::string name = PacketDecoder::ReadString(packet);
-                int properties_length = PacketDecoder::ReadVarInt(packet);
-                std::list<PlayerProperty> properties = PacketDecoder::ReadPropertyArray(properties_length, packet);
-                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet);
-                int ping = PacketDecoder::ReadVarInt(packet);
-                bool has_display_name = PacketDecoder::ReadBoolean(packet);
-                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : name;
-
-                EntityPlayer player = EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
-
-                // If this player is the bot player
-                if (name == this->session.GetUsername())
-                {
-                    // TODO: just copy the player variable over
-                    this->player.SetName(name);
-                    this->player.SetUUID(uuid);
-                    this->player.SetProperties(properties);
-                    this->player.SetGamemode(gamemode);
-                    this->player.SetPing(ping);
-                    this->player.SetDisplayName(display_name);
-                }
-
-                this->player_registry.RegisterValue(uuid, player);
-
-                this->logger.LogDebug("\t\tName: " + name + '\n'
-                    + "\t\tGamemode: " + StringUtils::to_string(gamemode) + '\n'
-                    + "\t\tPing: " + std::to_string(ping));
-                break;
-            }
-
-            case PlayerInfoAction::UPDATE_GAMEMODE:
-            {
-                try
-                {
-                    EntityPlayer& player = this->player_registry.GetValue(uuid);
-                }
-                catch (...)
-                {
-                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
-                    return;
-                }
-                Gamemode gamemode = (Gamemode) PacketDecoder::ReadVarInt(packet);
-                player.SetGamemode(gamemode);
-                break;
-            }
-
-            case PlayerInfoAction::UPDATE_LATENCY:
-            {
-                try
-                {
-                    EntityPlayer& player = this->player_registry.GetValue(uuid);
-                }
-                catch (...)
-                {
-                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
-                    return;
-                }
-                int ping = PacketDecoder::ReadVarInt(packet);
-
-                player.SetPing(ping);
-                break;
-            }
-
-            case PlayerInfoAction::UPDATE_DISPLAY_NAME:
-            {
-                try
-                {
-                    EntityPlayer& player = this->player_registry.GetValue(uuid);
-                }
-                catch (...)
-                {
-                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
-                    return;
-                }
-
-                bool has_display_name = PacketDecoder::ReadBoolean(packet);
-                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : "";
-                if (has_display_name)
-                {
-                    player.SetDisplayName(display_name);
-                }
-
-                break;
-            }
-
-            case PlayerInfoAction::REMOVE_PLAYER:
-            {
-                this->player_registry.RemoveValue(uuid);
-                break;
-            }
-            default:
-                break;
-            }
-        }
-    }
-
-    void MCBot::UpdatePlayerRotation(float yaw, float pitch)
-    {
-        this->player.UpdateRotation(yaw, pitch);
-    }
-
-    void MCBot::UpdatePlayerInventory(std::array<Slot, 45> player_inventory)
-    {
-        this->player.UpdateInventory(player_inventory);
-    }
-
-	void MCBot::UpdatePlayerLocation(Vector<double> location)
-	{
-        this->player.UpdateLocation(location);
-	}
-
     MCBot::MCBot()
     {
         this->connected = false;
@@ -174,6 +51,7 @@ namespace mcbot
     {
         delete this->packet_receiver;
         delete this->packet_sender;
+        this->sock.CleanupEncryption();
     }
 
     int MCBot::ConnectToServer(char* hostname, char* port)
@@ -472,6 +350,134 @@ namespace mcbot
         return player_location.GetY() == ground_location.GetY();
     }
 
+    void MCBot::UpdatePlayerInfo(PlayerInfoAction action, int length, Packet& packet)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            UUID uuid = PacketDecoder::ReadUUID(packet);
+
+            this->logger.LogDebug("\tPlayer Update (" + uuid.ToString() + "): " + StringUtils::to_string(action));
+
+            switch (action)
+            {
+            case PlayerInfoAction::ADD_PLAYER:
+            {
+                std::string name = PacketDecoder::ReadString(packet);
+                int properties_length = PacketDecoder::ReadVarInt(packet);
+                std::list<PlayerProperty> properties = PacketDecoder::ReadPropertyArray(properties_length, packet);
+                Gamemode gamemode = (Gamemode)PacketDecoder::ReadVarInt(packet);
+                int ping = PacketDecoder::ReadVarInt(packet);
+                bool has_display_name = PacketDecoder::ReadBoolean(packet);
+                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : name;
+
+                EntityPlayer player = EntityPlayer(-1, uuid, name, properties, gamemode, ping, display_name);
+
+                // If this player is the bot player
+                if (name == this->session.GetUsername())
+                {
+                    // TODO: just copy the player variable over
+                    this->player.SetName(name);
+                    this->player.SetUUID(uuid);
+                    this->player.SetProperties(properties);
+                    this->player.SetGamemode(gamemode);
+                    this->player.SetPing(ping);
+                    this->player.SetDisplayName(display_name);
+                }
+
+                this->player_registry.RegisterValue(uuid, player);
+
+                this->logger.LogDebug("\t\tName: " + name + '\n'
+                    + "\t\tGamemode: " + StringUtils::to_string(gamemode) + '\n'
+                    + "\t\tPing: " + std::to_string(ping));
+                break;
+            }
+
+            case PlayerInfoAction::UPDATE_GAMEMODE:
+            {
+                try
+                {
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
+                }
+                catch (...)
+                {
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
+                    return;
+                }
+                Gamemode gamemode = (Gamemode)PacketDecoder::ReadVarInt(packet);
+                player.SetGamemode(gamemode);
+                break;
+            }
+
+            case PlayerInfoAction::UPDATE_LATENCY:
+            {
+                try
+                {
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
+                }
+                catch (...)
+                {
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
+                    return;
+                }
+                int ping = PacketDecoder::ReadVarInt(packet);
+
+                player.SetPing(ping);
+                break;
+            }
+
+            case PlayerInfoAction::UPDATE_DISPLAY_NAME:
+            {
+                try
+                {
+                    EntityPlayer& player = this->player_registry.GetValue(uuid);
+                }
+                catch (...)
+                {
+                    this->logger.LogError("Failed to find player of UUID " + uuid.ToString());
+                    return;
+                }
+
+                bool has_display_name = PacketDecoder::ReadBoolean(packet);
+                std::string display_name = has_display_name ? PacketDecoder::ReadString(packet) : "";
+                if (has_display_name)
+                {
+                    player.SetDisplayName(display_name);
+                }
+
+                break;
+            }
+
+            case PlayerInfoAction::REMOVE_PLAYER:
+            {
+                this->player_registry.RemoveValue(uuid);
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }
+
+    void MCBot::UpdatePlayerRotation(float yaw, float pitch)
+    {
+        this->player.UpdateRotation(yaw, pitch);
+    }
+
+    void MCBot::UpdatePlayerInventory(std::array<Slot, 45> player_inventory)
+    {
+        this->player.UpdateInventory(player_inventory);
+    }
+
+    void MCBot::UpdatePlayerLocation(Vector<double> location)
+    {
+        this->player.UpdateLocation(location);
+    }
+
+    int MCBot::SendPacket(Packet packet)
+    {
+        return this->sock.SendPacket(packet.data, packet.offset);
+    }
+
     void MCBot::InitEncryption(uint8_t* key, uint8_t* iv)
     {
         this->sock.InitEncryption(key, iv);
@@ -514,7 +520,6 @@ namespace mcbot
         // Collision detection
         if (!dest_block.CanPassThrough())
         {
-            std::cout << dest_block.GetID() << std::endl;
             throw CollisionException(dest_block, dest);
         }
 
@@ -553,7 +558,7 @@ namespace mcbot
         return this->state;
     }
 
-    Socket& MCBot::GetSocket()
+    Socket MCBot::GetSocket()
     {
         return this->sock;
     }
