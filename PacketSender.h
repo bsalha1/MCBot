@@ -43,8 +43,7 @@ namespace mcbot
 		void SendBlockPlace(Vector<int> location, BlockFace face, Slot held_item, Vector<uint8_t> cursor_position);
 		void SendHeldItemSlot(short slot);
 		void SendArmAnimation();
-		void SendEntityAction(EntityAction action, int action_parameter = 0);
-		void SendEntityAction(int player_id, EntityAction action, int param);
+		void SendEntityAction(int player_entity_id, EntityAction action, int param = 0);
 		void SendSetCreativeSlot(short slot, Slot item);
 		void SendEnchantItem(uint8_t window_id, uint8_t enchantment);
 		void SendUpdateSign(Vector<int> location, std::string line1, std::string line2, std::string line3, std::string line4);

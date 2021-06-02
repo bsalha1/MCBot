@@ -183,10 +183,10 @@ namespace mcbot
         }
     }
 
-    Buffer<uint8_t> PacketDecoder::ReadByteArray(int length, Packet& packet)
+    Buffer<uint8_t> PacketDecoder::ReadByteArray(size_t length, Packet& packet)
     {
         Buffer<uint8_t> buffer = Buffer<uint8_t>(length);
-        for (int i = 0; i < length; i++)
+        for (size_t i = 0; i < length; i++)
         {
             buffer.put(packet.data[packet.offset++]);
         }
@@ -360,7 +360,7 @@ namespace mcbot
 
         case 23:
         {
-            float block_state = ReadVarInt(packet);
+            int block_state = ReadVarInt(packet);
             return Particle(id, block_state);
         }
 

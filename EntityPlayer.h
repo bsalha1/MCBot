@@ -34,25 +34,27 @@ namespace mcbot
 
 		EntityPlayer();
 
+		void UpdateInventory(std::array<Slot, 45> inventory);
+
 		void SetGamemode(Gamemode gamemode);
 		void SetPing(int ping);
 		void SetDisplayName(std::string display_name);
 		void SetName(std::string name);
 		void SetUUID(UUID uuid);
 		void SetProperties(std::list<PlayerProperty> properties);
-		void SetInventory(std::array<Slot, 45> inventory);
 
-		std::array<Slot, 45> GetInventory();
-		UUID GetUUID();
-		std::string GetName();
-		std::list<PlayerProperty> GetProperties();
-		Gamemode GetGamemode();
-		Vector<double> GetLocation();
-		int GetPing();
-		float GetPitch();
-		float GetYaw();
-		bool HasDisplayName();
-		std::string GetDisplayName();
+		// Private variable access
+		std::array<Slot, 45> GetInventory() const;
+		UUID GetUUID() const;
+		std::string GetName() const;
+		std::list<PlayerProperty> GetProperties() const;
+		Gamemode GetGamemode() const;
+		Vector<double> GetLocation() const;
+		int GetPing() const;
+		float GetPitch() const;
+		float GetYaw() const;
+		bool HasDisplayName() const;
+		std::string GetDisplayName() const;
 
 		friend bool operator==(const EntityPlayer& lhs, const EntityPlayer& rhs);
 		friend bool operator!=(const EntityPlayer& lhs, const EntityPlayer& rhs);

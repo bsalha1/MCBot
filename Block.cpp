@@ -13,9 +13,9 @@ namespace mcbot
 		this->id = 0;
 	}
 
-	bool Block::IsWeak()
+	bool Block::CanPassThrough()
 	{
-		return BlockUtils::IsWeak(this->id);
+		return BlockUtils::CanPassThrough(this->id);
 	}
 
 	int Block::GetID()

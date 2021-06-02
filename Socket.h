@@ -44,9 +44,30 @@ namespace mcbot
 		int Decompress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length);
 		int Compress(uint8_t* compressed, int compressed_length, uint8_t* decompressed, int decompressed_length);
 
-		int RecvPacket(uint8_t* packet, int length, int decompressed_length = 0);
-		int SendPacket(uint8_t* packet, size_t length);
+		/*
+			Connects "this->socket" to host given the "addrinfo" struct.
+			@param info: the address info
+			@return the error code of connect()
+		*/
 		int ConnectSocket(addrinfo* info);
+
+
+		/*
+			Reads "length" bytes of the packet stream. Decrypts then decompresses the packet (when they are enabled).
+			@param length: number of bytes to read from packet stream
+			@param decompressed_length: number of bytes of packet when it is decompressed (if 0 then it is not compressed so it does not need to be decompressed)
+			@return number of bytes the output packet has
+		*/
+		int RecvPacket(uint8_t* packet, int length, int decompressed_length = 0);
+
+
+		/*
+			Sends "packet" of "length" bytes. Compresses then encrypts the packet (compresses only if size of packet is greater than "this->max_uncompressed_length").
+			@param packet: packet to send
+			@param length: size of packet to send
+			@return size of packet sent
+		*/
+		int SendPacket(uint8_t* packet, size_t length);
 	};
 }
 

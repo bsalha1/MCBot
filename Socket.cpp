@@ -189,6 +189,11 @@ namespace mcbot
         this->compression_enabled = true;
     }
 
+    int Socket::ConnectSocket(addrinfo* info)
+    {
+        return connect(this->socket, info->ai_addr, (int)info->ai_addrlen);
+    }
+
     int Socket::RecvPacket(uint8_t* packet, int length, int decompressed_length)
     {
         if (this->encryption_enabled)
@@ -200,35 +205,29 @@ namespace mcbot
             int decrypted_packet_length = Decrypt((unsigned char*)encrypted_packet, length, decrypted_packet);
             delete[] encrypted_packet;
 
-            if (this->compression_enabled && length > 1)
+            if (this->compression_enabled && (length > 1) && (decompressed_length != 0))
             {
-                if (decompressed_length == 0)
-                {
-                    memcpy(packet, decrypted_packet, decrypted_packet_length);
-                    delete[] decrypted_packet;
-                }
-                else
-                {
-                    uint8_t* decompressed_packet = new uint8_t[decompressed_length]{ 0 };
+                uint8_t* decompressed_packet = new uint8_t[decompressed_length]{ 0 };
 
-                    Decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
-                    memcpy(packet, decompressed_packet, decompressed_length);
+                Decompress(decrypted_packet, length, decompressed_packet, decompressed_length);
+                memcpy(packet, decompressed_packet, decompressed_length);
 
-                    delete[] decrypted_packet;
-                    delete[] decompressed_packet;
-                    return decompressed_length;
-                }
+                delete[] decrypted_packet;
+                delete[] decompressed_packet;
+                return decompressed_length;
             }
-            else
+            else // Packet not compressed here
             {
                 memcpy(packet, decrypted_packet, decrypted_packet_length);
                 delete[] decrypted_packet;
+                return decrypted_packet_length;
             }
-            return decrypted_packet_length;
 
         }
         else
         {
+            // TODO: implement compression here
+
             return recv(this->socket, (char*)packet, length, 0);
         }
     }
@@ -293,11 +292,6 @@ namespace mcbot
             delete[] full_packet;
             return  ret;
         }
-    }
-
-    int Socket::ConnectSocket(addrinfo* info)
-    {
-        return connect(this->socket, info->ai_addr, (int)info->ai_addrlen);
     }
 }
 

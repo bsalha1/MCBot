@@ -29,6 +29,7 @@ namespace mcbot
 		void UpdateMotion(Vector<double> motion);
 		void UpdateRotation(float yaw, float pitch);
 		void UpdateYaw(float yaw);
+		void UpdatePitch(float pitch);
 
 		void Die();
 

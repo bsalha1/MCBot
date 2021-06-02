@@ -31,10 +31,18 @@
 
 #define TPS 20 // Ticks per second
 
-#define ASSERT_TRUE(cond, msg) if(!(cond)) std::cerr << "[ASSERT]: " msg << " @ " << __FILE__ << ":" << __LINE__  << std::endl;
+inline bool assert_line_trace(bool cond, const char* file, int line, std::string msg)
+{
+	if (!(cond)) std::cerr << "[ASSERT]: " << msg << " @ " << file << ":" << line << std::endl;
+
+	return !(cond);
+}
+
+#define ASSERT_TRUE(cond, msg) assert_line_trace(cond, __FILE__, __LINE__, msg)
 
 namespace mcbot
 {
+	// Declared here due to circular dependency
 	class PacketReceiver;
 	class PacketSender;
 
@@ -67,6 +75,7 @@ namespace mcbot
 		MCBot();
 		~MCBot();
 
+
 		/*
 			Connect local socket to server
 			@param hostname: The hostname of the server to connect to
@@ -94,18 +103,32 @@ namespace mcbot
 
 
 		/*
-			Receive packets continually until `connected = false`
+			Receive packets and dispatch the necessary tasks continually until `connected = false`
 			@return thread object
 		*/
 		std::thread StartPacketReceiverThread();
 
 
 		/*
-			Send current position every tick
+			Send player's current position, yaw and pitch every tick
 			@return thread object
 		*/
 		std::thread StartPositionThread();
 
+
+		/*
+			Initialize socket to encrypt and decrypt on sending and receiving
+			@param key: the key to use in encryption
+			@param iv: the initial value to use in encryption
+		*/
+		void InitEncryption(uint8_t* key, uint8_t* iv);
+
+
+		/*
+			Initialize socket to compress and decompress on sending and receiving
+			@param max_uncompressed_length: if sending packet greater than this size, compress it, otherwise do not compress it
+		*/
+		void InitCompression(int max_uncompressed_length);
 
 
 		// High-Level Interaction Methods //
@@ -125,13 +148,16 @@ namespace mcbot
 		Registry<std::pair<int, int>, Chunk>& GetChunkRegistry();
 
 		void UpdatePlayerInfo(PlayerInfoAction action, int players_length, Packet& packet);
+		void UpdatePlayerLocation(Vector<double> location);
+		void UpdatePlayerRotation(float yaw, float pitch);
+		void UpdatePlayerInventory(std::array<Slot, 45> player_inventory);
 
 
 		// Chunk Management //
 		Chunk& GetChunk(int x, int z);
 		Chunk& GetChunk(Vector<int> location);
 		Chunk& GetChunk(Vector<double> location);
-		std::list<Chunk> GetChunks(int x, int z, unsigned int radius);
+		std::list<Chunk> GetChunks(int x, int z, int radius);
 
 
 		// Setters //
@@ -141,14 +167,14 @@ namespace mcbot
 
 
 		// Variable Access //
-		MojangSession GetSession();
-		bool IsConnected();
-		State GetState();
+		MojangSession GetSession() const;
+		bool IsConnected() const;
+		State GetState() const;
 		Socket& GetSocket();
 		PacketSender& GetPacketSender();
 		PacketReceiver& GetPacketReceiver();
 		Logger& GetLogger();
-		EntityPlayer& GetPlayer();
+		EntityPlayer GetPlayer() const;
 	};
 }
 

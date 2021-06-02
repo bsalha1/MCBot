@@ -5,7 +5,7 @@
 
 namespace mcbot
 {
-    static std::string GetRandomHexBytes(std::size_t num_bytes)
+    static std::string get_random_hex_bytes(std::size_t num_bytes)
     {
         std::string out;
 
@@ -20,14 +20,16 @@ namespace mcbot
         return out;
     }
 
-    PacketReceiver::PacketReceiver(MCBot* bot) : player(&(bot->GetPlayer()))
+    PacketReceiver::PacketReceiver(MCBot* bot)
     {
         this->bot = bot;
+        this->compression_enabled = false;
     }
 
-    PacketReceiver::PacketReceiver() : player(NULL)
+    PacketReceiver::PacketReceiver()
     {
         this->bot = NULL;
+        this->compression_enabled = false;
     }
 
 
@@ -62,20 +64,9 @@ namespace mcbot
         return result;
     }
 
-    void PacketReceiver::RecvPacket()
+    void PacketReceiver::ReadAndHandleNextPacket()
     {
-        int length = this->ReadNextVarInt();
-        this->bot->GetLogger().LogDebug("Length: " + std::to_string(length));
-
-        int decompressed_length = 0;
-        if (this->compression_enabled)
-        {
-            decompressed_length = this->ReadNextVarInt();
-            length -= PacketEncoder::GetVarIntNumBytes(decompressed_length);
-            this->bot->GetLogger().LogDebug("Decompressed length: " + std::to_string(decompressed_length));
-        }
-
-        Packet packet = this->ReadNextPacket(length, decompressed_length);
+        Packet packet = this->ReadNextPacket();
         if (packet.data == NULL)
         {
             this->bot->GetLogger().LogError("Invalid packet received");
@@ -85,30 +76,44 @@ namespace mcbot
         int packet_id = PacketDecoder::ReadVarInt(packet);
         this->bot->GetLogger().LogDebug("ID: " + std::to_string(packet_id));
 
-        HandleRecvPacket(packet_id, packet);
+        HandlePacket(packet_id, packet);
 
         delete[] packet.data;
     }
 
-    Packet PacketReceiver::ReadNextPacket(int length, int decompressed_length)
+    Packet PacketReceiver::ReadNextPacket()
     {
-        uint8_t* data = new uint8_t[decompressed_length == 0 ? length : decompressed_length]{ 0 };
+        // Get Total Packet Length //
+        int length = this->ReadNextVarInt();
+        this->bot->GetLogger().LogDebug("Length: " + std::to_string(length));
 
+        // Handle Compression Sizes //
+        int decompressed_length = 0;
+        if (this->compression_enabled)
+        {
+            decompressed_length = this->ReadNextVarInt();
+            length -= PacketEncoder::GetVarIntNumBytes(decompressed_length);
+            this->bot->GetLogger().LogDebug("Decompressed length: " + std::to_string(decompressed_length));
+        }
+
+        // Receive Packet //
+        uint8_t* data = new uint8_t[decompressed_length == 0 ? length : decompressed_length]{ 0 };
         int bytes_read = this->bot->GetSocket().RecvPacket(data, length, decompressed_length);
         if (bytes_read < 0)
         {
             this->bot->GetLogger().LogError("Failed to receive packet");
             delete[] data;
-            return Packet(bytes_read);
+            return Packet(-1);
         }
         this->bot->GetLogger().LogDebug("Received Packet: " + std::to_string(bytes_read) + "bytes");
 
+        // Wrap Data //
         Packet packet = Packet(bytes_read);
         packet.data = data;
         return packet;
     }
 
-    void PacketReceiver::HandleRecvPacket(int packet_id, Packet packet)
+    void PacketReceiver::HandlePacket(int packet_id, Packet packet)
     {
         if (this->bot->GetState() == State::HANDSHAKE)
         {
@@ -343,7 +348,7 @@ namespace mcbot
 
         this->bot->GetLogger().LogDebug("\tMax Uncompressed Length: " + std::to_string(max_uncompressed_length));
         this->compression_enabled = true;
-        this->bot->GetSocket().InitCompression(max_uncompressed_length);
+        this->bot->InitCompression(max_uncompressed_length);
         this->bot->GetLogger().LogDebug("<<< COMPRESSION ENABLED <<<");
     }
 
@@ -364,7 +369,7 @@ namespace mcbot
         uint8_t* verify_token = new uint8_t[verify_token_length];
         PacketDecoder::ReadByteArray(verify_token, verify_token_length, packet);
 
-        std::string shared_secret = GetRandomHexBytes(16);
+        std::string shared_secret = get_random_hex_bytes(16);
 
         // Save Session //
         // - So Yggdrasil authentication doesn't kick us!
@@ -533,8 +538,8 @@ namespace mcbot
             "\n\tPitch: " + std::to_string(pitch) +
             "\n\tFlags: " + std::to_string((int)flags));
 
-        this->bot->GetPlayer().UpdateLocation(position);
-        this->bot->GetPlayer().UpdateRotation(yaw, pitch);
+        this->bot->UpdatePlayerRotation(yaw, pitch);
+        this->bot->UpdatePlayerLocation(position);
     }
 
     void PacketReceiver::RecvHeldItemSlot(Packet packet)
@@ -821,8 +826,8 @@ namespace mcbot
         int entity_id = PacketDecoder::ReadVarInt(packet);
         Vector<int8_t> dmot = PacketDecoder::ReadVector<int8_t>(packet);
         Vector<double> dr = Vector<double>(dmot.GetX() / 32.0, dmot.GetY() / 32.0, dmot.GetZ() / 32.0);
-        double yaw = PacketDecoder::ReadByte(packet) * 2 * 3.14159 / 256;
-        uint8_t pitch = PacketDecoder::ReadByte(packet) * 2 * 3.14159 / 256;
+        float yaw = PacketDecoder::ReadByte(packet)   * 2.0F * 3.14159F / 256.0F;
+        float pitch = PacketDecoder::ReadByte(packet) * 2.0F * 3.14159F / 256.0F;
         bool on_ground = PacketDecoder::ReadBoolean(packet);
 
         this->bot->GetLogger().LogDebug(
@@ -845,8 +850,8 @@ namespace mcbot
         Vector<int> position = PacketDecoder::ReadVector<int>(packet);
         Vector<double> position1 = Vector<double>(position.GetX() / 32.0, position.GetY() / 32.0, position.GetZ() / 32.0);
 
-        double yaw = PacketDecoder::ReadByte(packet) * 2 * 3.14159 / 256;
-        double pitch = PacketDecoder::ReadByte(packet) * 2 * 3.14159 / 256;
+        float yaw = PacketDecoder::ReadByte(packet)   * 2.0F * 3.14159F / 256.0F;
+        float pitch = PacketDecoder::ReadByte(packet) * 2.0F * 3.14159F / 256.0F;
         bool on_ground = PacketDecoder::ReadBoolean(packet);
 
         this->bot->GetLogger().LogDebug(
@@ -867,7 +872,7 @@ namespace mcbot
         this->bot->GetLogger().LogDebug("<<< Handling PacketPlayOutEntityHeadLook...");
 
         int entity_id = PacketDecoder::ReadVarInt(packet);
-        double yaw = PacketDecoder::ReadByte(packet) * 2 * 3.14159 / 256;
+        float yaw = PacketDecoder::ReadByte(packet) * 2.0F * 3.14159F / 256.0F;
 
         this->bot->GetLogger().LogDebug(
             "Entity ID: " + std::to_string(entity_id) +
@@ -984,8 +989,8 @@ namespace mcbot
             uint8_t y = PacketDecoder::ReadByte(packet);
             int block_id = PacketDecoder::ReadVarInt(packet);
 
-            int x = horizontal_position >> 4 + chunk_x << 4;
-            int z = horizontal_position & 0x0F + chunk_z << 4;
+            int x = (horizontal_position >> 4)   + (chunk_x << 4);
+            int z = (horizontal_position & 0x0F) + (chunk_z << 4);
 
             chunk.UpdateBlock(x, y, z, block_id);
         }
@@ -1174,7 +1179,7 @@ namespace mcbot
                 player_inventory[i] = PacketDecoder::ReadSlot(packet);
             }
 
-            this->player->SetInventory(player_inventory);
+            this->bot->UpdatePlayerInventory(player_inventory);
         }
         else
         {
@@ -1416,7 +1421,7 @@ namespace mcbot
         {
             double old_radius = PacketDecoder::ReadDouble(packet);
             double new_radius = PacketDecoder::ReadDouble(packet);
-            long speed = PacketDecoder::ReadVarLong(packet);
+            int64_t speed = PacketDecoder::ReadVarLong(packet);
             //this->world_border.set_old_radius(old_radius);
             //this->world_border.set_new_radius(new_radius);
             //this->world_border.set_speed(speed);
@@ -1438,7 +1443,7 @@ namespace mcbot
             double z = PacketDecoder::ReadDouble(packet);
             double old_radius = PacketDecoder::ReadDouble(packet);
             double new_radius = PacketDecoder::ReadDouble(packet);
-            long speed = PacketDecoder::ReadVarLong(packet);
+            int64_t speed = PacketDecoder::ReadVarLong(packet);
             int portal_teleport_boundary = PacketDecoder::ReadVarInt(packet);
             int warning_time = PacketDecoder::ReadVarInt(packet);
             int warning_blocks = PacketDecoder::ReadVarInt(packet);

@@ -136,6 +136,21 @@ namespace mcbot
         }
     }
 
+    void MCBot::UpdatePlayerRotation(float yaw, float pitch)
+    {
+        this->player.UpdateRotation(yaw, pitch);
+    }
+
+    void MCBot::UpdatePlayerInventory(std::array<Slot, 45> player_inventory)
+    {
+        this->player.UpdateInventory(player_inventory);
+    }
+
+	void MCBot::UpdatePlayerLocation(Vector<double> location)
+	{
+        this->player.UpdateLocation(location);
+	}
+
     MCBot::MCBot()
     {
         this->connected = false;
@@ -143,6 +158,7 @@ namespace mcbot
         this->packet_receiver = new PacketReceiver(this);
         this->packet_sender = new PacketSender(this);
         this->logger = Logger();
+        this->state = State::HANDSHAKE;
 
         // Start WinSock DLL //
         WSADATA wsaData;
@@ -227,7 +243,7 @@ namespace mcbot
             while (this->connected)
             {
                 Sleep(1);
-                this->packet_receiver->RecvPacket();
+                this->packet_receiver->ReadAndHandleNextPacket();
             }
         });
 
@@ -255,7 +271,7 @@ namespace mcbot
 
                 // Determine if player is on the ground
                 bool on_ground = true;
-                if (BlockUtils::IsWeak(this->GetChunk(location).GetBlockID(location - Vector<double>(0, 1, 0))))
+                if (BlockUtils::CanPassThrough(this->GetChunk(location).GetBlockID(location - Vector<double>(0, 1, 0))))
                 {
                     on_ground = false;
                 }
@@ -406,12 +422,13 @@ namespace mcbot
         return this->chunk_registry.GetValue(std::pair<int, int>(x, z));
     }
 
-    std::list<Chunk> MCBot::GetChunks(int x, int z, unsigned int radius)
+    std::list<Chunk> MCBot::GetChunks(int x, int z, int radius)
     {
         std::list<Chunk> chunks;
 
-        for (int i = -((int)radius); i <= radius; i++)
-            for (int j = -((int)radius); j <= radius; j++)
+        radius = abs(radius);
+        for (int i = -radius; i <= radius; i++)
+            for (int j = -radius; j <= radius; j++)
             {
                 chunks.push_back(this->chunk_registry.GetValue(std::pair<int, int>(x + i, z + j)));
             }
@@ -427,7 +444,7 @@ namespace mcbot
         while (location.GetY() >= 0)
         {
             Block block = Block(chunk.GetBlockID(location));
-            if (!block.IsWeak())
+            if (!block.CanPassThrough())
             {
                 break;
             }
@@ -455,13 +472,23 @@ namespace mcbot
         return player_location.GetY() == ground_location.GetY();
     }
 
+    void MCBot::InitEncryption(uint8_t* key, uint8_t* iv)
+    {
+        this->sock.InitEncryption(key, iv);
+    }
+
+    void MCBot::InitCompression(int max_uncompressed_length)
+    {
+        this->sock.InitCompression(max_uncompressed_length);
+    }
+
     void MCBot::Move(Vector<double> diff)
     {
         auto init = this->player.GetLocation();
         auto dest = init + diff;
 
-        Chunk& dest_chunk = this->GetChunk(dest);
-        Chunk& init_chunk = this->GetChunk(init);
+        Chunk dest_chunk = this->GetChunk(dest);
+        Chunk init_chunk = this->GetChunk(init);
 
         int dest_block_id = dest_chunk.GetBlockID(dest);
 
@@ -480,18 +507,18 @@ namespace mcbot
         auto init = this->player.GetLocation();
         auto dest = init + dr;
 
-        Chunk& dest_chunk = this->GetChunk(dest);
-        Chunk& init_chunk = this->GetChunk(init);
+        Chunk dest_chunk = this->GetChunk(dest);
+        Chunk init_chunk = this->GetChunk(init);
         Block dest_block = Block(dest_chunk.GetBlockID(dest));
 
         // Collision detection
-        if (!dest_block.IsWeak())
+        if (!dest_block.CanPassThrough())
         {
             std::cout << dest_block.GetID() << std::endl;
             throw CollisionException(dest_block, dest);
         }
 
-        float yaw = dx > 0 ? -90 : dx < 0 ? 90 : dz > 0 ? 0 : dz < 0 ? 180 : 0;
+        float yaw = dx > 0.0 ? -90.0F : dx < 0.0 ? 90.0F : dz < 0.0 ? 180.0F : 0.0F;
         this->player.UpdateLocation(dest);
         this->player.UpdateRotation(yaw, 0);
     }
@@ -511,17 +538,17 @@ namespace mcbot
         this->session = session;
     }
 
-    MojangSession MCBot::GetSession()
+    MojangSession MCBot::GetSession() const
     {
         return this->session;
     }
 
-    bool MCBot::IsConnected()
+    bool MCBot::IsConnected() const
     {
         return this->connected;
     }
 
-    State MCBot::GetState()
+    State MCBot::GetState() const
     {
         return this->state;
     }
@@ -546,7 +573,7 @@ namespace mcbot
         return this->logger;
     }
 
-    EntityPlayer& MCBot::GetPlayer()
+    EntityPlayer MCBot::GetPlayer() const
     {
         return this->player;
     }

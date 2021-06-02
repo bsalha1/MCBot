@@ -13,7 +13,7 @@ namespace mcbot
 		Block(int id);
 		Block();
 
-		bool IsWeak();
+		bool CanPassThrough();
 
 		int GetID();
 	};

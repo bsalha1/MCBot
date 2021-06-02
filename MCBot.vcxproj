@@ -220,6 +220,7 @@
     <ClInclude Include="NBTTagCompound.h" />
     <ClInclude Include="EntityPlayer.h" />
     <ClInclude Include="PlayerProperty.h" />
+    <ClInclude Include="Reflection.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="ScriptRuntime.h" />
     <ClInclude Include="Serializable.h" />

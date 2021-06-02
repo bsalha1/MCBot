@@ -295,6 +295,9 @@
     <ClInclude Include="Packet.h">
       <Filter>Header Files\packet</Filter>
     </ClInclude>
+    <ClInclude Include="Reflection.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

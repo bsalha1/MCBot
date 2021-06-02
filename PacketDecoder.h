@@ -3,6 +3,8 @@
 #include <iostream>
 #include <array>
 
+#include "Reflection.h"
+
 #include "Packet.h"
 
 #include "Chunk.h"
@@ -71,7 +73,7 @@ namespace mcbot
 
 		// Arrays //
 		static void ReadByteArray(uint8_t* bytes, int length, Packet& packet);
-		static Buffer<uint8_t> ReadByteArray(int length, Packet& packet);
+		static Buffer<uint8_t> ReadByteArray(size_t length, Packet& packet);
 		static Buffer<uint16_t> ReadShortArray(int length, Packet& packet);
 		static Buffer<uint16_t> ReadShortLittleEndianArray(int length, Packet& packet); // little-endian
 		static Buffer<int> ReadIntArray(int length, Packet& packet);
@@ -86,43 +88,46 @@ namespace mcbot
 	template<typename T>
 	inline Vector<T> PacketDecoder::ReadVector(Packet& packet)
 	{
-		T x, y, z;
-		if (std::is_same<T, float>())
+		if (INSTANCE_OF(T, float))
 		{
-			x = ReadFloat(packet);
-			y = ReadFloat(packet);
-			z = ReadFloat(packet);
+			float x = ReadFloat(packet);
+			float y = ReadFloat(packet);
+			float z = ReadFloat(packet);
+			return Vector<T>(x, y, z);
 		}
-		else if (std::is_same<T, double>())
+		else if (INSTANCE_OF(T, double))
 		{
-			x = ReadDouble(packet);
-			y = ReadDouble(packet);
-			z = ReadDouble(packet);
+			double x = ReadDouble(packet);
+			double y = ReadDouble(packet);
+			double z = ReadDouble(packet);
+			return Vector<T>(x, y, z);
 		}
-		else if (std::is_same<T, uint8_t>() || std::is_same<T, int8_t>())
+		else if (INSTANCE_OF(T, uint8_t) || INSTANCE_OF(T, int8_t))
 		{
-			x = ReadByte(packet);
-			y = ReadByte(packet);
-			z = ReadByte(packet);
+			uint8_t x = ReadByte(packet);
+			uint8_t y = ReadByte(packet);
+			uint8_t z = ReadByte(packet);
+			return Vector<T>(x, y, z);
 		}
-		else if (std::is_same<T, short>())
+		else if (INSTANCE_OF(T, short))
 		{
-			x = ReadShort(packet);
-			y = ReadShort(packet);
-			z = ReadShort(packet);
+			short x = ReadShort(packet);
+			short y = ReadShort(packet);
+			short z = ReadShort(packet);
+			return Vector<T>(x, y, z);
 		}
-		else if (std::is_same<T, int>())
+		else if (INSTANCE_OF(T, int))
 		{
-			x = ReadInt(packet);
-			y = ReadInt(packet);
-			z = ReadInt(packet);
+			int x = ReadInt(packet);
+			int y = ReadInt(packet);
+			int z = ReadInt(packet);
+			return Vector<T>(x, y, z);
 		}
 		else
 		{
 			std::cerr << "Unsupported vector type: " << typeid(T).name() << std::endl;
 			return Vector<T>();
 		}
-		return Vector<T>(x, y, z);
 	}
 }
 

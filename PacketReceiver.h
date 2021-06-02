@@ -1,4 +1,4 @@
-#pragma oncePacket packet
+#pragma once
 
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -37,7 +37,6 @@ namespace mcbot
 	{
 	private:
 		MCBot* bot;
-		EntityPlayer* player;
 		bool compression_enabled;
 
 	public:
@@ -47,24 +46,33 @@ namespace mcbot
 		PacketReceiver();
 
 
-		// Server incoming requests //
-
+		/*
+			Reads next packet and passes it to the corresponding callback function to parse it.
+		*/
+		void ReadAndHandleNextPacket();
 		
-		void RecvPacket();
+		
+		/*
+			Reads next VarInt in the stream.
+			@return returns the value of the VarInt
+		*/
 		int ReadNextVarInt();
 
-		/**
-			Sum numbers in a vector.
 
-			@param length: Size of packet
-			@param packet: Output buffer
-			@param decompressed_length: Length of the uncompressed data of packet (0 means no compressed data to decompress)
-			@return full size of packet
+		/*
+			Reads next packet in the stream. 
+			First reads size and uncompressed size (if compression is enabled) then passes that to the socket to receive.
+			@return received packet object
 		*/
-		Packet ReadNextPacket(int length, int decompressed_length = 0);
+		Packet ReadNextPacket();
 
 
-		void HandleRecvPacket(int packet_id, Packet packet);
+		/*
+			Parses packet by calling the corresponding callback function.
+			@param packet_id: ID of the packet to identify which function to handle the packet
+			@param packet: the packet object to parse
+		*/
+		void HandlePacket(int packet_id, Packet packet);
 
 
 		// Status: LOGIN //

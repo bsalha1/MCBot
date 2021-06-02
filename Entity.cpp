@@ -8,6 +8,8 @@ namespace mcbot
 		this->entity_type = entity_type;
 		this->id = id;
 		this->dead = false;
+		this->yaw = 0;
+		this->pitch = 0;
 	}
 
 	Entity::Entity(int id)
@@ -15,6 +17,8 @@ namespace mcbot
 		this->entity_type = EntityType::UNKNOWN;
 		this->id = id;
 		this->dead = false;
+		this->yaw = 0;
+		this->pitch = 0;
 	}
 
 	Entity::Entity()
@@ -22,6 +26,8 @@ namespace mcbot
 		this->entity_type = EntityType::UNKNOWN;
 		this->id = -1;
 		this->dead = false;
+		this->yaw = 0;
+		this->pitch = 0;
 	}
 
 	void Entity::UpdateLocation(Vector<double> location)
@@ -50,6 +56,11 @@ namespace mcbot
 	void Entity::UpdateYaw(float yaw)
 	{
 		this->yaw = yaw;
+	}
+
+	void Entity::UpdatePitch(float pitch)
+	{
+		this->pitch = pitch;
 	}
 
 	void Entity::Die()

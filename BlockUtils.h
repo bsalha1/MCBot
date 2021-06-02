@@ -7,16 +7,16 @@ namespace mcbot
 	class BlockUtils
 	{
 	private:
-		static std::set<int> weak_blocks; 
+		static std::set<int> pass_through_blocks;
 
 	public:
-		BlockUtils();
+		BlockUtils() = default;
 
 		/*
 			@param id: ID of block
 			@return: true if the block can be passed through by the player
 		*/
-		static bool IsWeak(int id);
+		static bool CanPassThrough(int id);
 	};
 }
 

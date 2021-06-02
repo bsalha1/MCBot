@@ -36,6 +36,11 @@ namespace mcbot
 		this->display_name = "";
 	}
 
+	void EntityPlayer::UpdateInventory(std::array<Slot, 45> inventory)
+	{
+		this->inventory = inventory;
+	}
+
 	void EntityPlayer::SetGamemode(Gamemode gamemode)
 	{
 		this->gamemode = gamemode;
@@ -66,62 +71,57 @@ namespace mcbot
 		this->properties = properties;
 	}
 
-	void EntityPlayer::SetInventory(std::array<Slot, 45> inventory)
-	{
-		this->inventory = inventory;
-	}
-
-	std::array<Slot, 45> EntityPlayer::GetInventory()
+	std::array<Slot, 45> EntityPlayer::GetInventory() const
 	{
 		return this->inventory;
 	}
 
-	UUID EntityPlayer::GetUUID()
+	UUID EntityPlayer::GetUUID() const
 	{
 		return this->uuid;
 	}
 
-	std::string EntityPlayer::GetName()
+	std::string EntityPlayer::GetName() const
 	{
 		return this->name;
 	}
 
-	std::list<PlayerProperty> EntityPlayer::GetProperties()
+	std::list<PlayerProperty> EntityPlayer::GetProperties() const
 	{
 		return this->properties;
 	}
 
-	Gamemode EntityPlayer::GetGamemode()
+	Gamemode EntityPlayer::GetGamemode() const
 	{
 		return this->gamemode;
 	}
 
-	Vector<double> EntityPlayer::GetLocation()
+	Vector<double> EntityPlayer::GetLocation() const
 	{
 		return this->location;
 	}
 
-	int EntityPlayer::GetPing()
+	int EntityPlayer::GetPing() const
 	{
 		return this->ping;
 	}
 
-	float EntityPlayer::GetPitch()
+	float EntityPlayer::GetPitch() const
 	{
 		return this->pitch;
 	}
 
-	float EntityPlayer::GetYaw()
+	float EntityPlayer::GetYaw() const
 	{
 		return this->yaw;
 	}
 
-	bool EntityPlayer::HasDisplayName()
+	bool EntityPlayer::HasDisplayName() const
 	{
 		return this->display_name.compare(this->name) != 0;
 	}
 
-	std::string EntityPlayer::GetDisplayName()
+	std::string EntityPlayer::GetDisplayName() const
 	{
 		return this->display_name;
 	}
