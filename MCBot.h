@@ -42,6 +42,8 @@ namespace mcbot
 	private:
 		Logger logger;
 
+		std::condition_variable cv;
+		std::mutex state_mutex;
 
 		// User info
 		MojangSession session;
@@ -64,6 +66,7 @@ namespace mcbot
 		
 	public:
 		MCBot();
+		MCBot(const MCBot& origin);
 		~MCBot();
 
 
@@ -91,6 +94,13 @@ namespace mcbot
 			@return -1 if unsuccessful, 0 otherwise
 		*/
 		int LoginToMojang(char* email, char* password);
+
+
+		/*
+			Pauses calling thread until given state is reached
+			@param state: The state to wait for
+		*/
+		void AwaitState(State state);
 
 
 		/*

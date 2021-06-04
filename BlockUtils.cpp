@@ -8,7 +8,6 @@ namespace mcbot
 
 	bool BlockUtils::CanPassThrough(int id)
 	{
-		//return true;
 		return BlockUtils::pass_through_blocks.find(id) != BlockUtils::pass_through_blocks.end();
 	}
 }

@@ -4,7 +4,18 @@
 
 namespace mcbot
 {
-    std::string get_openssl_error_string()
+    static void print_winsock_error()
+    {
+        wchar_t* s = NULL;
+        FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, WSAGetLastError(),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPWSTR)&s, 0, NULL);
+        printf("%S\n", s);
+
+    }
+
+    static std::string get_openssl_error_string()
     {
         BIO* bio = BIO_new(BIO_s_mem());
         ERR_print_errors(bio);
@@ -49,6 +60,15 @@ namespace mcbot
         this->iv = NULL;
         this->key = NULL;
         this->max_uncompressed_length = -1;
+
+        // Start WinSock DLL //
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            std::cout << "Failed to start up WinSock DLL" << std::endl;
+            print_winsock_error();
+            return;
+        }
     }
 
     Socket::Socket()

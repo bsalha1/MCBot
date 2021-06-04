@@ -17,7 +17,6 @@
 
 namespace mcbot
 {
-
     static void print_winsock_error()
     {
         wchar_t* s = NULL;
@@ -28,23 +27,21 @@ namespace mcbot
         printf("%S\n", s);
     }
 
-    MCBot::MCBot()
+    MCBot::MCBot() 
     {
         this->connected = false;
-        this->world_border = WorldBorder();
         this->packet_receiver = new PacketReceiver(this);
         this->packet_sender = new PacketSender(this);
-        this->logger = Logger();
         this->state = State::HANDSHAKE;
+    }
 
-        // Start WinSock DLL //
-        WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-        {
-            std::cout << "Failed to start up WinSock DLL" << std::endl;
-            print_winsock_error();
-            return;
-        }
+    // std::mutex not copyable
+    MCBot::MCBot(const MCBot& origin) : state_mutex()
+    {
+        this->connected = origin.connected;
+        this->packet_receiver = origin.packet_receiver;
+        this->packet_sender = origin.packet_sender;
+        this->state = origin.state;
     }
 
     MCBot::~MCBot()
@@ -115,6 +112,20 @@ namespace mcbot
         return 0;
     }
 
+    void MCBot::AwaitState(State state)
+    {
+        if (this->state == state)
+        {
+            return;
+        }
+
+        std::unique_lock<std::mutex> lk(this->state_mutex);
+
+        cv.wait(lk, [this, state] {
+            return this->state == state;
+        });
+    }
+    
     std::thread MCBot::StartPacketReceiverThread()
     {
         std::thread recv_thread([this]() {
@@ -198,7 +209,7 @@ namespace mcbot
         x = floor(x) + 0.5;
         z = floor(z) + 0.5;
 
-        Vector<double> dest = Vector<double>(x, 0, z);
+        Vector<double> dest(x, 0, z);
         Vector<double> init = this->player.GetLocation();
 
         auto diff = dest - init;
@@ -509,13 +520,13 @@ namespace mcbot
 
     void MCBot::Move(double dx, double dz)
     {
-        auto dr = Vector<double>(dx, 0, dz);
+        Vector<double> dr(dx, 0, dz);
         auto init = this->player.GetLocation();
         auto dest = init + dr;
 
         Chunk dest_chunk = this->GetChunk(dest);
         Chunk init_chunk = this->GetChunk(init);
-        Block dest_block = Block(dest_chunk.GetBlockID(dest));
+        Block dest_block(dest_chunk.GetBlockID(dest));
 
         // Collision detection
         if (!dest_block.CanPassThrough())
@@ -531,6 +542,7 @@ namespace mcbot
     void MCBot::SetState(State state)
     {
         this->state = state;
+        this->cv.notify_all();
     }
 
     void MCBot::SetConnected(bool connected)

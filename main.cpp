@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     char* hostname = argv[3];
     char* port = (argc >= 5) ? argv[4] : (char*)"25565";
 
-    MCBot bot = MCBot();
+    MCBot bot;
     bot.GetLogger().SetDebug(false);
 
 
@@ -64,13 +64,15 @@ int main(int argc, char* argv[])
     // Send player's position every tick
     std::thread position_thread = bot.StartPositionThread();
 
-
     // Do specific tasks
     std::thread tick_thread([&bot]() {
 
-        Sleep(4000);
+        bot.AwaitState(State::PLAY);
+
         bot.GetPacketSender().SendSettings();
         bot.GetPacketSender().SendCustomPayload("vanilla");
+
+        Sleep(1000);
 
         // Move to better center of a block to make math easier
         mcbot::Vector<double> clean_position = bot.GetPlayer().GetLocation();
