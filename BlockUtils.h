@@ -2,7 +2,7 @@
 
 #include <set>
 
-namespace mcbot
+namespace McBot
 {
 	class BlockUtils
 	{

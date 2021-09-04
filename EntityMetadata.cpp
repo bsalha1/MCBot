@@ -1,6 +1,6 @@
 #include "EntityMetadata.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	void EntityMetaData::AddValue(boost::any value)

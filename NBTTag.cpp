@@ -3,7 +3,7 @@
 #include "PacketEncoder.h"
 #include "Buffer.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	NBTTag::NBTTag(NBTType type, std::string name, boost::any value)

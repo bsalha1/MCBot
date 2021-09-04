@@ -6,7 +6,7 @@
 #include "Buffer.h"
 #include "Vector.h"
 
-namespace mcbot
+namespace McBot
 {
 	class ChunkSection
 	{

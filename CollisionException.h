@@ -6,7 +6,7 @@
 #include "Vector.h"
 #include "Block.h"
 
-namespace mcbot
+namespace McBot
 {
     class CollisionException : public std::exception
     {

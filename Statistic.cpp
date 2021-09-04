@@ -1,7 +1,7 @@
 #include <string>
 #include "Statistic.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Statistic::Statistic(std::string name, int value)

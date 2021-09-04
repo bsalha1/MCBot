@@ -5,7 +5,7 @@
 #include "Packet.h"
 #include "Slot.h"
 
-namespace mcbot
+namespace McBot
 {
 	class PacketEncoder
 	{

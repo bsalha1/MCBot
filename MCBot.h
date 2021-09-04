@@ -31,7 +31,7 @@
 
 #define TPS 20 // Ticks per second
 
-namespace mcbot
+namespace McBot
 {
 	// Declared here due to circular dependency
 	class PacketReceiver;

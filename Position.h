@@ -3,7 +3,7 @@
 #include <iostream>
 #include "Vector.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Position
 	{

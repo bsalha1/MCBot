@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-namespace mcbot
+namespace McBot
 {
 	template <class T>
 	class Buffer
@@ -46,12 +46,12 @@ namespace mcbot
 	};
 
 	template<class T>
-	mcbot::Buffer<T>::Buffer()
+	McBot::Buffer<T>::Buffer()
 	{
 	}
 
 	template<typename T>
-	inline mcbot::Buffer<T>::Buffer(T* arr, int size)
+	inline McBot::Buffer<T>::Buffer(T* arr, int size)
 	{
 		this->arr = new T[size];
 		this->max_size = size;
@@ -64,7 +64,7 @@ namespace mcbot
 	}
 
 	template<class T>
-	mcbot::Buffer<T>::Buffer(int size)
+	McBot::Buffer<T>::Buffer(int size)
 	{
 		this->arr = new T[size]{ 0 };
 		this->max_size = size;
@@ -72,13 +72,13 @@ namespace mcbot
 	}
 
 	template<class T>
-	mcbot::Buffer<T>::~Buffer()
+	McBot::Buffer<T>::~Buffer()
 	{
 		//delete arr;
 	}
 
 	template<class T>
-	void mcbot::Buffer<T>::put(T element)
+	void McBot::Buffer<T>::put(T element)
 	{
 		if (current_size >= max_size)
 		{
@@ -90,31 +90,31 @@ namespace mcbot
 	}
 
 	template<class T>
-	inline T* mcbot::Buffer<T>::get_array()
+	inline T* McBot::Buffer<T>::get_array()
 	{
 		return this->arr;
 	}
 
 	template<class T>
-	inline T& mcbot::Buffer<T>::get(int i)
+	inline T& McBot::Buffer<T>::get(int i)
 	{
 		return this->arr[i];
 	}
 
 	template<class T>
-	int mcbot::Buffer<T>::get_current_size()
+	int McBot::Buffer<T>::get_current_size()
 	{
 		return this->current_size;
 	}
 
 	template<class T>
-	inline int mcbot::Buffer<T>::get_max_size()
+	inline int McBot::Buffer<T>::get_max_size()
 	{
 		return this->max_size;
 	}
 
 	template<class T>
-	std::string mcbot::Buffer<T>::to_string()
+	std::string McBot::Buffer<T>::to_string()
 	{
 		std::string str = "";
 		for (int i = 0; i < this->current_size; i++)

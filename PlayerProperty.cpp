@@ -1,6 +1,6 @@
 #include "PlayerProperty.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	PlayerProperty::PlayerProperty(std::string name, std::string value, bool _signed, std::string signature)

@@ -1,6 +1,6 @@
 #include "ScriptRuntime.h"
 
-namespace mcbot
+namespace McBot
 {
     Vector<double> get_vector(std::string vector_string)
     {

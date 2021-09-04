@@ -1,6 +1,6 @@
 #include "StringUtils.h"
 
-namespace mcbot
+namespace McBot
 {
 	std::string StringUtils::to_string(State state)
 	{

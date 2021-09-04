@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace mcbot
+namespace McBot
 {
 	class MojangSession
 	{

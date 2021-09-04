@@ -15,7 +15,7 @@
 #include "DaftHash.h"
 #include "ScriptRuntime.h"
 
-using namespace mcbot;
+using namespace McBot;
 using namespace std::literals;
 
 int main(int argc, char* argv[])
@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
         Sleep(1000);
 
         // Move to better center of a block to make math easier
-        mcbot::Vector<double> clean_position = bot.GetPlayer().GetLocation();
+        McBot::Vector<double> clean_position = bot.GetPlayer().GetLocation();
         clean_position.Floor();
-        clean_position = clean_position + mcbot::Vector<double>(0.5, 0, 0.5);
+        clean_position = clean_position + McBot::Vector<double>(0.5, 0, 0.5);
         bot.MoveTo(clean_position, 1.0);
 
         bot.GetPacketSender().SendArmAnimation();

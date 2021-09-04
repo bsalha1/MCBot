@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Entity::Entity(EntityType entity_type, int id)

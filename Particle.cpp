@@ -1,6 +1,6 @@
 #include "Particle.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Particle::Particle(int id)

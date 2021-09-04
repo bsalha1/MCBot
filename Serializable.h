@@ -4,7 +4,7 @@
 
 #include "Packet.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Serializable
 	{

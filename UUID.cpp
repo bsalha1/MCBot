@@ -1,6 +1,6 @@
 #include "UUID.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	UUID::UUID(char big_endian_bytes[16])

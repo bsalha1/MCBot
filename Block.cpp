@@ -1,6 +1,6 @@
 #include "Block.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Block::Block(int id)

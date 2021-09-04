@@ -11,7 +11,7 @@
 #include "Slot.h"
 #include "Vector.h"
 
-namespace mcbot
+namespace McBot
 {
 	class EntityPlayer : public EntityLiving 
 	{

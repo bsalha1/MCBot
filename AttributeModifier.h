@@ -2,7 +2,7 @@
 
 #include "UUID.h"
 
-namespace mcbot
+namespace McBot
 {
 	class AttributeModifier
 	{

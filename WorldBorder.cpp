@@ -1,6 +1,6 @@
 #include "WorldBorder.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	WorldBorder::WorldBorder()

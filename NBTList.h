@@ -4,7 +4,7 @@
 #include "NBTTag.h"
 #include "Enums.h"
 
-namespace mcbot
+namespace McBot
 {
 	class NBTList
 	{

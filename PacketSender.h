@@ -9,7 +9,7 @@
 #include "MojangSession.h"
 #include "base64.h"
 
-namespace mcbot
+namespace McBot
 {
 	class MCBot;
 

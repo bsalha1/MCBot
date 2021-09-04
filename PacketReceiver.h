@@ -29,7 +29,7 @@
 #include "Position.h"
 #include "Vector.h"
 
-namespace mcbot
+namespace McBot
 {
 	class MCBot;
 	

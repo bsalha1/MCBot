@@ -1,5 +1,5 @@
 #pragma once
-namespace mcbot
+namespace McBot
 {
 	class WorldBorder
 	{

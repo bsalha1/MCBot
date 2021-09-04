@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace mcbot
+namespace McBot
 {
 	template<typename T> class Vector;
 

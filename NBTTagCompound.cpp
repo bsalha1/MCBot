@@ -4,7 +4,7 @@
 
 #include <typeinfo>
 
-namespace mcbot
+namespace McBot
 {
 
 	NBTTagCompound::NBTTagCompound()

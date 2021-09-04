@@ -1,6 +1,6 @@
 #include "Chunk.h"
 
-namespace mcbot
+namespace McBot
 {
     Chunk::Chunk()
     {

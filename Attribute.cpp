@@ -1,6 +1,6 @@
 #include "Attribute.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Attribute::Attribute(std::string key, double value, std::list<AttributeModifier> modifiers)

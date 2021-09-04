@@ -1,6 +1,6 @@
 #include "MojangSession.h"
 
-namespace mcbot
+namespace McBot
 {
 	MojangSession::MojangSession(std::string access_token, std::string username, std::string uuid)
 	{

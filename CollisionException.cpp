@@ -1,6 +1,6 @@
 #include "CollisionException.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	CollisionException::CollisionException(Block block, Vector<double> location) noexcept

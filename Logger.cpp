@@ -1,6 +1,6 @@
 #include "Logger.h"
 
-namespace mcbot
+namespace McBot
 {
     Logger::Logger()
     {

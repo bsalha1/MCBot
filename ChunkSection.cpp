@@ -1,6 +1,6 @@
 #include "ChunkSection.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	int ChunkSection::GetBlockID(int x, int y, int z)

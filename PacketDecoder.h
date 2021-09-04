@@ -24,7 +24,7 @@
 #include "Statistic.h"
 #include "PlayerProperty.h"
 
-namespace mcbot
+namespace McBot
 {
 	class PacketDecoder
 	{

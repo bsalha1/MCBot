@@ -1,6 +1,6 @@
 #include "Color.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Color::Color(float r, float g, float b, float scale)

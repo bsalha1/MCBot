@@ -2,7 +2,7 @@
 
 #include <map>
 
-namespace mcbot
+namespace McBot
 {
 	template<class K, class V>
 	class Registry

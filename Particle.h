@@ -4,7 +4,7 @@
 #include "Color.h"
 #include <boost/any.hpp>
 
-namespace mcbot
+namespace McBot
 {
 	class Particle
 	{
@@ -14,8 +14,8 @@ namespace mcbot
 
 	public:
 		Particle(int id);
-		Particle(int id, mcbot::Slot slot);
-		Particle(int id, mcbot::Color color);
+		Particle(int id, McBot::Slot slot);
+		Particle(int id, McBot::Color color);
 		Particle(int id, int block_state);
 	};
 }

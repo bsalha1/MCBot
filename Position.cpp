@@ -1,7 +1,7 @@
 #include <string>
 #include "Position.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Position::Position(int32_t x, int32_t y, int32_t z)

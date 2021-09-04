@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mcbot
+namespace McBot
 {
 	enum class VillagerType {
 		DESERT = 0,

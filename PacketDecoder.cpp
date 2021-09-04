@@ -1,7 +1,7 @@
 #include "PacketDecoder.h"
 #include "StringUtils.h"
 
-namespace mcbot
+namespace McBot
 {
     //---- Basic Types ----//
     int32_t PacketDecoder::ReadVarInt(Packet& packet)
@@ -50,10 +50,10 @@ namespace mcbot
 
     uint32_t PacketDecoder::ReadInt(Packet& packet)
     {
-        uint8_t byte4 = packet.data[packet.offset++];
-        uint8_t byte3 = packet.data[packet.offset++];
-        uint8_t byte2 = packet.data[packet.offset++];
-        uint8_t byte1 = packet.data[packet.offset++];
+        uint8_t byte4 = packet.PopByte();
+        uint8_t byte3 = packet.PopByte();
+        uint8_t byte2 = packet.PopByte();
+        uint8_t byte1 = packet.PopByte();
 
         uint32_t result =
             byte4 << 24 |
@@ -65,8 +65,8 @@ namespace mcbot
 
     uint16_t PacketDecoder::ReadShort(Packet& packet)
     {
-        uint8_t byte2 = packet.data[packet.offset++];
-        uint8_t byte1 = packet.data[packet.offset++];
+        uint8_t byte2 = packet.PopByte();
+        uint8_t byte1 = packet.PopByte();
 
         uint16_t result =
             byte2 << 8 |
@@ -76,8 +76,8 @@ namespace mcbot
 
     uint16_t PacketDecoder::ReadShortLittleEndian(Packet& packet)
     {
-        uint8_t byte2 = packet.data[packet.offset++];
-        uint8_t byte1 = packet.data[packet.offset++];
+        uint8_t byte2 = packet.PopByte();
+        uint8_t byte1 = packet.PopByte();
 
         uint16_t result =
             byte2 << 0 |
@@ -87,14 +87,14 @@ namespace mcbot
 
     uint64_t PacketDecoder::ReadLong(Packet& packet)
     {
-        uint64_t byte8 = packet.data[packet.offset++];
-        uint64_t byte7 = packet.data[packet.offset++];
-        uint64_t byte6 = packet.data[packet.offset++];
-        uint64_t byte5 = packet.data[packet.offset++];
-        uint64_t byte4 = packet.data[packet.offset++];
-        uint64_t byte3 = packet.data[packet.offset++];
-        uint64_t byte2 = packet.data[packet.offset++];
-        uint64_t byte1 = packet.data[packet.offset++];
+        uint64_t byte8 = packet.PopByte();
+        uint64_t byte7 = packet.PopByte();
+        uint64_t byte6 = packet.PopByte();
+        uint64_t byte5 = packet.PopByte();
+        uint64_t byte4 = packet.PopByte();
+        uint64_t byte3 = packet.PopByte();
+        uint64_t byte2 = packet.PopByte();
+        uint64_t byte1 = packet.PopByte();
 
         uint64_t result =
             byte8 << 56 |
@@ -110,12 +110,12 @@ namespace mcbot
 
     uint8_t PacketDecoder::ReadByte(Packet& packet)
     {
-        return packet.data[packet.offset++];
+        return packet.PopByte();
     }
 
     uint8_t PacketDecoder::PeekByte(Packet& packet)
     {
-        return packet.data[packet.offset++];
+        return packet.PopByte();
     }
 
     float PacketDecoder::ReadFloat(Packet& packet)
@@ -132,7 +132,7 @@ namespace mcbot
 
     bool PacketDecoder::ReadBoolean(Packet& packet)
     {
-        uint8_t value = packet.data[packet.offset++];
+        uint8_t value = packet.PopByte();
         bool result = false;
         if (value == 1)
         {
@@ -156,7 +156,7 @@ namespace mcbot
         std::string string = "";
         for (size_t i = 0; i < length; i++)
         {
-            string += packet.data[packet.offset++];
+            string += packet.PopByte();
         }
         return string;
     }
@@ -166,7 +166,7 @@ namespace mcbot
         std::string string = "";
         for (size_t i = 0; i < length; i++)
         {
-            string += packet.data[packet.offset++];
+            string += packet.PopByte();
         }
         return string;
     }
@@ -179,7 +179,7 @@ namespace mcbot
     {
         for (int i = 0; i < length; i++)
         {
-            bytes[i] = packet.data[packet.offset++];
+            bytes[i] = packet.PopByte();
         }
     }
 
@@ -188,7 +188,7 @@ namespace mcbot
         Buffer<uint8_t> buffer = Buffer<uint8_t>(length);
         for (size_t i = 0; i < length; i++)
         {
-            buffer.put(packet.data[packet.offset++]);
+            buffer.put(packet.PopByte());
         }
         return buffer;
     }
@@ -310,7 +310,7 @@ namespace mcbot
         char bytes[16] = { 0 };
         for (int i = 0; i < 16; i++)
         {
-            bytes[i] = packet.data[packet.offset++];
+            bytes[i] = packet.PopByte();
         }
         return UUID(bytes);
     }
@@ -377,26 +377,26 @@ namespace mcbot
     Position PacketDecoder::ReadPosition(Packet& packet)
     {
         // Parse X Coordinate (26 bit signed integer)
-        uint8_t byte4 = packet.data[packet.offset++];
-        uint8_t byte3 = packet.data[packet.offset++];
-        uint8_t byte2 = packet.data[packet.offset++];
-        uint8_t byte1 = packet.data[packet.offset] & 0xC0; // xx00 0000
+        uint8_t byte4 = packet.PopByte();
+        uint8_t byte3 = packet.PopByte();
+        uint8_t byte2 = packet.PopByte();
+        uint8_t byte1 = packet.GetCurrentByte() & 0xC0; // xx00 0000
 
         uint32_t x_bits = ((byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1 << 0)) >> 6;
         int32_t x = x_bits & (1 << 25) ? x_bits - (0x3FFFFFF + 1) : x_bits;
 
         // Parse Y Coordinate (12 bit signed integer)
-        byte2 = packet.data[packet.offset++] & 0x3F;
-        byte1 = packet.data[packet.offset] & 0xFC;
+        byte2 = packet.PopByte() & 0x3F;
+        byte1 = packet.GetCurrentByte() & 0xFC;
 
         uint16_t y_bits = ((byte2 << 8) | (byte1 << 0)) >> 2;
         int16_t y = y_bits & (1 << 11) ? y_bits - (0xFFF + 1) : y_bits;
 
         // Parse Z Coordinate (26 bit signed integer)
-        byte4 = packet.data[packet.offset++] & 0x03;
-        byte3 = packet.data[packet.offset++];
-        byte2 = packet.data[packet.offset++];
-        byte1 = packet.data[packet.offset++];
+        byte4 = packet.PopByte() & 0x03;
+        byte3 = packet.PopByte();
+        byte2 = packet.PopByte();
+        byte1 = packet.PopByte();
 
         uint32_t z_bits = (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1 << 0);
         int32_t z = z_bits & (1 << 25) ? z_bits - (0x3FFFFFF + 1) : z_bits;
@@ -621,7 +621,7 @@ namespace mcbot
         std::string str = "";
         for (size_t i = 0; i < length; i++)
         {
-            str += packet.data[packet.offset++];
+            str += packet.PopByte();
         }
         return str;
     }

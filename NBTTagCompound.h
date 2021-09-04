@@ -8,7 +8,7 @@
 #include "Serializable.h"
 #include "NBTTag.h"
 
-namespace mcbot
+namespace McBot
 {
 	class NBTTagCompound : Serializable
 	{

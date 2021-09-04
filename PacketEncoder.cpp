@@ -1,7 +1,7 @@
 #include "PacketEncoder.h"
 #include <cstdarg>
 
-namespace mcbot
+namespace McBot
 {
     //---- VarInt ----//
 
@@ -29,7 +29,7 @@ namespace mcbot
             {
                 temp |= 0b10000000;
             }
-            packet.data[packet.offset++] = temp;
+            packet.AddByte(temp);
         } while (value != 0);
     }
 
@@ -93,7 +93,7 @@ namespace mcbot
 
         for (int i = 0; i < string_length; i++)
         {
-            packet.data[packet.offset++] = string[i];
+            packet.AddByte(string[i]);
         }
     }
 
@@ -104,7 +104,7 @@ namespace mcbot
 
         for (int i = 0; i < length; i++)
         {
-            packet.data[packet.offset++] = string[i];
+            packet.AddByte(string[i]);
         }
     }
 
@@ -121,7 +121,7 @@ namespace mcbot
 
         for (int i = 0; i < length; i++)
         {
-            packet.data[packet.offset++] = string[i];
+            packet.AddByte(string[i]);
         }
     }
 
@@ -152,43 +152,43 @@ namespace mcbot
     {
         if (value)
         {
-            packet.data[packet.offset++] = 1;
+            packet.AddByte(1);
         }
         else
         {
-            packet.data[packet.offset++] = 0;
+            packet.AddByte(0);
         }
     }
 
     void PacketEncoder::WriteByte(uint8_t num, Packet& packet)
     {
-        packet.data[packet.offset++] = num;
+        packet.AddByte(num);
     }
 
     void PacketEncoder::WriteShort(uint16_t num, Packet& packet)
     {
-        packet.data[packet.offset++] = (num >> 8) & 0xFF;
-        packet.data[packet.offset++] = (num >> 0) & 0xFF;
+        packet.AddByte((num >> 8) & 0xFF);
+        packet.AddByte((num >> 0) & 0xFF);
     }
 
     void PacketEncoder::WriteInt(uint32_t num, Packet& packet)
     {
-        packet.data[packet.offset++] = (num >> 24) & 0xFF;
-        packet.data[packet.offset++] = (num >> 16) & 0xFF;
-        packet.data[packet.offset++] = (num >> 8) & 0xFF;
-        packet.data[packet.offset++] = (num >> 0) & 0xFF;
+        packet.AddByte((num >> 24) & 0xFF);
+        packet.AddByte((num >> 16) & 0xFF);
+        packet.AddByte((num >> 8) & 0xFF);
+        packet.AddByte((num >> 0) & 0xFF);
     }
 
     void PacketEncoder::WriteLong(uint64_t num, Packet& packet)
     {
-        packet.data[packet.offset++] = (num >> 56) & 0xFF;
-        packet.data[packet.offset++] = (num >> 48) & 0xFF;
-        packet.data[packet.offset++] = (num >> 40) & 0xFF;
-        packet.data[packet.offset++] = (num >> 32) & 0xFF;
-        packet.data[packet.offset++] = (num >> 24) & 0xFF;
-        packet.data[packet.offset++] = (num >> 16) & 0xFF;
-        packet.data[packet.offset++] = (num >> 8) & 0xFF;
-        packet.data[packet.offset++] = (num >> 0) & 0xFF;
+        packet.AddByte((num >> 56) & 0xFF);
+        packet.AddByte((num >> 48) & 0xFF);
+        packet.AddByte((num >> 40) & 0xFF);
+        packet.AddByte((num >> 32) & 0xFF);
+        packet.AddByte((num >> 24) & 0xFF);
+        packet.AddByte((num >> 16) & 0xFF);
+        packet.AddByte((num >> 8) & 0xFF);
+        packet.AddByte((num >> 0) & 0xFF);
     }
 
     void PacketEncoder::WriteDouble(double num, Packet& packet)

@@ -15,7 +15,7 @@
 
 #include "zlib.h"
 
-namespace mcbot
+namespace McBot
 {
     static void print_winsock_error()
     {

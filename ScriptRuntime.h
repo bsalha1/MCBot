@@ -8,7 +8,7 @@
 
 #include "MCBot.h"
 
-namespace mcbot
+namespace McBot
 {
 	class ScriptRuntime
 	{

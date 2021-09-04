@@ -3,7 +3,7 @@
 #include "PacketSender.h"
 #include "StringUtils.h"
 
-namespace mcbot
+namespace McBot
 {
     static std::string get_random_hex_bytes(std::size_t num_bytes)
     {

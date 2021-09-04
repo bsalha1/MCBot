@@ -1,6 +1,6 @@
 #include "VillagerData.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	VillagerData::VillagerData(int villager_type, int villager_profession, int level)

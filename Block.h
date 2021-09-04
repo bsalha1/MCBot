@@ -2,7 +2,7 @@
 
 #include "BlockUtils.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Block
 	{

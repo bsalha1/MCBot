@@ -6,7 +6,7 @@
 
 #include "DaftHash.h"
 
-namespace mcbot
+namespace McBot
 {
     std::string daft_hash_impl::finalise()
     {

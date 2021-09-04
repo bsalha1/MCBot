@@ -5,7 +5,7 @@
 
 #include "AttributeModifier.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Attribute
 	{

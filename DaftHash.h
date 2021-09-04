@@ -16,7 +16,7 @@
 #include <cctype>
 #include <iostream>
 
-namespace mcbot
+namespace McBot
 {
     struct daft_hash_impl
     {

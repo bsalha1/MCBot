@@ -1,6 +1,6 @@
 #include "EntityPlayer.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	EntityPlayer::EntityPlayer(int entity_id, UUID uuid, std::string name,

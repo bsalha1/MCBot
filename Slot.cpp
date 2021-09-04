@@ -1,7 +1,7 @@
 #include "Slot.h"
 #include "PacketEncoder.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	Slot::Slot()

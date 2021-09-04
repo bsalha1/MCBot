@@ -1,6 +1,6 @@
 #include "AttributeModifier.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	AttributeModifier::AttributeModifier(UUID uuid, double amount, uint8_t operation)

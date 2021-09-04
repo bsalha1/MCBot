@@ -1,7 +1,7 @@
 #include "MCBot.h"
 #include "PacketSender.h"
 
-namespace mcbot
+namespace McBot
 {
 
     static void print_winsock_error()
@@ -121,13 +121,13 @@ namespace mcbot
 
         int packet_id = 0x00;
         int protocol_version = 47;
-        Packet packet = Packet(1028);
+        Packet packet = Packet(1024);
         packet.data = new uint8_t[packet.length]{ 0 };
 
-        PacketEncoder::WriteVarInt(packet_id, packet); // packet id
-        PacketEncoder::WriteVarInt(protocol_version, packet);   // protocol version
-        PacketEncoder::WriteString(hostname, packet); // hostname
-        PacketEncoder::WriteShort(port, packet); // port
+        PacketEncoder::WriteVarInt(packet_id, packet);
+        PacketEncoder::WriteVarInt(protocol_version, packet);
+        PacketEncoder::WriteString(hostname, packet);
+        PacketEncoder::WriteShort(port, packet);
         PacketEncoder::WriteVarInt((int)State::LOGIN, packet); // next state
 
         if (ASSERT_TRUE(this->bot->SendPacket(packet) > 0, "Failed to send packet"))

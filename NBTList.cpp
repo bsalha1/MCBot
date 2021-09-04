@@ -1,6 +1,6 @@
 #include "NBTList.h"
 
-namespace mcbot
+namespace McBot
 {
 
     NBTList::NBTList(NBTType type)

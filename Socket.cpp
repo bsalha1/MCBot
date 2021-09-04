@@ -2,7 +2,7 @@
 #include "zlib.h"
 #include "PacketEncoder.h"
 
-namespace mcbot
+namespace McBot
 {
     static void print_winsock_error()
     {

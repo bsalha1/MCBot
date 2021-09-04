@@ -1,6 +1,6 @@
 #include "EntityLiving.h"
 
-namespace mcbot
+namespace McBot
 {
 
 	EntityLiving::EntityLiving(EntityType entity_type, int id)

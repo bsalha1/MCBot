@@ -3,7 +3,7 @@
 #include "Enums.h"
 #include "Vector.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Entity
 	{

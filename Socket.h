@@ -14,7 +14,7 @@
 
 #include "Assert.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Socket
 	{

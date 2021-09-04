@@ -2,7 +2,7 @@
 
 #include "Entity.h"
 
-namespace mcbot
+namespace McBot
 {
 	class EntityLiving : public Entity
 	{

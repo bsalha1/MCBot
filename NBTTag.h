@@ -6,7 +6,7 @@
 #include "Serializable.h"
 #include "Enums.h"
 
-namespace mcbot
+namespace McBot
 {
 	class NBTTag : Serializable
 	{

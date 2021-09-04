@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace mcbot
+namespace McBot
 {
 	class PlayerProperty
 	{

@@ -3,7 +3,7 @@
 #include <list>
 #include <boost/any.hpp>
 
-namespace mcbot
+namespace McBot
 {
 	class EntityMetaData
 	{

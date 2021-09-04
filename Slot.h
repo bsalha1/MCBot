@@ -3,7 +3,7 @@
 #include "Serializable.h"
 #include "NBTTagCompound.h"
 
-namespace mcbot
+namespace McBot
 {
 	class Slot : Serializable
 	{
